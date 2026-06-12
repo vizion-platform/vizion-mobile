@@ -50,37 +50,7 @@ class HomeTabScreen extends StatelessWidget {
                     },
                   ),
                 ),
-                // Badge de Conexão da IA
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF141414),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF222222)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF52B788), // Verde ativo
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        "IA OTIMIZADA",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Badge de Conexão da IA (Removido)
               ],
             ),
             const SizedBox(height: 28),
@@ -153,9 +123,9 @@ class HomeTabScreen extends StatelessWidget {
             GridView.count(
               shrinkWrap: true,
               crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.5,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 2.2, // Mais compacto
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 _buildMetricCard("Eficiência Global", "94.2%", Icons.speed, Colors.blueAccent),

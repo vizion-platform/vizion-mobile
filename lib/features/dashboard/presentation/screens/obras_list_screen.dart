@@ -89,27 +89,32 @@ class ObrasListScreen extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1A1A1A),
-                                    borderRadius: BorderRadius.circular(4),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1A1A1A),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Icon(Icons.business, color: Color(0xFFD4AF37)),
                                   ),
-                                  child: const Icon(Icons.business, color: Color(0xFFD4AF37)),
-                                ),
-                                const SizedBox(width: 16),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(obra.titulo, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                                    const SizedBox(height: 4),
-                                    Text("Responsável: ${obra.responsavel}", style: const TextStyle(color: Colors.white54, fontSize: 13)),
-                                  ],
-                                ),
-                              ],
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(obra.titulo, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis),
+                                        const SizedBox(height: 4),
+                                        Text("Responsável: ${obra.responsavel}", style: const TextStyle(color: Colors.white54, fontSize: 13), overflow: TextOverflow.ellipsis),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 16),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
@@ -117,9 +122,9 @@ class ObrasListScreen extends StatelessWidget {
                                 const SizedBox(height: 12),
                                 Stack(
                                   children: [
-                                    Container(width: 180, height: 4, color: Colors.white10),
+                                    Container(width: 100, height: 4, color: Colors.white10),
                                     Container(
-                                      width: 180 * progressoVal,
+                                      width: 100 * progressoVal,
                                       height: 4,
                                       color: const Color(0xFFD4AF37),
                                       ),

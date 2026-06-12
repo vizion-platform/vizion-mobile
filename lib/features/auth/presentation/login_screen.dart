@@ -37,65 +37,34 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text;
       final password = _passwordController.text;
-      final name = _nameController.text;
-      final phone = _phoneController.text;
-      final cpf = _cpfController.text;
-
+      
       if (_isLoginMode) {
-        bool success = AuthService.login(email, password);
+        // Agora AuthService.login retorna Future<bool>
+        bool success = await AuthService.login(email, password);
 
         if (success) {
-          final userInfo = AuthService.getUserInfo(email);
-          if (userInfo != null) {
-            UserController.instance.recriarOuLogarUsuario(
-              Usuario(
-                nome: userInfo['name'] ?? 'Usuário',
-                email: userInfo['email'] ?? email,
-                cargo: '${userInfo['role']} • Vizion',
-                fotoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80',
-                dataCadastro: '11/06/2026',
-                role: userInfo['role'] ?? 'Cliente',
-              ),
-            );
-          }
-
+          // Fetch user data from API before navigating
+          await UserController.instance.fetchUserData();
+          
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Autenticado com sucesso!'), backgroundColor: AppColors.primaryGold),
+            const SnackBar(content: Text('Autenticado com sucesso!'), backgroundColor: Colors.green),
           );
           Navigator.pushReplacementNamed(context, '/dashboard');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro: Usuário não cadastrado ou senha incorreta!'), backgroundColor: Colors.redAccent),
+            const SnackBar(content: Text('Erro: Credenciais inválidas!'), backgroundColor: Colors.redAccent),
           );
         }
       } else {
-        // ENVIANDO OS NOVOS CAMPOS PARA O SERVIÇO
-        bool success = AuthService.register(
-          name: name,
-          email: email,
-          password: password,
-          phone: phone,
-          cpf: cpf,
-          role: _selectedRole,
+        // O registro no backend ainda não foi implementado no plano.
+        // Por enquanto, informamos que o registro está indisponível.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registro via mobile temporariamente indisponível.'), backgroundColor: Colors.orange),
         );
-
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Conta criada! Faça o login para entrar.'), backgroundColor: Colors.green),
-          );
-          setState(() {
-            _isLoginMode = true;
-          });
-          _formKey.currentState!.reset();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro: Este e-mail já está cadastrado!'), backgroundColor: Colors.redAccent),
-          );
-        }
       }
     }
   }

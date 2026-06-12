@@ -48,9 +48,15 @@ class PerfilTabScreen extends StatelessWidget {
               child: const Text("CANCELAR", style: TextStyle(color: Colors.white54, fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(ctx); // Fecha o modal de alerta
-                _navegarParaLogin(context, esvaziarDados: true); // Deleta e vai pro Login
+                final success = await AuthService.deleteCurrentAccount();
+                if (success) {
+                  UserController.instance.deletarContaDeVez();
+                  _navegarParaLogin(context, esvaziarDados: true); // Deleta e vai pro Login
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Erro ao excluir conta.")));
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE63946)),
               child: const Text("EXCLUIR DE VEZ", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -186,81 +192,4 @@ class PerfilTabScreen extends StatelessWidget {
   }
 }
 
-// --- TELA DE LOGIN TEMPORÁRIA / EXEMPLO ---
-// Nota: Substitua esta classe abaixo pela sua verdadeira tela de Login/Registro!
-class TelaDeLoginExemplo extends StatelessWidget {
-  const TelaDeLoginExemplo({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.business, color: Color(0xFFD4AF37), size: 64),
-              const SizedBox(height: 16),
-              const Text(
-                "VIZION UP BUILD",
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 1),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                "Entre com suas credenciais ou crie uma conta para acessar a plataforma.",
-                style: TextStyle(color: Colors.white54, fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-              
-              // Campo Simulado de E-mail
-              TextField(
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: "E-mail corporativo",
-                  labelStyle: const TextStyle(color: Colors.white54),
-                  filled: true,
-                  fillColor: const Color(0xFF141414),
-                  enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xFF222222))),
-                  focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Color(0xFFD4AF37))),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Botão para entrar novamente e restaurar o fluxo
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Simula a recriação do usuário na memória ao Logar com sucesso
-                    UserController.instance.recriarOuLogarUsuario(
-                      Usuario(
-                        nome: "João Duarte",
-                        email: "joao.duarte@vizionup.com",
-                        cargo: "Funcionário • vizion-001",
-                        fotoUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=256&q=80",
-                        dataCadastro: "11/06/2026",
-                        role: "Funcionário",
-                      ),
-                    );
-                    
-                    // IMPORTANTE: Coloque aqui o Navigator que joga para o seu `DashboardScreen()` real!
-                    Navigator.pop(context); 
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD4AF37),
-                    foregroundColor: Colors.black,
-                  ),
-                  child: const Text("ENTRAR / CADASTRAR", style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+// --- FIM DA TELA DE PERFIL ---
