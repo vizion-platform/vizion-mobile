@@ -48,13 +48,15 @@ class _CriarObraModalState extends State<CriarObraModal> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: AppColors.gridLine),
       ),
       child: Container(
-        width: 680,
-        padding: const EdgeInsets.all(40.0),
+        constraints: const BoxConstraints(maxWidth: 500),
+        width: double.infinity,
+        padding: const EdgeInsets.all(24.0),
         child: _currentStep == 1
             ? StepInicializarProjeto(
                 formKey: _step1FormKey,
@@ -68,7 +70,7 @@ class _CriarObraModalState extends State<CriarObraModal> {
                 complementoController: _complementoController,
                 dataController: _dataController,
                 onNext: () => setState(() => _currentStep = _step1FormKey.currentState!.validate() ? 2 : 1),
-                onBackToHome: () => Navigator.pop(context), // <-- Ação que fecha a janela na hora!
+                onBackToHome: () => Navigator.pop(context),
               )
             : StepInvestimentoProjeto(
                 formKey: _step2FormKey,
@@ -76,11 +78,30 @@ class _CriarObraModalState extends State<CriarObraModal> {
                 onBack: () => setState(() => _currentStep = 1),
                 onPublish: () {
                   if (_step2FormKey.currentState!.validate()) {
+                    DateTime start = DateTime.now();
+                    try {
+                      List<String> p = _dataController.text.split('/');
+                      start = DateTime(int.parse(p[2]), int.parse(p[1]), int.parse(p[0]));
+                    } catch (_) {}
+                    DateTime end = start.add(const Duration(days: 90)); // Default forecast 90 days
+
+                    String formatDate(DateTime dt) {
+                      return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+                    }
+
                     widget.onObraCriada({
                       'nome': _nameController.text,
-                      'status': 'Fase de Fundação',
-                      'progresso': 0.05,
-                      'responsavel': 'A definir',
+                      'status': 'PLANEJAMENTO',
+                      'data_inicio': formatDate(start),
+                      'data_previsao_entrega': formatDate(end),
+                      'valor_total_estimado': double.tryParse(_investimentoController.text.replaceAll(',', '.')) ?? 0.0,
+                      'logradouro': _logradouroController.text,
+                      'numero': _numeroController.text,
+                      'complemento': _complementoController.text,
+                      'bairro': _bairroController.text,
+                      'cidade': _cidadeController.text,
+                      'estado': _estadoController.text,
+                      'cep': _cepController.text,
                     });
                     Navigator.pop(context);
                   }
