@@ -81,22 +81,19 @@ class _LoginScreenState extends State<LoginScreen> {
           bool success = await AuthService.login(email, password);
 
           if (success) {
-            // Trigger 2FA step for corporate accounts
             setState(() {
               _isLoading = false;
-              _show2FA = true;
             });
-            _start2FATimer();
-            // Clear code inputs
-            for (var c in _codeControllers) {
-              c.clear();
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Autenticado com sucesso! Bem-vindo, ${AuthService.nome}!'),
+                  backgroundColor: AppColors.primaryGold,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              Navigator.pushReplacementNamed(context, '/dashboard');
             }
-            // Focus first digit
-            Future.delayed(const Duration(milliseconds: 100), () {
-              if (mounted) {
-                FocusScope.of(context).requestFocus(_focusNodes[0]);
-              }
-            });
           } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -299,45 +296,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            Text(
-              _isLoginMode ? 'Acesse o portal corporativo' : 'Crie sua credencial de acesso',
+            const Text(
+              'Acesse o portal corporativo',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 28),
-
-            // Cadastro fields
-            if (!_isLoginMode) ...[
-              TextFormField(
-                controller: _nameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: _inputStyle('NOME COMPLETO', Icons.person_outline),
-                validator: (value) => value == null || value.trim().isEmpty ? 'Insira seu nome.' : null,
-              ),
-              const SizedBox(height: 16),
-              
-              TextFormField(
-                controller: _cpfController,
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.number,
-                decoration: _inputStyle('CPF (APENAS NÚMEROS)', Icons.badge_outlined),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'O CPF é obrigatório.';
-                  if (value.replaceAll(RegExp(r'\D'), '').length < 11) return 'CPF inválido.';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _phoneController,
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.phone,
-                decoration: _inputStyle('TELEFONE / WHATSAPP', Icons.phone_android_outlined),
-                validator: (value) => value == null || value.isEmpty ? 'Telefone obrigatório.' : null,
-              ),
-              const SizedBox(height: 16),
-            ],
 
             // E-mail
             TextFormField(
@@ -365,21 +329,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Confirmar Senha (Apenas no Cadastro)
-            if (!_isLoginMode) ...[
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: _inputStyle('CONFIRMAR SENHA', Icons.lock_clock_outlined),
-                validator: (value) {
-                  if (value != _passwordController.text) return 'As senhas não coincidem.';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-
             const SizedBox(height: 24),
 
             ElevatedButton(
@@ -397,76 +346,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 20,
                       child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
                     )
-                  : Text(
-                      _isLoginMode ? 'ENTRAR COM CREDENCIAIS' : 'REGISTRAR CONTA',
-                      style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13),
+                  : const Text(
+                      'ENTRAR COM CREDENCIAIS',
+                      style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13),
                     ),
-            ),
-            
-            if (_isLoginMode) ...[
-              const SizedBox(height: 16),
-              // Separador
-              Row(
-                children: [
-                  Expanded(child: Divider(color: AppColors.gridLine, thickness: 1)),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('OU', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
-                  ),
-                  Expanded(child: Divider(color: AppColors.gridLine, thickness: 1)),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Login Google
-              OutlinedButton.icon(
-                onPressed: _isLoading ? null : _loginWithGoogle,
-                icon: Image.network(
-                  'https://img.icons8.com/color/48/google-logo.png',
-                  height: 20,
-                  width: 20,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.g_mobiledata, color: Colors.white),
-                ),
-                label: const Text(
-                  'ENTRAR COM O GOOGLE',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1, fontSize: 12),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: AppColors.gridLine, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 24),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _isLoginMode ? 'Não tem uma conta?' : 'Já possui cadastro?',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                ),
-                TextButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          setState(() {
-                            _isLoginMode = !_isLoginMode;
-                          });
-                          _formKey.currentState?.reset();
-                        },
-                  child: Text(
-                    _isLoginMode ? 'Criar Conta' : 'Fazer Login',
-                    style: const TextStyle(
-                      color: AppColors.primaryGold,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
         ),

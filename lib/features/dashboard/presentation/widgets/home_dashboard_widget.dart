@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/auth_service.dart';
+import '../../../chat/presentation/chat_room_screen.dart';
+import '../../../chat/data/chat_network_service.dart';
 
 class HomeDashboardWidget extends StatefulWidget {
   const HomeDashboardWidget({super.key});
@@ -50,7 +52,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
   }
 
   double _getProjectProgress(int id) {
-    // Return a stable mock completion progress based on project ID
     switch (id % 4) {
       case 0:
         return 0.35;
@@ -62,6 +63,65 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
         return 0.85;
       default:
         return 0.50;
+    }
+  }
+
+  Future<void> _startChatWithContractor() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryGold),
+      ),
+    );
+
+    try {
+      int contractorId = 1001;
+      String contractorName = 'Eng. Felipe (Empreiteiro)';
+      
+      try {
+        final contacts = await ChatNetworkService().fetchContacts();
+        final realContractor = contacts.firstWhere(
+          (c) => (c['role'] ?? '').toString().toUpperCase() == 'EMPREITEIRO',
+          orElse: () => <String, dynamic>{},
+        );
+        if (realContractor.isNotEmpty) {
+          contractorId = realContractor['id'] ?? 1001;
+          contractorName = realContractor['nome'] ?? contractorName;
+        }
+      } catch (e) {
+        print('Erro ao buscar contatos, usando padrão: $e');
+      }
+
+      final chatData = await ChatNetworkService().startPrivateChat(contractorId);
+      final chatId = chatData['id'];
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatRoomScreen(
+              chatId: chatId,
+              chatTitle: contractorName,
+              otherParticipantName: contractorName,
+              otherParticipantRole: 'EMPREITEIRO',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Não foi possível iniciar chat: $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -108,6 +168,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
     }
     final double avgBudget = totalObras > 0 ? totalBudget / totalObras : 0.0;
 
+    final role = AuthService.role ?? 'GESTOR';
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Column(
@@ -142,7 +204,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
                     ),
                     Text(
-                      'Cargo: ${AuthService.role ?? 'Gestor'} • Tenant: ${AuthService.tenantId ?? 'default'}',
+                      'Perfil: ${role.toUpperCase()} • Tenant: ${AuthService.tenantId ?? 'default'}',
                       style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
                     ),
                   ],
@@ -175,14 +237,22 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           ),
           const SizedBox(height: 28),
           
-          const Text(
-            'Visão Gerencial',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+          Text(
+            role == 'CLIENTE' 
+                ? 'Acompanhamento do Cliente' 
+                : role == 'FUNCIONARIO' 
+                    ? 'Atribuição de Trabalho' 
+                    : 'Visão Gerencial',
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Análise físico-financeira dos canteiros de obra.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          Text(
+            role == 'CLIENTE' 
+                ? 'Evolução física e financeira de sua residência.' 
+                : role == 'FUNCIONARIO' 
+                    ? 'Canteiro de obras e atividades atreladas ao seu cargo.' 
+                    : 'Análise físico-financeira dos canteiros de obra.',
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 24),
           
@@ -190,23 +260,110 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           LayoutBuilder(
             builder: (context, constraints) {
               final cardWidth = (constraints.maxWidth - 16) / 2;
-              return Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  _buildStatCard('Canteiros de Obra', totalObras.toString(), Icons.domain_outlined, AppColors.primaryGold, cardWidth),
-                  _buildStatCard('Investimento Total', _formatCurrency(totalBudget), Icons.account_balance_wallet_outlined, Colors.greenAccent, cardWidth),
-                  _buildStatCard('Custo Médio / Obra', _formatCurrency(avgBudget), Icons.analytics_outlined, Colors.blueAccent, cardWidth),
-                  _buildStatCard('Status de Segurança', 'MFA OK', Icons.lock_outline, Colors.tealAccent, cardWidth),
-                ],
-              );
+              
+              if (role == 'CLIENTE') {
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    _buildStatCard('Progresso Físico', '35%', Icons.trending_up, AppColors.primaryGold, cardWidth),
+                    _buildStatCard('Investimento Total', _formatCurrency(totalBudget), Icons.account_balance_wallet_outlined, Colors.greenAccent, cardWidth),
+                    _buildStatCard('Fases Concluídas', '1 / 5', Icons.construction_outlined, Colors.blueAccent, cardWidth),
+                    _buildStatCard('Status do Projeto', 'Execução', Icons.info_outline, Colors.tealAccent, cardWidth),
+                  ],
+                );
+              } else if (role == 'FUNCIONARIO') {
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    _buildStatCard('Meu Canteiro', 'Bella Vista', Icons.apartment_outlined, Colors.blueAccent, cardWidth),
+                    _buildStatCard('Atividade Atual', 'Fundação', Icons.construction_outlined, AppColors.primaryGold, cardWidth),
+                    _buildStatCard('Status de Presença', 'Registrada', Icons.verified_user_outlined, Colors.greenAccent, cardWidth),
+                    _buildStatCard('Segurança', 'MFA OK', Icons.lock_outline, Colors.tealAccent, cardWidth),
+                  ],
+                );
+              } else {
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    _buildStatCard('Canteiros de Obra', totalObras.toString(), Icons.domain_outlined, AppColors.primaryGold, cardWidth),
+                    _buildStatCard('Investimento Total', _formatCurrency(totalBudget), Icons.account_balance_wallet_outlined, Colors.greenAccent, cardWidth),
+                    _buildStatCard('Custo Médio / Obra', _formatCurrency(avgBudget), Icons.analytics_outlined, Colors.blueAccent, cardWidth),
+                    _buildStatCard('Status de Segurança', 'MFA OK', Icons.lock_outline, Colors.tealAccent, cardWidth),
+                  ],
+                );
+              }
             },
           ),
+
+          if (role == 'CLIENTE' || role == 'FUNCIONARIO') ...[
+            const SizedBox(height: 28),
+            const Text(
+              'CONTATO DIRETO',
+              style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.gridLine, width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: AppColors.primaryGold.withOpacity(0.12),
+                    child: const Icon(Icons.engineering_outlined, color: AppColors.primaryGold, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          role == 'CLIENTE' ? 'Falar com o Empreiteiro' : 'Contatar Encarregado',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          role == 'CLIENTE' 
+                              ? 'Dúvidas sobre prazos ou materiais?' 
+                              : 'Reporte incidentes ou andamento do serviço.',
+                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: _startChatWithContractor,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGold,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    ),
+                    child: const Text('CHAT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 32),
           
-          const Text(
-            'Desempenho Físico por Obra',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white70, letterSpacing: 0.5),
+          Text(
+            role == 'CLIENTE' 
+                ? 'Evolução Física do Imóvel' 
+                : role == 'FUNCIONARIO' 
+                    ? 'Status da Obra Associada' 
+                    : 'Desempenho Físico por Obra',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white70, letterSpacing: 0.5),
           ),
           const SizedBox(height: 16),
           
@@ -266,7 +423,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Fase: ${obra['status'] ?? 'Planejamento'}',
+                                'Status: ${obra['status'] ?? 'PLANEJAMENTO'}',
                                 style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
                               ),
                               Text(

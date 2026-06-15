@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/auth_service.dart';
 import 'criar_obra_modal.dart';
+import '../obra_details_screen.dart';
 
 class ObrasListWidget extends StatefulWidget {
   const ObrasListWidget({super.key});
@@ -292,18 +293,19 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
             ),
             
             // Botão Nova Obra
-            ElevatedButton.icon(
-              onPressed: _abrirModalCriarObra,
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('NOVA OBRA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGold,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                elevation: 4,
+            if (AuthService.role == 'EMPREITEIRO' || AuthService.role == null)
+              ElevatedButton.icon(
+                onPressed: _abrirModalCriarObra,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('NOVA OBRA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGold,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  elevation: 4,
+                ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -353,7 +355,14 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                               final val = (obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0;
                               final statusColor = _getStatusColor(obra['status'] ?? '');
                               return InkWell(
-                                onTap: () => _showObraDetails(obra),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ObraDetailsScreen(obra: obra),
+                                    ),
+                                  ).then((_) => _refreshObras());
+                                },
                                 borderRadius: BorderRadius.circular(12),
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
