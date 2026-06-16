@@ -297,17 +297,18 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                     Text(_formatDate(widget.obra['data_previsao_entrega']), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                                   ],
                                 ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    const Text('INVESTIMENTO TOTAL', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _formatCurrency((widget.obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0),
-                                      style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13),
-                                    ),
-                                  ],
-                                ),
+                                if (role != 'FUNCIONARIO')
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      const Text('INVESTIMENTO TOTAL', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        _formatCurrency((widget.obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0),
+                                        style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
                               ],
                             ),
                             if (widget.obra['logradouro'] != null) ...[
@@ -463,7 +464,8 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                             children: [
                                               _buildDateText('INÍCIO', _formatDate(fase['data_iniciada'] ?? fase['data_inicio_estimada'])),
                                               _buildDateText('TÉRMINO', _formatDate(fase['data_finalizada'] ?? fase['data_fim_estimada'])),
-                                              _buildDateText('ORÇADO', _formatCurrency((fase['valor_estimado'] as num?)?.toDouble() ?? 0.0)),
+                                              if (role != 'FUNCIONARIO')
+                                                _buildDateText('ORÇADO', _formatCurrency((fase['valor_estimado'] as num?)?.toDouble() ?? 0.0)),
                                             ],
                                           ),
                                           

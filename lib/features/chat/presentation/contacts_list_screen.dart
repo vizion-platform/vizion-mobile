@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/network/auth_service.dart';
 import '../data/chat_network_service.dart';
 import 'chat_room_screen.dart';
 
@@ -35,10 +36,24 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
   Future<void> _loadContacts() async {
     try {
       final data = await _chatService.fetchContacts();
+      final currentRole = (AuthService.role ?? 'COLABORADOR').toUpperCase();
       if (mounted) {
         setState(() {
-          _contacts = data;
-          _filteredContacts = data;
+          _contacts = data.where((contact) {
+            final contactRole = (contact['role'] ?? '').toString().toUpperCase();
+            if (currentRole == 'FUNCIONARIO') {
+              // Employees: can chat with colleagues, contractors/leaders, and company support
+              return contactRole == 'FUNCIONARIO' || contactRole == 'EMPREITEIRO' || contactRole == 'ADMIN' || contactRole == 'EMPREITEIRA';
+            } else if (currentRole == 'CLIENTE') {
+              // Clients: can only chat with contractors and support
+              return contactRole == 'EMPREITEIRO' || contactRole == 'ADMIN' || contactRole == 'EMPREITEIRA';
+            } else if (currentRole == 'EMPREITEIRO') {
+              // Contractors: can chat with everyone EXCEPT other contractors
+              return contactRole != 'EMPREITEIRO';
+            }
+            return true;
+          }).toList();
+          _filteredContacts = _contacts;
           _isLoading = false;
           _errorMessage = '';
         });
