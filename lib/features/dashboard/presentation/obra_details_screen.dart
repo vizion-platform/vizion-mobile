@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_room_screen.dart';
@@ -131,29 +133,59 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   }
 
   Future<void> _openCameraForPhase(Map<String, dynamic> fase) async {
-    final photoData = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CameraSimulatorScreen(
-          phaseName: fase['nome_fase'] ?? 'Fase',
-        ),
-      ),
-    );
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70,
+      );
 
-    if (photoData != null) {
-      setState(() {
-        _isLoading = true;
-      });
-      await AuthService.addPhasePhoto(fase['id_fase'], photoData);
-      await _loadFases();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Foto anexada à fase com sucesso!'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final String base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
+        setState(() {
+          _isLoading = true;
+        });
+        await AuthService.addPhasePhoto(fase['id_fase'], base64Image);
+        await _loadFases();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Foto tirada e salva com sucesso!'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Erro ao acessar camera real, abrindo simulador: $e');
+      if (!mounted) return;
+      final photoData = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CameraSimulatorScreen(
+            phaseName: fase['nome_fase'] ?? 'Fase',
           ),
-        );
+        ),
+      );
+
+      if (photoData != null) {
+        setState(() {
+          _isLoading = true;
+        });
+        await AuthService.addPhasePhoto(fase['id_fase'], photoData);
+        await _loadFases();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Foto simulada salva com sucesso!'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
   }
