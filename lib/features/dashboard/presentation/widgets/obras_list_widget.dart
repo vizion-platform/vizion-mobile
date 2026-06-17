@@ -222,48 +222,6 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
     );
   }
 
-  void _abrirModalCriarObra() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => CriarObraModal(
-        onObraCriada: (novaObraData) async {
-          setState(() {
-            _isLoading = true;
-          });
-          try {
-            bool success = await AuthService.createObra(novaObraData);
-            if (success) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Obra cadastrada com sucesso!'), backgroundColor: Colors.green),
-                );
-              }
-              _refreshObras();
-            } else {
-              if (mounted) {
-                setState(() {
-                  _isLoading = false;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Erro ao cadastrar obra no servidor.'), backgroundColor: Colors.redAccent),
-                );
-              }
-            }
-          } catch (e) {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Erro de conexão: $e'), backgroundColor: Colors.redAccent),
-              );
-            }
-          }
-        },
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -291,21 +249,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                 ],
               ),
             ),
-            
-            // Botão Nova Obra
-            if (AuthService.role == 'EMPREITEIRO' || AuthService.role == null)
-              ElevatedButton.icon(
-                onPressed: _abrirModalCriarObra,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('NOVA OBRA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGold,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  elevation: 4,
-                ),
-              ),
+
           ],
         ),
         const SizedBox(height: 24),

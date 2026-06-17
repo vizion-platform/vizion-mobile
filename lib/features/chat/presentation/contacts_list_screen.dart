@@ -47,9 +47,9 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
             } else if (currentRole == 'CLIENTE') {
               // Clients: can only chat with contractors and support
               return contactRole == 'EMPREITEIRO' || contactRole == 'ADMIN' || contactRole == 'EMPREITEIRA';
-            } else if (currentRole == 'EMPREITEIRO') {
+            } else if (currentRole == 'EMPREITEIRO' || currentRole == 'EMPREITEIRA') {
               // Contractors: can chat with everyone EXCEPT other contractors
-              return contactRole != 'EMPREITEIRO';
+              return contactRole != 'EMPREITEIRO' && contactRole != 'EMPREITEIRA';
             }
             return true;
           }).toList();
@@ -88,6 +88,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
       case 'ADMIN':
         return Colors.redAccent;
       case 'EMPREITEIRO':
+      case 'EMPREITEIRA':
         return AppColors.primaryGold;
       case 'CLIENTE':
         return Colors.blueAccent;

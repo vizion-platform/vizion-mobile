@@ -147,7 +147,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         setState(() {
           _isLoading = true;
         });
-        await AuthService.addPhasePhoto(fase['id_fase'], base64Image);
+        await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], base64Image);
         await _loadFases();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -175,7 +175,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         setState(() {
           _isLoading = true;
         });
-        await AuthService.addPhasePhoto(fase['id_fase'], photoData);
+        await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], photoData);
         await _loadFases();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -522,7 +522,12 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                       color: AppColors.background,
                                                       child: photoStr.startsWith('mock-camera-')
                                                           ? _buildMockImagePreview(photoStr)
-                                                          : const Icon(Icons.image, color: AppColors.textSecondary),
+                                                          : photoStr.startsWith('data:image/')
+                                                              ? Image.memory(
+                                                                  base64Decode(photoStr.split(',')[1]),
+                                                                  fit: BoxFit.cover,
+                                                                )
+                                                              : const Icon(Icons.image, color: AppColors.textSecondary),
                                                     ),
                                                   );
                                                 },
@@ -531,7 +536,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                           ],
 
                                           // Controles de Ação do Empreiteiro
-                                          if (role == 'EMPREITEIRO' || role == 'ADMIN') ...[
+                                          if (role == 'EMPREITEIRO' || role == 'EMPREITEIRA' || role == 'ADMIN') ...[
                                             const Divider(color: AppColors.gridLine, height: 24),
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,

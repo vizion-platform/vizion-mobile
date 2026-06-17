@@ -136,6 +136,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       case 'ADMIN':
         return Colors.redAccent;
       case 'EMPREITEIRO':
+      case 'EMPREITEIRA':
         return AppColors.primaryGold;
       case 'CLIENTE':
         return Colors.blueAccent;

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client_new/socket_io_client_new.dart' as IO;
 import '../../../core/network/auth_service.dart';
 
 class ChatNetworkService {
@@ -278,7 +278,7 @@ class ChatNetworkService {
       
       // If secure (production), route socket.io through HTTPS port 443 so reverse proxy (e.g. Nginx) can forward it.
       // If insecure (local dev), connect directly to host port 9092.
-      final socketUrl = isSecure ? 'https://${apiUri.host}' : 'http://${apiUri.host}:9092';
+      final socketUrl = isSecure ? 'https://${apiUri.host}:443' : 'http://${apiUri.host}:9092';
 
       print('Conectando ao Socket.io em: $socketUrl');
 

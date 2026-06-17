@@ -434,11 +434,32 @@ class AuthService {
     return true;
   }
 
-  static Future<void> addPhasePhoto(int faseId, String photoData) async {
+  static Future<void> addPhasePhoto(int obraId, int faseId, String photoData) async {
     if (!_fasesPhotos.containsKey(faseId)) {
       _fasesPhotos[faseId] = [];
     }
     _fasesPhotos[faseId]!.add(photoData);
+
+    if (_accessToken != null && !_accessToken!.startsWith('mock-token-')) {
+      try {
+        final response = await http.post(
+          Uri.parse('$baseUrl/obrasDocumentos'),
+          headers: getHeaders(),
+          body: jsonEncode({
+            'id_obra': obraId,
+            'tipo_documento': 'ARQUIVO',
+            'nome_arquivo': 'fase_${faseId}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            'url_arquivo': photoData,
+            'descricao_arquivo': 'Foto de progresso da fase $faseId',
+          }),
+        );
+        if (response.statusCode != 200 && response.statusCode != 201) {
+          print('Erro do servidor ao salvar foto: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('Erro de conexão ao salvar foto no servidor: $e');
+      }
+    }
   }
 
   static List<String> getPhasePhotos(int faseId) {

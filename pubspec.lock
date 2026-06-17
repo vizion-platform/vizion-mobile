@@ -509,14 +509,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  socket_io_client:
+  socket_io_client_new:
     dependency: "direct main"
     description:
-      name: socket_io_client
-      sha256: "740d3895e220e976570da7dbb2f084cd60dd0c46d174c4a830f9849faec23ef9"
+      name: socket_io_client_new
+      sha256: "1affffabef5d5ee29b9e493d156acf7867d1fdff7314cdae2a049c43d002b037"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.5"
+    version: "1.0.3"
   socket_io_common:
     dependency: transitive
     description:
@@ -613,14 +613,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
-  web_socket:
-    dependency: transitive
-    description:
-      name: web_socket
-      sha256: "34d64019aa8e36bf9842ac014bb5d2f5586ca73df5e4d9bf5c936975cae6982c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.1"
   xdg_directories:
     dependency: transitive
     description:
