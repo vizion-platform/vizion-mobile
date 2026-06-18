@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
@@ -29,21 +30,73 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   List<Map<String, dynamic>> _messages = [];
   bool _isLoading = true;
   String _errorMessage = '';
+  bool _isSocketConnected = false;
+  Timer? _fallbackTimer;
 
   @override
   void initState() {
     super.initState();
+    _isSocketConnected = _chatService.isConnected;
+    _chatService.addConnectionListener(_onConnectionStatusChanged);
     _loadMessages();
     _setupSocketListener();
   }
 
   @override
   void dispose() {
-    // We don't disconnect the entire socket because we might still want to
-    // listen in ChatListScreen, but we remove the callback for this room.
+    _chatService.removeConnectionListener(_onConnectionStatusChanged);
+    _chatService.unsubscribeFromChat(widget.chatId);
+    _stopFallbackTimer();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onConnectionStatusChanged(bool connected) {
+    if (mounted) {
+      setState(() {
+        _isSocketConnected = connected;
+      });
+      if (!connected) {
+        _startFallbackTimer();
+      } else {
+        _stopFallbackTimer();
+      }
+    }
+  }
+
+  void _startFallbackTimer() {
+    if (_fallbackTimer != null) return;
+    print('Iniciando fallback de polling periodico HTTP...');
+    _fallbackTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      _pollMessages();
+    });
+  }
+
+  void _stopFallbackTimer() {
+    if (_fallbackTimer != null) {
+      print('Parando fallback de polling periodico HTTP.');
+      _fallbackTimer!.cancel();
+      _fallbackTimer = null;
+    }
+  }
+
+  Future<void> _pollMessages() async {
+    if (!_isSocketConnected && mounted) {
+      try {
+        final data = await _chatService.fetchMessages(widget.chatId);
+        if (mounted && !_isSocketConnected) {
+          if (data.length != _messages.length) {
+            setState(() {
+              _messages = data;
+            });
+            _scrollToBottom();
+          }
+        }
+      } catch (e) {
+        print('Erro no fallback polling: $e');
+      }
+    }
   }
 
   Future<void> _loadMessages() async {
@@ -84,28 +137,19 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         }
       }
     });
+    _chatService.subscribeToChat(widget.chatId);
   }
 
   void _scrollToBottom({bool delayed = false}) {
-    if (delayed) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    } else {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          0.0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       }
-    }
+    });
   }
 
   void _sendMessage() {
@@ -117,6 +161,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     
     // Smooth scrolling to bottom after sending
     _scrollToBottom();
+
+    if (!_isSocketConnected) {
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        _pollMessages();
+      });
+    }
   }
 
   String _formatTime(String? dateStr) {
@@ -200,6 +250,37 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
           ],
         ),
+        actions: [
+          Row(
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _isSocketConnected ? Colors.greenAccent : Colors.amberAccent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isSocketConnected ? Colors.greenAccent : Colors.amberAccent).withOpacity(0.5),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    )
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _isSocketConnected ? 'Online' : 'HTTP Fallback',
+                style: TextStyle(
+                  color: _isSocketConnected ? Colors.greenAccent : Colors.amberAccent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 16),
+            ],
+          )
+        ],
       ),
       body: Column(
         children: [
@@ -264,11 +345,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
     return ListView.builder(
       controller: _scrollController,
+      reverse: true,
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       itemCount: _messages.length,
       itemBuilder: (context, index) {
-        final message = _messages[index];
+        final message = _messages[_messages.length - 1 - index];
         final remetenteId = message['remetenteId'];
         final isMe = remetenteId == currentUserId;
         final String content = message['conteudo'] ?? '';

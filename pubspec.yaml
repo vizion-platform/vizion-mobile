@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   shared_preferences: ^2.5.5
-  socket_io_client_new: ^1.0.0
+  mqtt_client: ^10.1.0
   image_picker: ^1.2.2
 
 dev_dependencies:

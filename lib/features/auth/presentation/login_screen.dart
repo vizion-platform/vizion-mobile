@@ -195,35 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  void _loginWithGoogle() {
-    setState(() {
-      _isLoading = true;
-    });
-    // Simulate google login -> redirects to 2FA for corporate profile
-    Future.delayed(const Duration(milliseconds: 1000), () async {
-      // Connect as the default test contractor
-      bool success = await AuthService.login('f@g.com', '123456');
-      if (success) {
-        setState(() {
-          _isLoading = false;
-          _show2FA = true;
-        });
-        _start2FATimer();
-        for (var c in _codeControllers) {
-          c.clear();
-        }
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) {
-            FocusScope.of(context).requestFocus(_focusNodes[0]);
-          }
-        });
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
-  }
+
 
   @override
   Widget build(BuildContext context) {

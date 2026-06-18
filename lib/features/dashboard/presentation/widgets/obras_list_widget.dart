@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/auth_service.dart';
-import 'criar_obra_modal.dart';
 import '../obra_details_screen.dart';
 
 class ObrasListWidget extends StatefulWidget {
@@ -88,139 +87,9 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
     }
   }
 
-  void _showObraDetails(Map<String, dynamic> obra) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        final val = (obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0;
-        final statusColor = _getStatusColor(obra['status'] ?? '');
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24.0, 
-            right: 24.0, 
-            top: 16.0,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 32.0
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.gridLine,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryGold.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primaryGold.withOpacity(0.3)),
-                    ),
-                    child: const Icon(Icons.apartment, color: AppColors.primaryGold, size: 28),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          obra['nome_projeto'] ?? 'Sem Nome',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'ID do Registro: #${obra['id'] ?? 'N/A'}',
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              
-              // Informações estruturadas
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.gridLine, width: 1.5),
-                ),
-                child: Column(
-                  children: [
-                    _buildDetailRow('Orçamento Estimado', _formatCurrency(val), Icons.monetization_on_outlined, AppColors.primaryGold),
-                    const Divider(color: AppColors.gridLine, height: 24),
-                    _buildDetailRow('Status do Canteiro', obra['status'] ?? 'PLANEJAMENTO', Icons.info_outline, statusColor),
-                    const Divider(color: AppColors.gridLine, height: 24),
-                    _buildDetailRow('Data de Início', _formatDate(obra['data_inicio']), Icons.calendar_today_outlined, Colors.white70),
-                    const Divider(color: AppColors.gridLine, height: 24),
-                    _buildDetailRow('Previsão de Conclusão', _formatDate(obra['data_previsao_entrega']), Icons.date_range_outlined, Colors.white70),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gridLine,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('RETORNAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13)),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
-  Widget _buildDetailRow(String label, String value, IconData icon, Color valueColor) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(icon, size: 20, color: AppColors.textSecondary),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  color: valueColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+
+
 
 
   @override
