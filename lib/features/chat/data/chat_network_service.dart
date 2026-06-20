@@ -168,11 +168,13 @@ class ChatNetworkService {
     final clientId =
         'vizion_mobile_${DateTime.now().millisecondsSinceEpoch}_${AuthService.userId}';
     if (kIsWeb) {
-      _client = MqttBrowserClient(
-        'wss://rabbit.felipedepauladev.site/ws',
+      final browserClient = MqttBrowserClient(
+        'rabbit.felipedepauladev.site',
         clientId,
       );
-      _client!.port = 443;
+      browserClient.port = 443;
+      browserClient.websocketUri = 'wss://rabbit.felipedepauladev.site/ws';
+      _client = browserClient;
     } else {
       final nativeClient = MqttServerClient(
         'wss://rabbit.felipedepauladev.site/ws',
@@ -247,6 +249,30 @@ class ChatNetworkService {
     print('MQTT desconectado e limpo.');
   }
 
+  Future<Map<String, dynamic>> postMessage(int chatId, String content) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AuthService.baseUrl}/chats/$chatId/mensagens'),
+        headers: {
+          ...AuthService.getHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(content),
+      );
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(
+          jsonDecode(utf8.decode(response.bodyBytes)),
+        );
+      } else {
+        throw Exception('Erro ao enviar mensagem via HTTP: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Erro ao postar mensagem: $e');
+      rethrow;
+    }
+  }
+
   Map<String, dynamic> sendMessage(int chatId, String content) {
     final currentUserId = AuthService.userId;
     final payload = {
@@ -260,20 +286,22 @@ class ChatNetworkService {
     if (_client == null ||
         _client!.connectionStatus!.state != MqttConnectionState.connected) {
       print(
-        'Aviso: Emitindo mensagem com MQTT offline. Tentando reconectar...',
+        'Aviso: Emitindo mensagem com MQTT offline. Enviando via REST HTTP...',
       );
+      postMessage(chatId, content);
       _connectMqtt();
-    }
+    } else {
+      try {
+        final String topic = 'chat/$chatId';
+        final builder = MqttClientPayloadBuilder();
+        builder.addString(jsonEncode(payload));
 
-    try {
-      final String topic = 'chat/$chatId';
-      final builder = MqttClientPayloadBuilder();
-      builder.addString(jsonEncode(payload));
-
-      _client?.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
-      print('Mensagem enviada via MQTT para o chat $chatId: $content');
-    } catch (e) {
-      print('Erro ao enviar mensagem via MQTT: $e');
+        _client?.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+        print('Mensagem enviada via MQTT para o chat $chatId: $content');
+      } catch (e) {
+        print('Erro ao enviar mensagem via MQTT, tentando REST HTTP: $e');
+        postMessage(chatId, content);
+      }
     }
 
     return payload;
