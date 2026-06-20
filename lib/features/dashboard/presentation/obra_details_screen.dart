@@ -160,7 +160,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         }
       }
     } catch (e) {
-      print('Erro ao acessar camera real, abrindo simulador: $e');
+      debugPrint('Erro ao acessar camera real, abrindo simulador: $e');
       if (!mounted) return;
       final photoData = await Navigator.push<String>(
         context,
@@ -214,7 +214,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
           contractorName = realContractor['nome'] ?? contractorName;
         }
       } catch (e) {
-        print('Erro ao buscar contatos, usando padrão: $e');
+        debugPrint('Erro ao buscar contatos, usando padrão: $e');
       }
 
       final chatData = await ChatNetworkService().startPrivateChat(contractorId);
@@ -296,9 +296,9 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primaryGold.withOpacity(0.12),
+                                    color: AppColors.primaryGold.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: AppColors.primaryGold.withOpacity(0.3)),
+                                    border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
                                   ),
                                   child: Text(
                                     '${(progress * 100).toStringAsFixed(0)}% OK',
@@ -369,8 +369,8 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.blueAccent.withOpacity(0.08),
-                            border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+                            color: Colors.blueAccent.withValues(alpha: 0.08),
+                            border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -434,7 +434,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                         color: color,
                                         shape: BoxShape.circle,
                                         boxShadow: [
-                                          BoxShadow(color: color.withOpacity(0.3), blurRadius: 4, spreadRadius: 1),
+                                          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4, spreadRadius: 1),
                                         ],
                                       ),
                                     ),
@@ -474,9 +474,9 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                                 decoration: BoxDecoration(
-                                                  color: color.withOpacity(0.12),
+                                                  color: color.withValues(alpha: 0.12),
                                                   borderRadius: BorderRadius.circular(12),
-                                                  border: Border.all(color: color.withOpacity(0.3), width: 0.8),
+                                                  border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
                                                 ),
                                                 child: Text(
                                                   status,
@@ -617,7 +617,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     }
 
     return Container(
-      color: previewBg.withOpacity(0.25),
+      color: previewBg.withValues(alpha: 0.25),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -658,9 +658,9 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.12),
+        backgroundColor: color.withValues(alpha: 0.12),
         foregroundColor: color,
-        side: BorderSide(color: color.withOpacity(0.4), width: 1),
+        side: BorderSide(color: color.withValues(alpha: 0.4), width: 1),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         elevation: 0,
