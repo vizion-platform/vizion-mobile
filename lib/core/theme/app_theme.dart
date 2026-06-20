@@ -16,7 +16,6 @@ class AppTheme {
     primaryColor: AppColors.primaryGold,
     colorScheme: const ColorScheme.dark(
       primary: AppColors.primaryGold,
-      background: AppColors.background,
       surface: AppColors.surface,
     ),
     fontFamily: 'sans-serif',

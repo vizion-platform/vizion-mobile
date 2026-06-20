@@ -25,9 +25,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cpfController = TextEditingController();
-  
+
   // 2FA Controllers
-  final List<TextEditingController> _codeControllers = List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _codeControllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   @override
@@ -87,7 +90,9 @@ class _LoginScreenState extends State<LoginScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Autenticado com sucesso! Bem-vindo, ${AuthService.nome}!'),
+                  content: Text(
+                    'Autenticado com sucesso! Bem-vindo, ${AuthService.nome}!',
+                  ),
                   backgroundColor: AppColors.primaryGold,
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -185,7 +190,9 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Autenticado com sucesso! Bem-vindo, ${AuthService.nome}!'),
+            content: Text(
+              'Autenticado com sucesso! Bem-vindo, ${AuthService.nome}!',
+            ),
             backgroundColor: AppColors.primaryGold,
             behavior: SnackBarBehavior.floating,
           ),
@@ -195,15 +202,16 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: GridBackground(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 24.0,
+            ),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: _show2FA ? _build2FACard() : _buildLoginCard(),
@@ -226,10 +234,10 @@ class _LoginScreenState extends State<LoginScreen> {
         border: Border.all(color: AppColors.gridLine, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 10),
-          )
+          ),
         ],
       ),
       child: Form(
@@ -242,7 +250,11 @@ class _LoginScreenState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.blur_on_outlined, color: AppColors.primaryGold, size: 36),
+                const Icon(
+                  Icons.blur_on_outlined,
+                  color: AppColors.primaryGold,
+                  size: 36,
+                ),
                 const SizedBox(width: 8),
                 const Text(
                   'VIZION',
@@ -280,10 +292,17 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _emailController,
               style: const TextStyle(color: Colors.white),
               keyboardType: TextInputType.emailAddress,
-              decoration: _inputStyle('E-MAIL CORPORATIVO', Icons.email_outlined),
+              decoration: _inputStyle(
+                'E-MAIL CORPORATIVO',
+                Icons.email_outlined,
+              ),
               validator: (value) {
-                if (value == null || value.isEmpty) return 'O e-mail é obrigatório.';
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                if (value == null || value.isEmpty) {
+                  return 'O e-mail é obrigatório.';
+                }
+                if (!RegExp(
+                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                ).hasMatch(value)) {
                   return 'Insira um e-mail válido.';
                 }
                 return null;
@@ -297,7 +316,9 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: true,
               style: const TextStyle(color: Colors.white),
               decoration: _inputStyle('SENHA DE ACESSO', Icons.lock_outline),
-              validator: (value) => value == null || value.isEmpty ? 'A senha é obrigatória.' : null,
+              validator: (value) => value == null || value.isEmpty
+                  ? 'A senha é obrigatória.'
+                  : null,
             ),
             const SizedBox(height: 16),
 
@@ -309,18 +330,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 backgroundColor: AppColors.primaryGold,
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 elevation: 4,
               ),
               child: _isLoading
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
+                      child: CircularProgressIndicator(
+                        color: Colors.black,
+                        strokeWidth: 2.5,
+                      ),
                     )
                   : const Text(
                       'ENTRAR COM CREDENCIAIS',
-                      style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        fontSize: 13,
+                      ),
                     ),
             ),
           ],
@@ -338,25 +368,36 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryGold.withOpacity(0.3), width: 1.5),
+        border: Border.all(
+          color: AppColors.primaryGold.withValues(alpha: 0.3),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryGold.withOpacity(0.05),
+            color: AppColors.primaryGold.withValues(alpha: 0.05),
             blurRadius: 20,
             spreadRadius: 2,
-          )
+          ),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.security_outlined, color: AppColors.primaryGold, size: 54),
+          const Icon(
+            Icons.security_outlined,
+            color: AppColors.primaryGold,
+            size: 54,
+          ),
           const SizedBox(height: 16),
           const Text(
             'Verificação de Segurança',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -376,7 +417,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _codeControllers[index],
                   focusNode: _focusNodes[index],
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.primaryGold, fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: AppColors.primaryGold,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                   keyboardType: TextInputType.number,
                   maxLength: 1,
                   decoration: InputDecoration(
@@ -386,16 +431,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.primaryGold, width: 2),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryGold,
+                        width: 2,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   onChanged: (value) {
                     if (value.isNotEmpty && index < 5) {
-                      FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+                      FocusScope.of(
+                        context,
+                      ).requestFocus(_focusNodes[index + 1]);
                     }
                     if (value.isEmpty && index > 0) {
-                      FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
+                      FocusScope.of(
+                        context,
+                      ).requestFocus(_focusNodes[index - 1]);
                     }
                     if (value.isNotEmpty && index == 5) {
                       _verify2FA();
@@ -411,14 +463,20 @@ class _LoginScreenState extends State<LoginScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.timer_outlined, color: AppColors.textSecondary, size: 16),
+              const Icon(
+                Icons.timer_outlined,
+                color: AppColors.textSecondary,
+                size: 16,
+              ),
               const SizedBox(width: 6),
               Text(
                 _timerSeconds > 0
                     ? 'O código expira em ${_timerSeconds}s'
                     : 'Código expirado. Reabra o app autenticador.',
                 style: TextStyle(
-                  color: _timerSeconds > 10 ? AppColors.textSecondary : Colors.redAccent,
+                  color: _timerSeconds > 10
+                      ? AppColors.textSecondary
+                      : Colors.redAccent,
                   fontSize: 12,
                 ),
               ),
@@ -432,17 +490,25 @@ class _LoginScreenState extends State<LoginScreen> {
               backgroundColor: AppColors.primaryGold,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: _isLoading
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
+                    child: CircularProgressIndicator(
+                      color: Colors.black,
+                      strokeWidth: 2.5,
+                    ),
                   )
                 : const Text(
                     'VERIFICAR E ENTRAR',
-                    style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
                   ),
           ),
           const SizedBox(height: 16),
@@ -455,7 +521,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       _show2FA = false;
                     });
                   },
-            child: const Text('Voltar para o Login', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Voltar para o Login',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
         ],
       ),
@@ -465,13 +534,25 @@ class _LoginScreenState extends State<LoginScreen> {
   InputDecoration _inputStyle(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 10, letterSpacing: 2),
+      labelStyle: const TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 10,
+        letterSpacing: 2,
+      ),
       errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 11),
       prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 18),
-      enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.gridLine)),
-      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGold)),
-      errorBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.redAccent)),
-      focusedErrorBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.redAccent, width: 2)),
+      enabledBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: AppColors.gridLine),
+      ),
+      focusedBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: AppColors.primaryGold),
+      ),
+      errorBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.redAccent, width: 2),
+      ),
     );
   }
 }

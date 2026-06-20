@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:mqtt_client/mqtt_browser_client.dart';
 import '../../../core/network/auth_service.dart';
 
 class ChatNetworkService {
@@ -10,7 +12,7 @@ class ChatNetworkService {
   factory ChatNetworkService() => _instance;
   ChatNetworkService._internal();
 
-  MqttServerClient? _client;
+  MqttClient? _client;
   bool _isConnected = false;
   bool get isConnected => _isConnected;
   Function(Map<String, dynamic>)? _onNewMessageCallback;
@@ -26,8 +28,10 @@ class ChatNetworkService {
 
       if (response.statusCode == 200) {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
-        final chats = list.map((item) => Map<String, dynamic>.from(item)).toList();
-        
+        final chats = list
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+
         // Auto-subscribe to all active chats in MQTT
         for (var chat in chats) {
           final id = chat['id'];
@@ -35,7 +39,7 @@ class ChatNetworkService {
             subscribeToChat(id);
           }
         }
-        
+
         return chats;
       } else {
         throw Exception('Erro ao buscar conversas: ${response.statusCode}');
@@ -137,14 +141,16 @@ class ChatNetworkService {
 
   void unsubscribeFromChat(int chatId) {
     _subscribedChatIds.remove(chatId);
-    if (_client != null && _client!.connectionStatus!.state == MqttConnectionState.connected) {
+    if (_client != null &&
+        _client!.connectionStatus!.state == MqttConnectionState.connected) {
       final topic = 'chat/$chatId';
       _client!.unsubscribe(topic);
     }
   }
 
   void _subscribeToTopic(int chatId) {
-    if (_client != null && _client!.connectionStatus!.state == MqttConnectionState.connected) {
+    if (_client != null &&
+        _client!.connectionStatus!.state == MqttConnectionState.connected) {
       final topic = 'chat/$chatId';
       print('Inscrevendo no topico MQTT: $topic');
       _client!.subscribe(topic, MqttQos.atLeastOnce);
@@ -154,17 +160,28 @@ class ChatNetworkService {
   Future<void> _connectMqtt() async {
     if (_client != null &&
         (_client!.connectionStatus!.state == MqttConnectionState.connected ||
-            _client!.connectionStatus!.state == MqttConnectionState.connecting)) {
+            _client!.connectionStatus!.state ==
+                MqttConnectionState.connecting)) {
       return;
     }
 
-    final clientId = 'vizion_mobile_${DateTime.now().millisecondsSinceEpoch}_${AuthService.userId}';
-    _client = MqttServerClient(
-      'wss://rabbit.felipedepauladev.site/ws',
-      clientId,
-    );
-    _client!.port = 443;
-    _client!.useWebSocket = true;
+    final clientId =
+        'vizion_mobile_${DateTime.now().millisecondsSinceEpoch}_${AuthService.userId}';
+    if (kIsWeb) {
+      _client = MqttBrowserClient(
+        'wss://rabbit.felipedepauladev.site/ws',
+        clientId,
+      );
+      _client!.port = 443;
+    } else {
+      final nativeClient = MqttServerClient(
+        'wss://rabbit.felipedepauladev.site/ws',
+        clientId,
+      );
+      nativeClient.port = 443;
+      nativeClient.useWebSocket = true;
+      _client = nativeClient;
+    }
     _client!.logging(on: false);
     _client!.keepAlivePeriod = 20;
 
@@ -198,7 +215,9 @@ class ChatNetworkService {
 
     _client!.updates?.listen((List<MqttReceivedMessage<MqttMessage>> c) {
       final recMess = c[0].payload as MqttPublishMessage;
-      final pt = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+      final pt = MqttPublishPayload.bytesToStringAsString(
+        recMess.payload.message,
+      );
       print('Mensagem MQTT recebida no topico ${c[0].topic}: $pt');
       try {
         final data = jsonDecode(pt);
@@ -228,8 +247,18 @@ class ChatNetworkService {
     print('MQTT desconectado e limpo.');
   }
 
-  void sendMessage(int chatId, String content) {
-    if (_client == null || _client!.connectionStatus!.state != MqttConnectionState.connected) {
+  Map<String, dynamic> sendMessage(int chatId, String content) {
+    final currentUserId = AuthService.userId;
+    final payload = {
+      'id': 'client_${DateTime.now().millisecondsSinceEpoch}_$chatId',
+      'chatId': chatId,
+      'remetenteId': currentUserId,
+      'conteudo': content,
+      'dataCriacao': DateTime.now().toUtc().toIso8601String(),
+    };
+
+    if (_client == null ||
+        _client!.connectionStatus!.state != MqttConnectionState.connected) {
       print(
         'Aviso: Emitindo mensagem com MQTT offline. Tentando reconectar...',
       );
@@ -237,15 +266,6 @@ class ChatNetworkService {
     }
 
     try {
-      final currentUserId = AuthService.userId;
-      final payload = {
-        'id': 'client_${DateTime.now().millisecondsSinceEpoch}_${chatId}',
-        'chatId': chatId,
-        'remetenteId': currentUserId,
-        'conteudo': content,
-        'dataCriacao': DateTime.now().toUtc().toIso8601String(),
-      };
-
       final String topic = 'chat/$chatId';
       final builder = MqttClientPayloadBuilder();
       builder.addString(jsonEncode(payload));
@@ -255,5 +275,7 @@ class ChatNetworkService {
     } catch (e) {
       print('Erro ao enviar mensagem via MQTT: $e');
     }
+
+    return payload;
   }
 }

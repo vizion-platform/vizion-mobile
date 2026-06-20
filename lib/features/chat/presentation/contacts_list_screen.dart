@@ -40,16 +40,25 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
       if (mounted) {
         setState(() {
           _contacts = data.where((contact) {
-            final contactRole = (contact['role'] ?? '').toString().toUpperCase();
+            final contactRole = (contact['role'] ?? '')
+                .toString()
+                .toUpperCase();
             if (currentRole == 'FUNCIONARIO') {
               // Employees: can chat with colleagues, contractors/leaders, and company support
-              return contactRole == 'FUNCIONARIO' || contactRole == 'EMPREITEIRO' || contactRole == 'ADMIN' || contactRole == 'EMPREITEIRA';
+              return contactRole == 'FUNCIONARIO' ||
+                  contactRole == 'EMPREITEIRO' ||
+                  contactRole == 'ADMIN' ||
+                  contactRole == 'EMPREITEIRA';
             } else if (currentRole == 'CLIENTE') {
               // Clients: can only chat with contractors and support
-              return contactRole == 'EMPREITEIRO' || contactRole == 'ADMIN' || contactRole == 'EMPREITEIRA';
-            } else if (currentRole == 'EMPREITEIRO' || currentRole == 'EMPREITEIRA') {
+              return contactRole == 'EMPREITEIRO' ||
+                  contactRole == 'ADMIN' ||
+                  contactRole == 'EMPREITEIRA';
+            } else if (currentRole == 'EMPREITEIRO' ||
+                currentRole == 'EMPREITEIRA') {
               // Contractors: can chat with everyone EXCEPT other contractors
-              return contactRole != 'EMPREITEIRO' && contactRole != 'EMPREITEIRA';
+              return contactRole != 'EMPREITEIRO' &&
+                  contactRole != 'EMPREITEIRA';
             }
             return true;
           }).toList();
@@ -102,7 +111,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
   Future<void> _startChat(Map<String, dynamic> contact) async {
     final contactId = contact['id'];
     final contactName = contact['nome'] ?? 'Contato';
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -117,7 +126,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
 
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
-        
+
         // Navigate to ChatRoomScreen
         Navigator.push(
           context,
@@ -141,7 +150,9 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
         Navigator.pop(context); // Close loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Não foi possível iniciar a conversa: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+              'Não foi possível iniciar a conversa: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
@@ -159,7 +170,11 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
         elevation: 0,
         title: const Text(
           'Contatos Disponíveis',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -168,30 +183,54 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60.0),
           child: Padding(
-            padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 12.0),
+            padding: const EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              bottom: 12.0,
+            ),
             child: TextField(
               controller: _searchController,
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Buscar contatos...',
-                hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
-                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                hintStyle: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
+                        icon: const Icon(
+                          Icons.clear,
+                          color: AppColors.textSecondary,
+                          size: 18,
+                        ),
                         onPressed: () => _searchController.clear(),
                       )
                     : null,
                 filled: true,
                 fillColor: AppColors.background,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppColors.gridLine, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.gridLine,
+                    width: 1.5,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppColors.primaryGold, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGold,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -225,8 +264,13 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                 });
                 _loadContacts();
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGold),
-              child: const Text('Tentar Novamente', style: TextStyle(color: Colors.black)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGold,
+              ),
+              child: const Text(
+                'Tentar Novamente',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
           ],
         ),
@@ -238,7 +282,11 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off_outlined, color: AppColors.textSecondary.withOpacity(0.5), size: 64),
+            Icon(
+              Icons.search_off_outlined,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
+              size: 64,
+            ),
             const SizedBox(height: 16),
             const Text(
               'Nenhum contato encontrado.',
@@ -274,13 +322,20 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
             border: Border.all(color: AppColors.gridLine, width: 1),
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
             leading: CircleAvatar(
               radius: 22,
-              backgroundColor: AppColors.primaryGold.withOpacity(0.12),
+              backgroundColor: AppColors.primaryGold.withValues(alpha: 0.12),
               child: Text(
                 initial,
-                style: const TextStyle(color: AppColors.primaryGold, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  color: AppColors.primaryGold,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
             title: Row(
@@ -288,7 +343,11 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                 Expanded(
                   child: Text(
                     name,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -296,15 +355,25 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                 if (role != null) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getRoleColor(role).withOpacity(0.12),
+                      color: _getRoleColor(role).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _getRoleColor(role).withOpacity(0.3), width: 0.8),
+                      border: Border.all(
+                        color: _getRoleColor(role).withValues(alpha: 0.3),
+                        width: 0.8,
+                      ),
                     ),
                     child: Text(
                       role.toUpperCase(),
-                      style: TextStyle(color: _getRoleColor(role), fontSize: 9, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: _getRoleColor(role),
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -314,12 +383,19 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
                 email,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 18),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+              size: 18,
+            ),
             onTap: () => _startChat(contact),
           ),
         );

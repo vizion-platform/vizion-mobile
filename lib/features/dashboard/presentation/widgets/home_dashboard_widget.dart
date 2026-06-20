@@ -78,7 +78,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
     try {
       int contractorId = 1001;
       String contractorName = 'Eng. Felipe (Empreiteiro)';
-      
+
       try {
         final contacts = await ChatNetworkService().fetchContacts();
         final realContractor = contacts.firstWhere(
@@ -93,12 +93,14 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
         print('Erro ao buscar contatos, usando padrão: $e');
       }
 
-      final chatData = await ChatNetworkService().startPrivateChat(contractorId);
+      final chatData = await ChatNetworkService().startPrivateChat(
+        contractorId,
+      );
       final chatId = chatData['id'];
 
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
-        
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -138,7 +140,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.cloud_off_outlined, color: Colors.redAccent, size: 48),
+            const Icon(
+              Icons.cloud_off_outlined,
+              color: Colors.redAccent,
+              size: 48,
+            ),
             const SizedBox(height: 16),
             Text(_errorMessage, style: const TextStyle(color: Colors.white)),
             const SizedBox(height: 16),
@@ -149,8 +155,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                 });
                 _loadDashboardData();
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGold),
-              child: const Text('Recarregar', style: TextStyle(color: Colors.black)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGold,
+              ),
+              child: const Text(
+                'Recarregar',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
           ],
         ),
@@ -190,7 +201,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                     AuthService.nome != null && AuthService.nome!.isNotEmpty
                         ? AuthService.nome![0].toUpperCase()
                         : 'U',
-                    style: const TextStyle(color: AppColors.primaryGold, fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                      color: AppColors.primaryGold,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -201,11 +216,19 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   children: [
                     Text(
                       'Olá, ${AuthService.nome ?? 'Membro Vizion'}',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                     Text(
                       'Perfil: ${role.toUpperCase()} • Tenant: ${AuthService.tenantId ?? 'default'}',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
@@ -218,58 +241,100 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.primaryGold.withOpacity(0.06),
-              border: Border.all(color: AppColors.primaryGold.withOpacity(0.25), width: 1),
+              color: AppColors.primaryGold.withValues(alpha: 0.06),
+              border: Border.all(
+                color: AppColors.primaryGold.withValues(alpha: 0.25),
+                width: 1,
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                const Icon(Icons.verified_user_outlined, color: AppColors.primaryGold, size: 20),
+                const Icon(
+                  Icons.verified_user_outlined,
+                  color: AppColors.primaryGold,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text(
                     'Autenticação de 2 etapas ativa. Sua conexão está criptografada de ponta a ponta.',
-                    style: TextStyle(color: AppColors.primaryGold, fontSize: 11, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: AppColors.primaryGold,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 28),
-          
+
           Text(
-            role == 'CLIENTE' 
-                ? 'Acompanhamento do Cliente' 
-                : role == 'FUNCIONARIO' 
-                    ? 'Atribuição de Trabalho' 
-                    : 'Visão Gerencial',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            role == 'CLIENTE'
+                ? 'Acompanhamento do Cliente'
+                : role == 'FUNCIONARIO'
+                ? 'Atribuição de Trabalho'
+                : 'Visão Gerencial',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
-            role == 'CLIENTE' 
-                ? 'Evolução física e financeira de sua residência.' 
-                : role == 'FUNCIONARIO' 
-                    ? 'Canteiro de obras e atividades atreladas ao seu cargo.' 
-                    : 'Análise físico-financeira dos canteiros de obra.',
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            role == 'CLIENTE'
+                ? 'Evolução física e financeira de sua residência.'
+                : role == 'FUNCIONARIO'
+                ? 'Canteiro de obras e atividades atreladas ao seu cargo.'
+                : 'Análise físico-financeira dos canteiros de obra.',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 24),
-          
+
           // Métricas em Cards
           LayoutBuilder(
             builder: (context, constraints) {
               final cardWidth = (constraints.maxWidth - 16) / 2;
-              
+
               if (role == 'CLIENTE') {
                 return Wrap(
                   spacing: 16,
                   runSpacing: 16,
                   children: [
-                    _buildStatCard('Progresso Físico', '35%', Icons.trending_up, AppColors.primaryGold, cardWidth),
-                    _buildStatCard('Investimento Total', _formatCurrency(totalBudget), Icons.account_balance_wallet_outlined, Colors.greenAccent, cardWidth),
-                    _buildStatCard('Fases Concluídas', '1 / 5', Icons.construction_outlined, Colors.blueAccent, cardWidth),
-                    _buildStatCard('Status do Projeto', 'Execução', Icons.info_outline, Colors.tealAccent, cardWidth),
+                    _buildStatCard(
+                      'Progresso Físico',
+                      '35%',
+                      Icons.trending_up,
+                      AppColors.primaryGold,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Investimento Total',
+                      _formatCurrency(totalBudget),
+                      Icons.account_balance_wallet_outlined,
+                      Colors.greenAccent,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Fases Concluídas',
+                      '1 / 5',
+                      Icons.construction_outlined,
+                      Colors.blueAccent,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Status do Projeto',
+                      'Execução',
+                      Icons.info_outline,
+                      Colors.tealAccent,
+                      cardWidth,
+                    ),
                   ],
                 );
               } else if (role == 'FUNCIONARIO') {
@@ -277,10 +342,34 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   spacing: 16,
                   runSpacing: 16,
                   children: [
-                    _buildStatCard('Meu Canteiro', 'Bella Vista', Icons.apartment_outlined, Colors.blueAccent, cardWidth),
-                    _buildStatCard('Atividade Atual', 'Fundação', Icons.construction_outlined, AppColors.primaryGold, cardWidth),
-                    _buildStatCard('Status de Presença', 'Registrada', Icons.verified_user_outlined, Colors.greenAccent, cardWidth),
-                    _buildStatCard('Segurança', 'MFA OK', Icons.lock_outline, Colors.tealAccent, cardWidth),
+                    _buildStatCard(
+                      'Meu Canteiro',
+                      'Bella Vista',
+                      Icons.apartment_outlined,
+                      Colors.blueAccent,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Atividade Atual',
+                      'Fundação',
+                      Icons.construction_outlined,
+                      AppColors.primaryGold,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Status de Presença',
+                      'Registrada',
+                      Icons.verified_user_outlined,
+                      Colors.greenAccent,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Segurança',
+                      'MFA OK',
+                      Icons.lock_outline,
+                      Colors.tealAccent,
+                      cardWidth,
+                    ),
                   ],
                 );
               } else {
@@ -288,10 +377,34 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   spacing: 16,
                   runSpacing: 16,
                   children: [
-                    _buildStatCard('Canteiros de Obra', totalObras.toString(), Icons.domain_outlined, AppColors.primaryGold, cardWidth),
-                    _buildStatCard('Investimento Total', _formatCurrency(totalBudget), Icons.account_balance_wallet_outlined, Colors.greenAccent, cardWidth),
-                    _buildStatCard('Custo Médio / Obra', _formatCurrency(avgBudget), Icons.analytics_outlined, Colors.blueAccent, cardWidth),
-                    _buildStatCard('Status de Segurança', 'MFA OK', Icons.lock_outline, Colors.tealAccent, cardWidth),
+                    _buildStatCard(
+                      'Canteiros de Obra',
+                      totalObras.toString(),
+                      Icons.domain_outlined,
+                      AppColors.primaryGold,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Investimento Total',
+                      _formatCurrency(totalBudget),
+                      Icons.account_balance_wallet_outlined,
+                      Colors.greenAccent,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Custo Médio / Obra',
+                      _formatCurrency(avgBudget),
+                      Icons.analytics_outlined,
+                      Colors.blueAccent,
+                      cardWidth,
+                    ),
+                    _buildStatCard(
+                      'Status de Segurança',
+                      'MFA OK',
+                      Icons.lock_outline,
+                      Colors.tealAccent,
+                      cardWidth,
+                    ),
                   ],
                 );
               }
@@ -302,7 +415,12 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
             const SizedBox(height: 28),
             const Text(
               'CONTATO DIRETO',
-              style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             Container(
@@ -317,8 +435,14 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: AppColors.primaryGold.withOpacity(0.12),
-                    child: const Icon(Icons.engineering_outlined, color: AppColors.primaryGold, size: 28),
+                    backgroundColor: AppColors.primaryGold.withValues(
+                      alpha: 0.12,
+                    ),
+                    child: const Icon(
+                      Icons.engineering_outlined,
+                      color: AppColors.primaryGold,
+                      size: 28,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -326,15 +450,24 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          role == 'CLIENTE' ? 'Falar com o Empreiteiro' : 'Contatar Encarregado',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          role == 'CLIENTE'
+                              ? 'Falar com o Empreiteiro'
+                              : 'Contatar Encarregado',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          role == 'CLIENTE' 
-                              ? 'Dúvidas sobre prazos ou materiais?' 
+                          role == 'CLIENTE'
+                              ? 'Dúvidas sobre prazos ou materiais?'
                               : 'Reporte incidentes ou andamento do serviço.',
-                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -345,10 +478,21 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGold,
                       foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                     ),
-                    child: const Text('CHAT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'CHAT',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -356,17 +500,22 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           ],
 
           const SizedBox(height: 32),
-          
+
           Text(
-            role == 'CLIENTE' 
-                ? 'Evolução Física do Imóvel' 
-                : role == 'FUNCIONARIO' 
-                    ? 'Status da Obra Associada' 
-                    : 'Desempenho Físico por Obra',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white70, letterSpacing: 0.5),
+            role == 'CLIENTE'
+                ? 'Evolução Física do Imóvel'
+                : role == 'FUNCIONARIO'
+                ? 'Status da Obra Associada'
+                : 'Desempenho Físico por Obra',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white70,
+              letterSpacing: 0.5,
+            ),
           ),
           const SizedBox(height: 16),
-          
+
           // Container do Desempenho Físico-Financeiro
           Container(
             width: double.infinity,
@@ -382,8 +531,19 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Cronograma de Execução', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                    Icon(Icons.trending_up, color: AppColors.primaryGold.withOpacity(0.6), size: 18),
+                    const Text(
+                      'Cronograma de Execução',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Icon(
+                      Icons.trending_up,
+                      color: AppColors.primaryGold.withValues(alpha: 0.6),
+                      size: 18,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -391,12 +551,17 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 40.0),
-                      child: Text('Nenhuma obra ativa encontrada.', style: TextStyle(color: AppColors.textSecondary)),
+                      child: Text(
+                        'Nenhuma obra ativa encontrada.',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
                     ),
                   )
                 else
                   ..._obras.take(4).map((obra) {
-                    final double val = (obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0;
+                    final double val =
+                        (obra['valor_total_estimado'] as num?)?.toDouble() ??
+                        0.0;
                     final int id = obra['id'] ?? 0;
                     final double progress = _getProjectProgress(id);
                     return Padding(
@@ -409,13 +574,24 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  obra['nome_projeto'] ?? 'Projeto Sem Nome', 
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                  obra['nome_projeto'] ?? 'Projeto Sem Nome',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              Text(_formatCurrency(val), style: const TextStyle(color: AppColors.primaryGold, fontSize: 12, fontWeight: FontWeight.bold)),
+                              Text(
+                                _formatCurrency(val),
+                                style: const TextStyle(
+                                  color: AppColors.primaryGold,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -424,11 +600,18 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                             children: [
                               Text(
                                 'Status: ${obra['status'] ?? 'PLANEJAMENTO'}',
-                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                ),
                               ),
                               Text(
                                 '${(progress * 100).toStringAsFixed(0)}% concluído',
-                                style: const TextStyle(color: AppColors.primaryGold, fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: AppColors.primaryGold,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -445,7 +628,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
               ],
             ),
           ),
@@ -455,7 +638,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color iconColor, double width) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color iconColor,
+    double width,
+  ) {
     return Container(
       width: width,
       padding: const EdgeInsets.all(18),
@@ -465,10 +654,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
         border: Border.all(color: AppColors.gridLine, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -478,14 +667,24 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           const SizedBox(height: 16),
           Text(
             value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 0.5,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w500, letterSpacing: 0.2),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.2,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

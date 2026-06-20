@@ -72,9 +72,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
       } else {
         _filteredChats = _chats.where((c) {
           final title = (c['tituloChat'] ?? '').toString().toLowerCase();
-          final otherName = (c['nomeOutroParticipante'] ?? '').toString().toLowerCase();
-          final otherEmail = (c['emailOutroParticipante'] ?? '').toString().toLowerCase();
-          return title.contains(query) || otherName.contains(query) || otherEmail.contains(query);
+          final otherName = (c['nomeOutroParticipante'] ?? '')
+              .toString()
+              .toLowerCase();
+          final otherEmail = (c['emailOutroParticipante'] ?? '')
+              .toString()
+              .toLowerCase();
+          return title.contains(query) ||
+              otherName.contains(query) ||
+              otherEmail.contains(query);
         }).toList();
       }
     });
@@ -85,7 +91,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       context,
       MaterialPageRoute(builder: (context) => const ContactsListScreen()),
     );
-    
+
     if (result == true) {
       _loadChats();
     }
@@ -93,7 +99,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   void _openChatRoom(Map<String, dynamic> chat) {
     final chatId = chat['id'];
-    final otherName = chat['nomeOutroParticipante'] ?? chat['tituloChat'] ?? 'Conversa';
+    final otherName =
+        chat['nomeOutroParticipante'] ?? chat['tituloChat'] ?? 'Conversa';
 
     Navigator.push(
       context,
@@ -121,7 +128,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
         elevation: 0,
         title: const Text(
           'Mensagens',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60.0),
@@ -132,24 +143,44 @@ class _ChatListScreenState extends State<ChatListScreen> {
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Buscar conversas...',
-                hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
-                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                hintStyle: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
+                        icon: const Icon(
+                          Icons.clear,
+                          color: AppColors.textSecondary,
+                          size: 18,
+                        ),
                         onPressed: () => _searchController.clear(),
                       )
                     : null,
                 filled: true,
                 fillColor: AppColors.surface,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppColors.gridLine, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.gridLine,
+                    width: 1.5,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppColors.primaryGold, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryGold,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -188,7 +219,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
               children: [
                 const Icon(Icons.cloud_off, color: Colors.redAccent, size: 48),
                 const SizedBox(height: 16),
-                Text(_errorMessage, style: const TextStyle(color: Colors.white)),
+                Text(
+                  _errorMessage,
+                  style: const TextStyle(color: Colors.white),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
@@ -197,8 +231,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     });
                     _loadChats();
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGold),
-                  child: const Text('Tentar Novamente', style: TextStyle(color: Colors.black)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryGold,
+                  ),
+                  child: const Text(
+                    'Tentar Novamente',
+                    style: TextStyle(color: Colors.black),
+                  ),
                 ),
               ],
             ),
@@ -218,17 +257,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.forum_outlined, color: AppColors.textSecondary.withOpacity(0.3), size: 64),
+                  Icon(
+                    Icons.forum_outlined,
+                    color: AppColors.textSecondary.withValues(alpha: 0.3),
+                    size: 64,
+                  ),
                   const SizedBox(height: 20),
                   const Text(
                     'Nenhuma conversa ativa',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     'Toque no botão flutuante para iniciar um chat com um contato disponível de sua organização.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   OutlinedButton.icon(
@@ -236,7 +286,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryGold,
                       side: const BorderSide(color: AppColors.primaryGold),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                     ),
                     icon: const Icon(Icons.search, size: 18),
                     label: const Text('Buscar Contatos'),
@@ -255,8 +307,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
       padding: const EdgeInsets.only(top: 8, bottom: 80),
       itemBuilder: (context, index) {
         final chat = _filteredChats[index];
-        final String title = chat['nomeOutroParticipante'] ?? chat['tituloChat'] ?? 'Conversa';
-        final String subtitle = chat['emailOutroParticipante'] ?? 'Chat privado';
+        final String title =
+            chat['nomeOutroParticipante'] ?? chat['tituloChat'] ?? 'Conversa';
+        final String subtitle =
+            chat['emailOutroParticipante'] ?? 'Chat privado';
         final String initial = title.isNotEmpty ? title[0].toUpperCase() : 'U';
 
         return Container(
@@ -267,15 +321,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
             border: Border.all(color: AppColors.gridLine, width: 1),
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
             leading: Stack(
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.primaryGold.withOpacity(0.12),
+                  backgroundColor: AppColors.primaryGold.withValues(
+                    alpha: 0.12,
+                  ),
                   child: Text(
                     initial,
-                    style: const TextStyle(color: AppColors.primaryGold, fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(
+                      color: AppColors.primaryGold,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                 ),
                 Positioned(
@@ -295,7 +358,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             title: Text(
               title,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -303,7 +370,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
                 subtitle,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -312,7 +382,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Icon(Icons.arrow_forward_ios, color: AppColors.textSecondary, size: 14),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: AppColors.textSecondary,
+                  size: 14,
+                ),
               ],
             ),
             onTap: () => _openChatRoom(chat),

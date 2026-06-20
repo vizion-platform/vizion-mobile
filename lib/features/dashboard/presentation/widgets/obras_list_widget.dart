@@ -46,7 +46,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
     List<String> parts = valueStr.split('.');
     String whole = parts[0];
     String decimal = parts[1];
-    
+
     String wholeFormatted = '';
     int count = 0;
     for (int i = whole.length - 1; i >= 0; i--) {
@@ -87,11 +87,6 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
     }
   }
 
-
-
-
-
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -107,156 +102,214 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Gestão de Obras', 
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
+                    'Gestão de Obras',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Central de controle dos canteiros.', 
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    'Central de controle dos canteiros.',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             ),
-
           ],
         ),
         const SizedBox(height: 24),
-        
+
         // Listagem Dinâmica das Obras
         Expanded(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGold))
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryGold,
+                  ),
+                )
               : _errorMessage.isNotEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.cloud_off_outlined, color: AppColors.textSecondary, size: 40),
-                          const SizedBox(height: 12),
-                          Text(_errorMessage, style: const TextStyle(color: AppColors.textSecondary)),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _refreshObras,
-                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGold),
-                            child: const Text('Recarregar', style: TextStyle(color: Colors.black)),
-                          )
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_outlined,
+                        color: AppColors.textSecondary,
+                        size: 40,
                       ),
-                    )
-                  : _obras.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.construction_outlined, color: AppColors.textSecondary, size: 48),
-                              SizedBox(height: 12),
-                              Text('Nenhuma obra cadastrada no tenant ativo.', style: TextStyle(color: AppColors.textSecondary)),
+                      const SizedBox(height: 12),
+                      Text(
+                        _errorMessage,
+                        style: const TextStyle(color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _refreshObras,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGold,
+                        ),
+                        child: const Text(
+                          'Recarregar',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : _obras.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.construction_outlined,
+                        color: AppColors.textSecondary,
+                        size: 48,
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Nenhuma obra cadastrada no tenant ativo.',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  color: AppColors.primaryGold,
+                  backgroundColor: AppColors.surface,
+                  onRefresh: _refreshObras,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: _obras.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final obra = _obras[index];
+                      final val =
+                          (obra['valor_total_estimado'] as num?)?.toDouble() ??
+                          0.0;
+                      final statusColor = _getStatusColor(obra['status'] ?? '');
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ObraDetailsScreen(obra: obra),
+                            ),
+                          ).then((_) => _refreshObras());
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.gridLine,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
                             ],
                           ),
-                        )
-                      : RefreshIndicator(
-                          color: AppColors.primaryGold,
-                          backgroundColor: AppColors.surface,
-                          onRefresh: _refreshObras,
-                          child: ListView.separated(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: _obras.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final obra = _obras[index];
-                              final val = (obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0;
-                              final statusColor = _getStatusColor(obra['status'] ?? '');
-                              return InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ObraDetailsScreen(obra: obra),
-                                    ),
-                                  ).then((_) => _refreshObras());
-                                },
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surface,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColors.gridLine, width: 1.5),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.15),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 3),
-                                      )
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 44,
-                                        height: 44,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.background,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: AppColors.gridLine),
-                                        ),
-                                        child: const Icon(Icons.apartment_outlined, color: AppColors.primaryGold, size: 20),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              obra['nome_projeto'] ?? 'Sem Nome', 
-                                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Orçamento: ${_formatCurrency(val)}', 
-                                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: statusColor.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: statusColor.withOpacity(0.3)),
-                                            ),
-                                            child: Text(
-                                              obra['status'] ?? 'N/A', 
-                                              style: TextStyle(
-                                                color: statusColor, 
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 9,
-                                                letterSpacing: 0.5,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            'Início: ${_formatDate(obra['data_inicio'])}',
-                                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 10),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppColors.gridLine),
                                 ),
-                              );
-                            },
+                                child: const Icon(
+                                  Icons.apartment_outlined,
+                                  color: AppColors.primaryGold,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      obra['nome_projeto'] ?? 'Sem Nome',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Orçamento: ${_formatCurrency(val)}',
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: statusColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: statusColor.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      obra['status'] ?? 'N/A',
+                                      style: TextStyle(
+                                        color: statusColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 9,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Início: ${_formatDate(obra['data_inicio'])}',
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
+                      );
+                    },
+                  ),
+                ),
         ),
       ],
     );

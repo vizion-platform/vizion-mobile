@@ -43,10 +43,7 @@ class AuthService {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email.trim(),
-          'senha': password,
-        }),
+        body: jsonEncode({'email': email.trim(), 'senha': password}),
       );
 
       if (response.statusCode == 200) {
@@ -114,7 +111,10 @@ class AuthService {
         body: jsonEncode({
           'name': name.trim(),
           'email': email.toLowerCase().trim(),
-          'documento': cpf.replaceAll(RegExp(r'\D'), ''), // Extract only numbers for validation
+          'documento': cpf.replaceAll(
+            RegExp(r'\D'),
+            '',
+          ), // Extract only numbers for validation
           'telefone': phone.replaceAll(RegExp(r'\D'), ''),
           'senha': password,
         }),
@@ -155,7 +155,7 @@ class AuthService {
     return {
       'Content-Type': 'application/json',
       if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-      if (_tenantId != null) 'X-Tenant-ID': _tenantId!,
+      'X-Tenant-ID': ?_tenantId,
     };
   }
 
@@ -191,7 +191,7 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        
+
         // Sync uploaded photo documents from server to mobile phase gallery
         final List<dynamic>? docs = data['documentos'];
         if (docs != null) {
@@ -211,7 +211,7 @@ class AuthService {
                     parsedFaseId = int.tryParse(descMatch.group(1)!);
                   }
                 }
-                
+
                 if (parsedFaseId != null) {
                   if (!_fasesPhotos.containsKey(parsedFaseId)) {
                     _fasesPhotos[parsedFaseId] = [];
@@ -237,7 +237,11 @@ class AuthService {
     }
   }
 
-  static Future<bool> transitionPhaseStatus(int obraId, int faseId, String acao) async {
+  static Future<bool> transitionPhaseStatus(
+    int obraId,
+    int faseId,
+    String acao,
+  ) async {
     try {
       final response = await http.patch(
         Uri.parse('$baseUrl/fasesObra/$faseId/status'),
@@ -251,7 +255,11 @@ class AuthService {
     }
   }
 
-  static Future<void> addPhasePhoto(int obraId, int faseId, String photoData) async {
+  static Future<void> addPhasePhoto(
+    int obraId,
+    int faseId,
+    String photoData,
+  ) async {
     if (!_fasesPhotos.containsKey(faseId)) {
       _fasesPhotos[faseId] = [];
     }
@@ -264,7 +272,8 @@ class AuthService {
         body: jsonEncode({
           'id_obra': obraId,
           'tipo_documento': 'ARQUIVO',
-          'nome_arquivo': 'fase_${faseId}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          'nome_arquivo':
+              'fase_${faseId}_${DateTime.now().millisecondsSinceEpoch}.jpg',
           'url_arquivo': photoData,
           'descricao_arquivo': 'Foto de progresso da fase $faseId',
         }),
