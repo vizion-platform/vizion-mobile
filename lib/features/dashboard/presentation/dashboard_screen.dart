@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_list_screen.dart';
+import '../../agenda/presentation/agenda_screen.dart';
+import '../../materiais/presentation/materiais_screen.dart';
 import 'widgets/home_dashboard_widget.dart';
 import 'widgets/obras_list_widget.dart';
 
@@ -161,7 +163,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 24.0),
+          padding: _selectedModuleIndex == 2
+              ? EdgeInsets.zero
+              : const EdgeInsets.only(left: 20.0, right: 20.0, top: 24.0),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             child: _buildModuleContent(_selectedModuleIndex),
@@ -195,6 +199,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.inventory_2_outlined),
+              activeIcon: Icon(Icons.inventory_2, color: AppColors.primaryGold),
+              label: 'Materiais',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_month_outlined),
+              activeIcon: Icon(
+                Icons.calendar_month,
+                color: AppColors.primaryGold,
+              ),
+              label: 'Agenda',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.construction_outlined),
               activeIcon: Icon(
                 Icons.construction,
@@ -208,9 +225,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: 'Mensagens',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.shield_outlined),
-              activeIcon: Icon(Icons.shield, color: AppColors.primaryGold),
-              label: 'Segurança',
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person, color: AppColors.primaryGold),
+              label: 'Perfil',
             ),
           ],
         ),
@@ -223,10 +240,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 0:
         return const HomeDashboardWidget();
       case 1:
-        return const ObrasListWidget();
+        return const MateriaisScreen();
       case 2:
-        return const ChatListScreen();
+        return const AgendaScreen();
       case 3:
+        return const ObrasListWidget();
+      case 4:
+        return const ChatListScreen();
+      case 5:
         return _buildProfileContent();
       default:
         return const Center(
@@ -359,6 +380,91 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+
+          // Seção de Alternância Rápida de Perfil
+          const Text(
+            'PERFIL DE ACESSO ATIVO (DEMO)',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.gridLine),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Alternar Perfil para Teste:',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AuthService.isFuncionario ? AppColors.primaryGold : Colors.white70,
+                          side: BorderSide(
+                            color: AuthService.isFuncionario ? AppColors.primaryGold : AppColors.gridLine,
+                          ),
+                          backgroundColor: AuthService.isFuncionario ? AppColors.primaryGold.withValues(alpha: 0.15) : Colors.transparent,
+                        ),
+                        onPressed: () async {
+                          await AuthService.switchRole('FUNCIONARIO', 'Carlos Silva (Funcionário)', 'carlos.funcionario@vizion.com');
+                          setState(() {});
+                        },
+                        child: const Text('Funcionário', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AuthService.isEmpreiteiro ? Colors.blueAccent : Colors.white70,
+                          side: BorderSide(
+                            color: AuthService.isEmpreiteiro ? Colors.blueAccent : AppColors.gridLine,
+                          ),
+                          backgroundColor: AuthService.isEmpreiteiro ? Colors.blueAccent.withValues(alpha: 0.15) : Colors.transparent,
+                        ),
+                        onPressed: () async {
+                          await AuthService.switchRole('EMPREITEIRO', 'Eng. Felipe (Empreiteiro)', 'felipe.empreiteiro@vizion.com');
+                          setState(() {});
+                        },
+                        child: const Text('Empreiteiro', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AuthService.isCliente ? Colors.greenAccent : Colors.white70,
+                          side: BorderSide(
+                            color: AuthService.isCliente ? Colors.greenAccent : AppColors.gridLine,
+                          ),
+                          backgroundColor: AuthService.isCliente ? Colors.greenAccent.withValues(alpha: 0.15) : Colors.transparent,
+                        ),
+                        onPressed: () async {
+                          await AuthService.switchRole('CLIENTE', 'Dra. Mariana (Cliente)', 'mariana.cliente@vizion.com');
+                          setState(() {});
+                        },
+                        child: const Text('Cliente', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],

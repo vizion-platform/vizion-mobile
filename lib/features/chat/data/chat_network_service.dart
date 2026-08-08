@@ -173,7 +173,6 @@ class ChatNetworkService {
         clientId,
       );
       browserClient.port = 443;
-      browserClient.websocketUri = 'wss://rabbit.felipedepauladev.site/ws';
       _client = browserClient;
     } else {
       final nativeClient = MqttServerClient(

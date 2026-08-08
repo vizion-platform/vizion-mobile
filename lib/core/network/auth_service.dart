@@ -20,6 +20,35 @@ class AuthService {
   static String? get currentUserEmail => _email;
   static int? get userId => _userId;
 
+  static bool get isEmpreiteiro {
+    final r = (_role ?? '').toUpperCase();
+    return r == 'EMPREITEIRO' || r == 'ADMIN' || r == 'GESTOR';
+  }
+
+  static bool get isFuncionario {
+    final r = (_role ?? '').toUpperCase();
+    return r == 'FUNCIONARIO' || r == 'COLABORADOR' || r == 'MOBILE-FUNCIONARIO';
+  }
+
+  static bool get isCliente {
+    final r = (_role ?? '').toUpperCase();
+    return r == 'CLIENTE';
+  }
+
+  static Future<void> switchRole(String newRole, String newName, String newEmail) async {
+    _role = newRole;
+    _nome = newName;
+    _email = newEmail;
+    if (_accessToken == null || _accessToken!.isEmpty) {
+      _accessToken = 'demo_session_token';
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('role', newRole);
+    await prefs.setString('nome', newName);
+    await prefs.setString('email', newEmail);
+    await prefs.setString('accessToken', _accessToken!);
+  }
+
   // Initialize and load session from SharedPreferences
   static Future<bool> init() async {
     try {
