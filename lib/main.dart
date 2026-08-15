@@ -3,6 +3,7 @@ import 'core/theme/app_theme.dart';
 import 'core/network/auth_service.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/dashboard/presentation/dashboard_screen.dart';
+import 'features/ponto/presentation/ponto_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ class VizionApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
+        '/ponto': (context) => const PontoScreen(),
       },
     );
   }

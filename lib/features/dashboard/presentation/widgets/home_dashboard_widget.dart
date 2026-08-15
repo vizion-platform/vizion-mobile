@@ -3,6 +3,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/auth_service.dart';
 import '../../../chat/presentation/chat_room_screen.dart';
 import '../../../chat/data/chat_network_service.dart';
+import '../../../ponto/presentation/ponto_screen.dart';
 
 class HomeDashboardWidget extends StatefulWidget {
   const HomeDashboardWidget({super.key});
@@ -410,6 +411,101 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
               }
             },
           ),
+
+          if (role == 'FUNCIONARIO') ...[
+            const SizedBox(height: 28),
+            const Text(
+              'CONTROLE DE PONTO',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryGold.withValues(alpha: 0.15),
+                    AppColors.surface,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.4), width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGold.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.fingerprint_rounded,
+                      color: AppColors.primaryGold,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ponto Eletrônico',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Bater ponto em tempo real ou consultar espelho.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PontoScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGold,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                    ),
+                    child: const Text(
+                      'ACESSAR',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           if (role == 'CLIENTE' || role == 'FUNCIONARIO') ...[
             const SizedBox(height: 28),

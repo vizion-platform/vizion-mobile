@@ -5,6 +5,7 @@ import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_list_screen.dart';
 import '../../agenda/presentation/agenda_screen.dart';
 import '../../materiais/presentation/materiais_screen.dart';
+import '../../ponto/presentation/ponto_screen.dart';
 import 'widgets/home_dashboard_widget.dart';
 import 'widgets/obras_list_widget.dart';
 
@@ -159,11 +160,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Modules without outer padding (fullscreen internal padding)
+    final bool isFullScreenModule = _selectedModuleIndex == 1 || _selectedModuleIndex == 3;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
-          padding: _selectedModuleIndex == 2
+          padding: isFullScreenModule
               ? EdgeInsets.zero
               : const EdgeInsets.only(left: 20.0, right: 20.0, top: 24.0),
           child: AnimatedSwitcher(
@@ -186,10 +190,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           unselectedItemColor: AppColors.textSecondary,
           selectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 11,
-            letterSpacing: 0.5,
+            fontSize: 10,
+            letterSpacing: 0.3,
           ),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontSize: 10),
           type: BottomNavigationBarType.fixed,
           elevation: 8,
           items: const [
@@ -197,6 +201,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icon(Icons.analytics_outlined),
               activeIcon: Icon(Icons.analytics, color: AppColors.primaryGold),
               label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.fingerprint_outlined),
+              activeIcon: Icon(Icons.fingerprint, color: AppColors.primaryGold),
+              label: 'Ponto',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory_2_outlined),
@@ -222,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.chat_outlined),
               activeIcon: Icon(Icons.chat, color: AppColors.primaryGold),
-              label: 'Mensagens',
+              label: 'Chat',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
@@ -240,14 +249,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 0:
         return const HomeDashboardWidget();
       case 1:
-        return const MateriaisScreen();
+        return const PontoScreen();
       case 2:
-        return const AgendaScreen();
+        return const MateriaisScreen();
       case 3:
-        return const ObrasListWidget();
+        return const AgendaScreen();
       case 4:
-        return const ChatListScreen();
+        return const ObrasListWidget();
       case 5:
+        return const ChatListScreen();
+      case 6:
         return _buildProfileContent();
       default:
         return const Center(
