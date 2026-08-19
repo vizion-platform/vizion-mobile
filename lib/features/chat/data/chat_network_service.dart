@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mqtt_client/mqtt_client.dart';
-import 'package:mqtt_client/mqtt_server_client.dart';
-import 'package:mqtt_client/mqtt_browser_client.dart';
+import 'mqtt_helper.dart';
 import '../../../core/network/auth_service.dart';
 
 class ChatNetworkService {
@@ -167,22 +165,7 @@ class ChatNetworkService {
 
     final clientId =
         'vizion_mobile_${DateTime.now().millisecondsSinceEpoch}_${AuthService.userId}';
-    if (kIsWeb) {
-      final browserClient = MqttBrowserClient(
-        'rabbit.felipedepauladev.site',
-        clientId,
-      );
-      browserClient.port = 443;
-      _client = browserClient;
-    } else {
-      final nativeClient = MqttServerClient(
-        'wss://rabbit.felipedepauladev.site/ws',
-        clientId,
-      );
-      nativeClient.port = 443;
-      nativeClient.useWebSocket = true;
-      _client = nativeClient;
-    }
+    _client = createMqttClient('rabbit.felipedepauladev.site', clientId, 443);
     _client!.logging(on: false);
     _client!.keepAlivePeriod = 20;
 

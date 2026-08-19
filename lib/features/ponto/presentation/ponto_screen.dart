@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/ponto_record_model.dart';
@@ -260,22 +260,22 @@ class _PontoScreenState extends State<PontoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Live Clock with seconds on top-left (Em cima na esquerda)
+          // 1. Live Clock with seconds on top-left
           _buildLiveClockHeader(),
           const SizedBox(height: 20),
 
-          // 2. Horas Trabalhadas (Embaixo da hora atual)
+          // 2. Horas Trabalhadas
           _buildWorkedHoursCard(today, progress),
           const SizedBox(height: 20),
 
-          // 3. Linha do Tempo (Embaixo das horas trabalhadas)
+          // 3. Linha do Tempo
           PontoTimelineWidget(
             todayDay: today,
             nextPunchType: nextPunchType,
           ),
           const SizedBox(height: 24),
 
-          // 4. Rodapé: Botão deslizante estilo iPhone "Slide to Answer"
+          // 4. Rodapé: Botão deslizante elegante padrão Vizion
           SlideToPunchButton(
             nextPunchType: nextPunchType,
             isLoading: _isPunching,
@@ -340,7 +340,6 @@ class _PontoScreenState extends State<PontoScreen> {
                 fontSize: 34,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.5,
-                fontFeatures: [],
               ),
             ),
             const SizedBox(height: 2),
@@ -355,25 +354,25 @@ class _PontoScreenState extends State<PontoScreen> {
           ],
         ),
 
-        // GPS status chip
+        // GPS status chip (Vizion standard styling)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF34C759).withValues(alpha: 0.12),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0xFF34C759).withValues(alpha: 0.4),
+              color: AppColors.primaryGold.withValues(alpha: 0.4),
             ),
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.location_on, color: Color(0xFF34C759), size: 12),
+              Icon(Icons.location_on, color: AppColors.primaryGold, size: 12),
               SizedBox(width: 4),
               Text(
                 'GPS Ativo',
                 style: TextStyle(
-                  color: Color(0xFF34C759),
+                  color: AppColors.primaryGold,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
@@ -385,7 +384,7 @@ class _PontoScreenState extends State<PontoScreen> {
     );
   }
 
-  /// 2. Horas Trabalhadas Card (Embaixo da hora atual)
+  /// 2. Horas Trabalhadas Card
   Widget _buildWorkedHoursCard(PontoDay today, double progress) {
     final int workedMin = today.workedMinutes;
     final int h = workedMin ~/ 60;
@@ -394,23 +393,17 @@ class _PontoScreenState extends State<PontoScreen> {
     final int percent = (progress * 100).toInt();
 
     final String statusText;
-    final Color statusColor;
 
     if (today.saida != null) {
       statusText = 'Jornada Finalizada';
-      statusColor = const Color(0xFF34C759);
     } else if (today.retornoAlmoco != null) {
       statusText = 'Em Andamento (Turno Tarde)';
-      statusColor = const Color(0xFF007AFF);
     } else if (today.saidaAlmoco != null) {
       statusText = 'Intervalo Almoço';
-      statusColor = const Color(0xFFFF9500);
     } else if (today.entrada != null) {
       statusText = 'Em Andamento (Turno Manhã)';
-      statusColor = const Color(0xFF34C759);
     } else {
       statusText = 'Aguardando Entrada';
-      statusColor = AppColors.textSecondary;
     }
 
     return Container(
@@ -452,14 +445,14 @@ class _PontoScreenState extends State<PontoScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
+                  color: AppColors.primaryGold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                  border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   statusText,
-                  style: TextStyle(
-                    color: statusColor,
+                  style: const TextStyle(
+                    color: AppColors.primaryGold,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -517,7 +510,7 @@ class _PontoScreenState extends State<PontoScreen> {
           ),
           const SizedBox(height: 10),
 
-          // Bottom helper row: Previsão de Saída
+          // Bottom helper row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

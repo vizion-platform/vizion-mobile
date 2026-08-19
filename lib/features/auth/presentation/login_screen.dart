@@ -472,7 +472,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Text(
                 _timerSeconds > 0
                     ? 'O código expira em ${_timerSeconds}s'
-                    : 'Código expirado. Reabra o app autenticador.',
+                    : 'Código expirado.',
                 style: TextStyle(
                   color: _timerSeconds > 10
                       ? AppColors.textSecondary
@@ -480,6 +480,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   fontSize: 12,
                 ),
               ),
+              if (_timerSeconds == 0) ...[
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _start2FATimer,
+                  child: const Text(
+                    'Reenviar',
+                    style: TextStyle(
+                      color: AppColors.primaryGold,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 32),

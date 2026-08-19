@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/auth_service.dart';
 import '../../domain/ponto_record_model.dart';
@@ -21,10 +21,10 @@ class PontoPunchReceiptDialog extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.5), width: 1.5),
+          border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.4), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryGold.withValues(alpha: 0.2),
+              color: AppColors.primaryGold.withValues(alpha: 0.15),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -33,18 +33,18 @@ class PontoPunchReceiptDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Success Icon
+            // Success Icon (Vizion Gold)
             Container(
               width: 60,
               height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF34C759).withValues(alpha: 0.15),
-                border: Border.all(color: const Color(0xFF34C759), width: 2),
+                color: AppColors.primaryGold.withValues(alpha: 0.15),
+                border: Border.all(color: AppColors.primaryGold, width: 2),
               ),
               child: const Icon(
                 Icons.check_circle_rounded,
-                color: Color(0xFF34C759),
+                color: AppColors.primaryGold,
                 size: 36,
               ),
             ),

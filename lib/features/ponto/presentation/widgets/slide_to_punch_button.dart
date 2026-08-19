@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/ponto_record_model.dart';
@@ -22,9 +22,9 @@ class SlideToPunchButton extends StatefulWidget {
 class _SlideToPunchButtonState extends State<SlideToPunchButton>
     with TickerProviderStateMixin {
   late AnimationController _shimmerController;
-  late AnimationController _resetController;
+  late AnimationController _snapController;
   late AnimationController _pulseController;
-  late Animation<double> _resetAnimation;
+  late Animation<double> _snapAnimation;
 
   double _dragPosition = 0.0;
   bool _isDragging = false;
@@ -34,7 +34,7 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
   void initState() {
     super.initState();
 
-    // Shimmer text animation (sweeping light)
+    // Shimmer text animation
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2200),
@@ -46,16 +46,16 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
 
-    // Spring reset animation
-    _resetController = AnimationController(
+    // Smooth snap animation (snaps forward to 100% or resets back to 0%)
+    _snapController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 280),
+      duration: const Duration(milliseconds: 250),
     );
-    _resetAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(
-      CurvedAnimation(parent: _resetController, curve: Curves.easeOutCubic),
+    _snapAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(
+      CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
     )..addListener(() {
         setState(() {
-          _dragPosition = _resetAnimation.value;
+          _dragPosition = _snapAnimation.value;
         });
       });
   }
@@ -64,13 +64,13 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
   void dispose() {
     _shimmerController.dispose();
     _pulseController.dispose();
-    _resetController.dispose();
+    _snapController.dispose();
     super.dispose();
   }
 
   void _onDragStart(DragStartDetails details) {
     if (widget.isLoading || widget.nextPunchType == null || _hasTriggered) return;
-    _resetController.stop();
+    _snapController.stop();
     setState(() {
       _isDragging = true;
     });
@@ -81,59 +81,72 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
     setState(() {
       _dragPosition = (_dragPosition + details.delta.dx).clamp(0.0, maxDrag);
     });
+  }
 
-    // Check if reached threshold (85% of track)
-    if (_dragPosition >= maxDrag * 0.85 && !_hasTriggered) {
+  void _onDragEnd(DragEndDetails details, double maxDrag) {
+    if (widget.isLoading || widget.nextPunchType == null || _hasTriggered) return;
+
+    setState(() {
+      _isDragging = false;
+    });
+
+    final double threshold = maxDrag * 0.5;
+
+    if (_dragPosition >= threshold) {
+      // Dragged past halfway: animate smoothly to end and confirm
       _hasTriggered = true;
-      HapticFeedback.heavyImpact();
-      widget.onConfirmed();
-      // Snap to end
-      setState(() {
-        _dragPosition = maxDrag;
+      _snapAnimation = Tween<double>(begin: _dragPosition, end: maxDrag).animate(
+        CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
+      );
+      _snapController.forward(from: 0.0).then((_) {
+        HapticFeedback.mediumImpact();
+        widget.onConfirmed();
+
+        // Smoothly return knob to start after punch action
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) {
+            _snapAnimation = Tween<double>(begin: maxDrag, end: 0.0).animate(
+              CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
+            );
+            _snapController.forward(from: 0.0).then((_) {
+              if (mounted) {
+                setState(() {
+                  _hasTriggered = false;
+                  _dragPosition = 0.0;
+                });
+              }
+            });
+          }
+        });
       });
-      // Reset after a brief delay
-      Future.delayed(const Duration(milliseconds: 900), () {
+    } else {
+      // Released before halfway: animate smoothly back to 0.0
+      _snapAnimation = Tween<double>(begin: _dragPosition, end: 0.0).animate(
+        CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
+      );
+      _snapController.forward(from: 0.0).then((_) {
         if (mounted) {
           setState(() {
-            _hasTriggered = false;
             _dragPosition = 0.0;
-            _isDragging = false;
           });
         }
       });
     }
   }
 
-  void _onDragEnd(DragEndDetails details, double maxDrag) {
+  void _onDragCancel(double maxDrag) {
     if (_hasTriggered) return;
     setState(() {
       _isDragging = false;
     });
-    // Snap back with smooth spring animation
-    _resetAnimation = Tween<double>(begin: _dragPosition, end: 0.0).animate(
-      CurvedAnimation(parent: _resetController, curve: Curves.easeOutBack),
+    _snapAnimation = Tween<double>(begin: _dragPosition, end: 0.0).animate(
+      CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
     );
-    _resetController.forward(from: 0.0);
-  }
-
-  Color _getKnobColor(PontoType? type) {
-    if (type == null) return Colors.grey.shade700;
-    switch (type) {
-      case PontoType.entrada:
-        return const Color(0xFF34C759); // iOS Call Green
-      case PontoType.saidaAlmoco:
-        return const Color(0xFFFF9500); // iOS Orange
-      case PontoType.retornoAlmoco:
-        return const Color(0xFF007AFF); // iOS Blue
-      case PontoType.saida:
-        return const Color(0xFFFF3B30); // iOS Red / Exit
-      case PontoType.extra:
-        return AppColors.primaryGold;
-    }
+    _snapController.forward(from: 0.0);
   }
 
   IconData _getKnobIcon(PontoType? type) {
-    if (type == null) return Icons.check_circle_outline;
+    if (type == null) return Icons.check_rounded;
     switch (type) {
       case PontoType.entrada:
         return Icons.login_rounded;
@@ -166,7 +179,6 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
         final double trackWidth = constraints.maxWidth;
         final double maxDrag = trackWidth - knobSize - (horizontalPadding * 2);
         final double dragProgress = maxDrag > 0 ? (_dragPosition / maxDrag).clamp(0.0, 1.0) : 0.0;
-        final knobColor = _getKnobColor(nextType);
 
         if (isCompleted) {
           return Container(
@@ -176,17 +188,20 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(36),
-              border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.4), width: 1.5),
+              border: Border.all(
+                color: AppColors.primaryGold.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle, color: Colors.greenAccent, size: 22),
+                Icon(Icons.check_circle_rounded, color: AppColors.primaryGold, size: 22),
                 SizedBox(width: 10),
                 Text(
                   'Todos os pontos de hoje registrados!',
                   style: TextStyle(
-                    color: Colors.greenAccent,
+                    color: AppColors.primaryGold,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.3,
@@ -201,16 +216,16 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
           height: buttonHeight,
           width: trackWidth,
           decoration: BoxDecoration(
-            color: const Color(0xFF141414),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(36),
             border: Border.all(
-              color: knobColor.withValues(alpha: 0.35),
+              color: AppColors.primaryGold.withValues(alpha: 0.3),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: knobColor.withValues(alpha: 0.15),
-                blurRadius: 16,
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
@@ -218,7 +233,7 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
           child: Stack(
             alignment: Alignment.centerLeft,
             children: [
-              // 1. Trail fill behind the knob
+              // 1. Gold trail fill behind the knob
               if (_dragPosition > 0)
                 Positioned(
                   left: 0,
@@ -230,15 +245,15 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                       borderRadius: BorderRadius.circular(36),
                       gradient: LinearGradient(
                         colors: [
-                          knobColor.withValues(alpha: 0.35),
-                          knobColor.withValues(alpha: 0.1),
+                          AppColors.primaryGold.withValues(alpha: 0.3),
+                          AppColors.primaryGold.withValues(alpha: 0.08),
                         ],
                       ),
                     ),
                   ),
                 ),
 
-              // 2. Shimmering "Slide to Answer" text in center
+              // 2. Shimmering text in center
               Positioned.fill(
                 child: Opacity(
                   opacity: (1.0 - (dragProgress * 1.4)).clamp(0.0, 1.0),
@@ -294,17 +309,18 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                 ),
               ),
 
-              // 3. Sliding Knob (iPhone Circular Answer Handle)
+              // 3. Sliding Knob (Gold circular handle matching Vizion theme)
               Positioned(
                 left: horizontalPadding + _dragPosition,
                 child: GestureDetector(
                   onHorizontalDragStart: _onDragStart,
                   onHorizontalDragUpdate: (details) => _onDragUpdate(details, maxDrag),
                   onHorizontalDragEnd: (details) => _onDragEnd(details, maxDrag),
+                  onHorizontalDragCancel: () => _onDragCancel(maxDrag),
                   child: AnimatedBuilder(
                     animation: _pulseController,
                     builder: (context, child) {
-                      final double pulseScale = _isDragging ? 1.05 : 1.0 + (_pulseController.value * 0.04);
+                      final double pulseScale = _isDragging ? 1.04 : 1.0 + (_pulseController.value * 0.03);
                       return Transform.scale(
                         scale: pulseScale,
                         child: Container(
@@ -312,18 +328,18 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                           height: knobSize,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: RadialGradient(
+                            gradient: const RadialGradient(
                               colors: [
-                                knobColor,
-                                knobColor.withValues(alpha: 0.85),
+                                AppColors.primaryGold,
+                                Color(0xFFB8A684),
                               ],
-                              center: const Alignment(-0.2, -0.2),
+                              center: Alignment(-0.2, -0.2),
                               radius: 0.8,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: knobColor.withValues(alpha: 0.5),
-                                blurRadius: 10 + (_pulseController.value * 6),
+                                color: AppColors.primaryGold.withValues(alpha: 0.35),
+                                blurRadius: 10 + (_pulseController.value * 5),
                                 spreadRadius: _isDragging ? 2 : 1,
                                 offset: const Offset(0, 2),
                               ),
@@ -335,19 +351,14 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                                     width: 22,
                                     height: 22,
                                     child: CircularProgressIndicator(
-                                      color: Colors.white,
+                                      color: Colors.black,
                                       strokeWidth: 2.5,
                                     ),
                                   )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        _getKnobIcon(nextType),
-                                        color: Colors.white,
-                                        size: 22,
-                                      ),
-                                    ],
+                                : Icon(
+                                    _getKnobIcon(nextType),
+                                    color: Colors.black,
+                                    size: 22,
                                   ),
                           ),
                         ),

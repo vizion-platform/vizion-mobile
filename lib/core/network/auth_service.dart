@@ -184,7 +184,7 @@ class AuthService {
     return {
       'Content-Type': 'application/json',
       if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-      'X-Tenant-ID': ?_tenantId,
+      if (_tenantId != null) 'X-Tenant-ID': _tenantId!,
     };
   }
 

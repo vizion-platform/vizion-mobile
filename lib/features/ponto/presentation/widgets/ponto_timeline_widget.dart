@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/ponto_record_model.dart';
 
@@ -22,7 +22,6 @@ class PontoTimelineWidget extends StatelessWidget {
         icon: Icons.login_rounded,
         punch: todayDay.entrada,
         expectedTime: '08:00',
-        color: const Color(0xFF34C759),
       ),
       _TimelineStage(
         type: PontoType.saidaAlmoco,
@@ -31,7 +30,6 @@ class PontoTimelineWidget extends StatelessWidget {
         icon: Icons.restaurant_rounded,
         punch: todayDay.saidaAlmoco,
         expectedTime: '12:00',
-        color: const Color(0xFFFF9500),
       ),
       _TimelineStage(
         type: PontoType.retornoAlmoco,
@@ -40,7 +38,6 @@ class PontoTimelineWidget extends StatelessWidget {
         icon: Icons.work_history_rounded,
         punch: todayDay.retornoAlmoco,
         expectedTime: '13:00',
-        color: const Color(0xFF007AFF),
       ),
       _TimelineStage(
         type: PontoType.saida,
@@ -49,7 +46,6 @@ class PontoTimelineWidget extends StatelessWidget {
         icon: Icons.logout_rounded,
         punch: todayDay.saida,
         expectedTime: '17:00',
-        color: const Color(0xFFFF3B30),
       ),
     ];
 
@@ -97,7 +93,7 @@ class PontoTimelineWidget extends StatelessWidget {
                   border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  '${todayDay.punches.length}/4 Batidas',
+                  '/4 Batidas',
                   style: const TextStyle(
                     color: AppColors.primaryGold,
                     fontSize: 10,
@@ -153,22 +149,20 @@ class PontoTimelineWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCompleted
-                      ? stage.color.withValues(alpha: 0.2)
+                      ? AppColors.primaryGold.withValues(alpha: 0.2)
                       : isCurrent
-                          ? AppColors.primaryGold.withValues(alpha: 0.25)
+                          ? AppColors.primaryGold.withValues(alpha: 0.15)
                           : const Color(0xFF1E1E1E),
                   border: Border.all(
-                    color: isCompleted
-                        ? stage.color
-                        : isCurrent
-                            ? AppColors.primaryGold
-                            : AppColors.gridLine,
-                    width: isCurrent ? 2.5 : 1.5,
+                    color: (isCompleted || isCurrent)
+                        ? AppColors.primaryGold
+                        : AppColors.gridLine,
+                    width: isCurrent ? 2.0 : 1.5,
                   ),
                   boxShadow: isCurrent
                       ? [
                           BoxShadow(
-                            color: AppColors.primaryGold.withValues(alpha: 0.4),
+                            color: AppColors.primaryGold.withValues(alpha: 0.3),
                             blurRadius: 8,
                             spreadRadius: 1,
                           ),
@@ -177,7 +171,7 @@ class PontoTimelineWidget extends StatelessWidget {
                 ),
                 child: Center(
                   child: isCompleted
-                      ? Icon(Icons.check_rounded, color: stage.color, size: 18)
+                      ? const Icon(Icons.check_rounded, color: AppColors.primaryGold, size: 18)
                       : Icon(
                           stage.icon,
                           color: isCurrent ? AppColors.primaryGold : Colors.white38,
@@ -194,7 +188,7 @@ class PontoTimelineWidget extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(vertical: 4),
                     decoration: BoxDecoration(
                       color: isCompleted
-                          ? stage.color.withValues(alpha: 0.5)
+                          ? AppColors.primaryGold.withValues(alpha: 0.4)
                           : AppColors.gridLine,
                       borderRadius: BorderRadius.circular(1),
                     ),
@@ -213,14 +207,14 @@ class PontoTimelineWidget extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: isCurrent
-                      ? AppColors.primaryGold.withValues(alpha: 0.07)
+                      ? AppColors.primaryGold.withValues(alpha: 0.06)
                       : isCompleted
                           ? const Color(0xFF1B1B1B)
                           : const Color(0xFF141414),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isCurrent
-                        ? AppColors.primaryGold.withValues(alpha: 0.4)
+                        ? AppColors.primaryGold.withValues(alpha: 0.35)
                         : isCompleted
                             ? AppColors.gridLine
                             : Colors.white10,
@@ -252,13 +246,13 @@ class PontoTimelineWidget extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: stage.color.withValues(alpha: 0.15),
+                                    color: AppColors.primaryGold.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: Text(
+                                  child: const Text(
                                     'CONFIRMADO',
                                     style: TextStyle(
-                                      color: stage.color,
+                                      color: AppColors.primaryGold,
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -306,7 +300,7 @@ class PontoTimelineWidget extends StatelessWidget {
                       ),
                     ),
 
-                    // Time badge (HH:mm format without seconds as requested)
+                    // Time badge (HH:mm format without seconds)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -315,7 +309,7 @@ class PontoTimelineWidget extends StatelessWidget {
                           timeDisplay,
                           style: TextStyle(
                             color: isCompleted
-                                ? stage.color
+                                ? Colors.white
                                 : isCurrent
                                     ? AppColors.primaryGold
                                     : AppColors.textSecondary,
@@ -351,7 +345,6 @@ class _TimelineStage {
   final IconData icon;
   final PontoPunch? punch;
   final String expectedTime;
-  final Color color;
 
   _TimelineStage({
     required this.type,
@@ -360,6 +353,5 @@ class _TimelineStage {
     required this.icon,
     required this.punch,
     required this.expectedTime,
-    required this.color,
   });
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/ponto_record_model.dart';
 import '../../data/ponto_service.dart';
@@ -105,86 +105,105 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
     final isPositiveBalance = balanceMinutes >= 0;
     final balanceFormatted = summary.formatBalance(balanceMinutes);
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 40),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Month Selector Navigation Bar
-          _buildMonthNavigator(),
-          const SizedBox(height: 18),
+    return RefreshIndicator(
+      color: AppColors.primaryGold,
+      backgroundColor: AppColors.surface,
+      onRefresh: _loadMonthSummary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: const EdgeInsets.only(bottom: 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Month Selector Navigation Bar
+            _buildMonthNavigator(),
+            const SizedBox(height: 18),
 
-          // 2. Banco de Horas Metric Cards
-          _buildBancoHorasCards(summary, isPositiveBalance, balanceFormatted),
-          const SizedBox(height: 24),
+            // 2. Banco de Horas Metric Cards
+            _buildBancoHorasCards(summary, isPositiveBalance, balanceFormatted),
+            const SizedBox(height: 24),
 
-          // 3. Filter Chips
-          _buildFilterChips(),
-          const SizedBox(height: 16),
+            // 3. Filter Chips
+            _buildFilterChips(),
+            const SizedBox(height: 16),
 
-          // 4. Days List Header & Count
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'REGISTROS DIÁRIOS (${_filteredDays.length})',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
+            // 4. Days List Header & Count
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'REGISTROS DIÁRIOS (${_filteredDays.length})',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
                 ),
-              ),
-              InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Espelho de Ponto pronto para download / PDF gerado.'),
-                      backgroundColor: AppColors.primaryGold,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                child: const Row(
+                InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Espelho de Ponto pronto para exportação.'),
+                        backgroundColor: AppColors.primaryGold,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  child: const Row(
+                    children: [
+                      Icon(Icons.download_rounded, color: AppColors.primaryGold, size: 14),
+                      SizedBox(width: 4),
+                      Text(
+                        'Exportar PDF',
+                        style: TextStyle(
+                          color: AppColors.primaryGold,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // 5. Daily cards
+            if (_filteredDays.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.gridLine),
+                ),
+                child: const Column(
                   children: [
-                    Icon(Icons.download_rounded, color: AppColors.primaryGold, size: 14),
-                    SizedBox(width: 4),
+                    Icon(Icons.access_time_rounded, color: AppColors.textSecondary, size: 36),
+                    SizedBox(height: 12),
                     Text(
-                      'Exportar PDF',
+                      'Nenhum registro de ponto neste mês',
                       style: TextStyle(
-                        color: AppColors.primaryGold,
-                        fontSize: 11,
+                        color: Colors.white,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Os registros serão armazenados no banco conforme os pontos forem batidos diariamente.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // 5. Daily cards
-          if (_filteredDays.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.gridLine),
-              ),
-              child: const Center(
-                child: Text(
-                  'Nenhum registro encontrado para este filtro.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                ),
-              ),
-            )
-          else
-            ..._filteredDays.map((day) => _buildDayCard(day)),
-        ],
+              )
+            else
+              ..._filteredDays.map((day) => _buildDayCard(day)),
+          ],
+        ),
       ),
     );
   }
@@ -237,22 +256,13 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
     bool isPositiveBalance,
     String balanceFormatted,
   ) {
-    final balanceColor = isPositiveBalance ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            balanceColor.withValues(alpha: 0.12),
-            AppColors.surface,
-          ],
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: balanceColor.withValues(alpha: 0.35), width: 1.5),
+        border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
@@ -284,8 +294,8 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                     children: [
                       Text(
                         balanceFormatted,
-                        style: TextStyle(
-                          color: balanceColor,
+                        style: const TextStyle(
+                          color: AppColors.primaryGold,
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
@@ -294,7 +304,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                       const SizedBox(width: 8),
                       Icon(
                         isPositiveBalance ? Icons.trending_up : Icons.trending_down,
-                        color: balanceColor,
+                        color: AppColors.primaryGold,
                         size: 24,
                       ),
                     ],
@@ -304,14 +314,14 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: balanceColor.withValues(alpha: 0.15),
+                  color: AppColors.primaryGold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: balanceColor.withValues(alpha: 0.4)),
+                  border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   isPositiveBalance ? 'Crédito' : 'Débito',
-                  style: TextStyle(
-                    color: balanceColor,
+                  style: const TextStyle(
+                    color: AppColors.primaryGold,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -349,7 +359,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                   'Dias Úteis',
                   '${summary.completedDaysCount} dias',
                   Icons.event_available_rounded,
-                  Colors.blueAccent,
+                  AppColors.primaryGold,
                 ),
               ),
             ],
@@ -434,8 +444,6 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
     final monthNum = day.date.month.toString().padLeft(2, '0');
     final weekdayAbbr = _getWeekdayAbbr(day.date.weekday);
     final isWeekend = day.isDayOff;
-    final isPositive = day.balanceMinutes >= 0;
-    final balanceColor = isPositive ? const Color(0xFF34C759) : const Color(0xFFFF3B30);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -516,13 +524,14 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: balanceColor.withValues(alpha: 0.15),
+                              color: AppColors.primaryGold.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
                             ),
                             child: Text(
                               day.formattedBalanceHours,
-                              style: TextStyle(
-                                color: balanceColor,
+                              style: const TextStyle(
+                                color: AppColors.primaryGold,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
