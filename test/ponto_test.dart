@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vizion_mobile/features/ponto/domain/ponto_record_model.dart';
 import 'package:vizion_mobile/features/ponto/data/ponto_service.dart';
 import 'package:vizion_mobile/features/ponto/presentation/ponto_screen.dart';
+import 'package:vizion_mobile/features/ponto/presentation/widgets/slide_to_punch_button.dart';
 
 void main() {
   setUp(() {
@@ -103,6 +104,43 @@ void main() {
       expect(find.text('SALDO DO BANCO DE HORAS'), findsOneWidget);
       expect(find.text('Trabalhadas'), findsOneWidget);
       expect(find.text('Previstas'), findsOneWidget);
+    });
+
+    testWidgets('SlideToPunchButton triggers confirmation on slide', (tester) async {
+      bool confirmed = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 350,
+                child: SlideToPunchButton(
+                  nextPunchType: PontoType.entrada,
+                  onConfirmed: () {
+                    confirmed = true;
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      // Drag across the button from left to right
+      final buttonFinder = find.byType(SlideToPunchButton);
+      expect(buttonFinder, findsOneWidget);
+
+      await tester.drag(buttonFinder, const Offset(300, 0));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+
+      expect(confirmed, isTrue);
+
+      // Advance reset timer
+      await tester.pump(const Duration(seconds: 1));
     });
   });
 }

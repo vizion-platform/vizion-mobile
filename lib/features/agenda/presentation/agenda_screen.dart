@@ -15,6 +15,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   // Calendar Navigation State
   late DateTime _currentWeekStart; // Start date (Monday) of active week
   late DateTime _selectedDate; // Currently selected day
+  DateTime? _selectedFilterDay; // Selected day filter for toggling
   String _selectedViewMode = 'Semana'; // 'Semana', 'Dia', 'Mês'
   String _activeFilter = 'Todas'; // 'Todas', 'Pendentes', 'Concluídas', 'Obra', 'Vistoria', 'Entrega', 'Segurança'
 
@@ -27,6 +28,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     super.initState();
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
+    _selectedFilterDay = null;
     _currentWeekStart = _getMonday(_selectedDate);
     _loadTasksData();
   }
@@ -116,6 +118,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     setState(() {
       _selectedDate = today;
       _currentWeekStart = _getMonday(today);
+      _selectedFilterDay = null;
     });
   }
 
@@ -124,6 +127,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
     setState(() {
       _currentWeekStart = _currentWeekStart.add(Duration(days: weeksDelta * 7));
       _selectedDate = _currentWeekStart;
+      _selectedFilterDay = null;
     });
   }
 
@@ -235,7 +239,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             children: [
               // Calendar Icon & Title "Agenda"
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4285F4).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
@@ -243,81 +247,84 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 child: const Icon(
                   Icons.calendar_month,
                   color: Color(0xFF4285F4),
-                  size: 24,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        _canModifyAgenda ? 'Agenda Empreiteira' : 'Agenda da Obra',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      if (!_canModifyAgenda) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            _canModifyAgenda ? 'Agenda Empreiteira' : 'Agenda da Obra',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.2,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.visibility, size: 11, color: AppColors.primaryGold),
-                              SizedBox(width: 4),
-                              Text(
-                                'Somente Leitura',
-                                style: TextStyle(color: AppColors.primaryGold, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                        if (!_canModifyAgenda) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                            ),
+                            child: const Text(
+                              'Leitura',
+                              style: TextStyle(
+                                color: AppColors.primaryGold,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
-                  ),
-                  Text(
-                    monthYearTitle,
-                    style: const TextStyle(
-                      color: AppColors.primaryGold,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ],
+                    Text(
+                      monthYearTitle,
+                      style: const TextStyle(
+                        color: AppColors.primaryGold,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-
-              const Spacer(),
+              const SizedBox(width: 6),
 
               // "Hoje" Button
               InkWell(
                 onTap: _jumpToToday,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                   decoration: BoxDecoration(
                     color: AppColors.gridLine,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.4)),
                   ),
                   child: const Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.today, size: 14, color: AppColors.primaryGold),
-                      SizedBox(width: 4),
+                      Icon(Icons.today, size: 12, color: AppColors.primaryGold),
+                      SizedBox(width: 3),
                       Text(
                         'Hoje',
                         style: TextStyle(
                           color: AppColors.primaryGold,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -325,24 +332,24 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
 
               // Previous Week Arrow
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+                icon: const Icon(Icons.chevron_left, color: Colors.white, size: 22),
                 onPressed: () => _navigateWeek(-1),
                 tooltip: 'Semana Anterior',
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               ),
 
               // Next Week Arrow
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: Colors.white, size: 24),
+                icon: const Icon(Icons.chevron_right, color: Colors.white, size: 22),
                 onPressed: () => _navigateWeek(1),
                 tooltip: 'Próxima Semana',
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
               ),
             ],
           ),
@@ -485,7 +492,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: days.map((day) {
-          final isSelected = _isSameDay(day, _selectedDate);
+          final isSelected = _selectedFilterDay != null && _isSameDay(day, _selectedFilterDay!);
           final isTodayDate = _isToday(day);
           final dayTasks = _tasksForDate(day);
           final hasTasks = dayTasks.isNotEmpty;
@@ -494,7 +501,15 @@ class _AgendaScreenState extends State<AgendaScreen> {
           return InkWell(
             onTap: () {
               setState(() {
-                _selectedDate = day;
+                if (_selectedFilterDay != null && _isSameDay(_selectedFilterDay!, day)) {
+                  // Apertou de novo -> desmarca e volta ao padrão (todas as tarefas da semana)
+                  _selectedFilterDay = null;
+                  _selectedDate = day;
+                } else {
+                  // Clicou no dia -> filtra para mostrar apenas as tarefas daquele dia
+                  _selectedFilterDay = day;
+                  _selectedDate = day;
+                }
               });
             },
             borderRadius: BorderRadius.circular(12),
@@ -521,9 +536,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   Text(
                     dayAbbr,
                     style: TextStyle(
-                      color: isTodayDate
-                          ? AppColors.primaryGold
-                          : (isSelected ? const Color(0xFF4285F4) : AppColors.textSecondary),
+                      color: isSelected
+                          ? const Color(0xFF4285F4)
+                          : (isTodayDate ? AppColors.primaryGold : AppColors.textSecondary),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -537,14 +552,14 @@ class _AgendaScreenState extends State<AgendaScreen> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isTodayDate
-                          ? AppColors.primaryGold
-                          : (isSelected ? const Color(0xFF4285F4) : Colors.transparent),
+                      color: isSelected
+                          ? const Color(0xFF4285F4)
+                          : (isTodayDate ? AppColors.primaryGold : Colors.transparent),
                     ),
                     child: Text(
                       '${day.day}',
                       style: TextStyle(
-                        color: (isTodayDate || isSelected)
+                        color: (isSelected || isTodayDate)
                             ? Colors.black
                             : Colors.white,
                         fontSize: 13,
@@ -608,7 +623,9 @@ class _AgendaScreenState extends State<AgendaScreen> {
       return _buildEmptyState();
     }
 
-    final days = _activeWeekDays;
+    final List<DateTime> days = _selectedFilterDay != null
+        ? [_selectedFilterDay!]
+        : _activeWeekDays;
 
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
@@ -646,12 +663,15 @@ class _AgendaScreenState extends State<AgendaScreen> {
                     color: isTodayDate ? AppColors.primaryGold : AppColors.textSecondary,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    _formatFullDayDate(day),
-                    style: TextStyle(
-                      color: isTodayDate ? AppColors.primaryGold : Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                  Expanded(
+                    child: Text(
+                      _formatFullDayDate(day),
+                      style: TextStyle(
+                        color: isTodayDate ? AppColors.primaryGold : Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (isTodayDate) ...[
@@ -672,7 +692,32 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       ),
                     ),
                   ],
-                  const Spacer(),
+                  if (_selectedFilterDay != null) ...[
+                    const SizedBox(width: 6),
+                    InkWell(
+                      onTap: () => setState(() => _selectedFilterDay = null),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4285F4).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFF4285F4)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Filtrado',
+                              style: TextStyle(color: Color(0xFF4285F4), fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(width: 2),
+                            Icon(Icons.close, size: 10, color: Color(0xFF4285F4)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: 6),
                   Text(
                     '${dayTasks.length} ${dayTasks.length == 1 ? "tarefa" : "tarefas"}',
                     style: const TextStyle(
@@ -944,32 +989,43 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           // Date Range Badge (e.g. 10/08 a 14/08 • 5 dias)
-                          Icon(Icons.date_range, size: 12, color: task.isCompleted ? AppColors.textSecondary : AppColors.primaryGold),
-                          const SizedBox(width: 4),
-                          Text(
-                            dateRangeString,
-                            style: TextStyle(
-                              color: task.isCompleted
-                                  ? AppColors.textSecondary
-                                  : AppColors.primaryGold,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          if (durationDays > 1) ...[
-                            const SizedBox(width: 4),
-                            Text(
-                              '($durationDays dias)',
-                              style: TextStyle(
-                                color: AppColors.textSecondary.withValues(alpha: 0.8),
-                                fontSize: 10,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.date_range,
+                                size: 12,
+                                color: task.isCompleted ? AppColors.textSecondary : AppColors.primaryGold,
                               ),
-                            ),
-                          ],
-                          const SizedBox(width: 8),
+                              const SizedBox(width: 4),
+                              Text(
+                                dateRangeString,
+                                style: TextStyle(
+                                  color: task.isCompleted
+                                      ? AppColors.textSecondary
+                                      : AppColors.primaryGold,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (durationDays > 1) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  '($durationDays dias)',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary.withValues(alpha: 0.8),
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
 
                           // Category Badge
                           Container(
@@ -987,7 +1043,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               ),
                             ),
                           ),
-                          const Spacer(),
 
                           // Priority Pill
                           if (task.priority == 'Alta')
@@ -1008,11 +1063,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
 
                       // Title
                       Text(
                         task.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: task.isCompleted ? AppColors.textSecondary : Colors.white,
                           fontSize: 14,

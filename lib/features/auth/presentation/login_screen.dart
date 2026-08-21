@@ -15,6 +15,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoginMode = true;
   bool _isLoading = false;
   bool _show2FA = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   int _timerSeconds = 30;
   Timer? _countdownTimer;
   final _formKey = GlobalKey<FormState>();
@@ -313,9 +315,29 @@ class _LoginScreenState extends State<LoginScreen> {
             // Senha
             TextFormField(
               controller: _passwordController,
-              obscureText: true,
+              obscureText: _obscurePassword,
               style: const TextStyle(color: Colors.white),
-              decoration: _inputStyle('SENHA DE ACESSO', Icons.lock_outline),
+              decoration: _inputStyle(
+                'SENHA DE ACESSO',
+                Icons.lock_outline,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: _obscurePassword
+                        ? AppColors.textSecondary
+                        : AppColors.primaryGold,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                  tooltip: _obscurePassword ? 'Mostrar senha' : 'Ocultar senha',
+                ),
+              ),
               validator: (value) => value == null || value.isEmpty
                   ? 'A senha é obrigatória.'
                   : null,
@@ -545,7 +567,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  InputDecoration _inputStyle(String label, IconData icon) {
+  InputDecoration _inputStyle(String label, IconData icon, {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(
@@ -555,6 +577,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 11),
       prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 18),
+      suffixIcon: suffixIcon,
       enabledBorder: const UnderlineInputBorder(
         borderSide: BorderSide(color: AppColors.gridLine),
       ),

@@ -424,10 +424,22 @@ class _MateriaisScreenState extends State<MateriaisScreen> with SingleTickerProv
                 ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Qtd: ${req.quantidade.toStringAsFixed(req.quantidade % 1 == 0 ? 0 : 1)} ${req.unidade} • Solicitado por ${req.solicitanteNome}',
-            style: const TextStyle(color: AppColors.primaryGold, fontSize: 12, fontWeight: FontWeight.w600),
+          Wrap(
+            spacing: 6,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                'Qtd: ${req.quantidade.toStringAsFixed(req.quantidade % 1 == 0 ? 0 : 1)} ${req.unidade}',
+                style: const TextStyle(color: AppColors.primaryGold, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              const Text('•', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+              Text(
+                'Solicitado por ${req.solicitanteNome}',
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
           if (req.observacao.isNotEmpty) ...[
             const SizedBox(height: 4),
@@ -501,6 +513,7 @@ class _MateriaisScreenState extends State<MateriaisScreen> with SingleTickerProv
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -510,6 +523,7 @@ class _MateriaisScreenState extends State<MateriaisScreen> with SingleTickerProv
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -743,8 +757,10 @@ class _MateriaisScreenState extends State<MateriaisScreen> with SingleTickerProv
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       '${mov.tipo == 'SAIDA' ? '-' : '+'}${mov.quantidade.toStringAsFixed(mov.quantidade % 1 == 0 ? 0 : 1)} ${mov.unidade}',
                       style: TextStyle(
@@ -759,6 +775,7 @@ class _MateriaisScreenState extends State<MateriaisScreen> with SingleTickerProv
                 Text(
                   'Responsável: ${mov.responsavel}',
                   style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (mov.origemDestino.isNotEmpty) ...[
                   const SizedBox(height: 2),
@@ -938,7 +955,10 @@ class _MateriaisScreenState extends State<MateriaisScreen> with SingleTickerProv
           ),
           const SizedBox(height: 8),
 
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'Quantidade: ${req.quantidade.toStringAsFixed(req.quantidade % 1 == 0 ? 0 : 1)} ${req.unidade}',
@@ -948,16 +968,17 @@ class _MateriaisScreenState extends State<MateriaisScreen> with SingleTickerProv
                   fontSize: 13,
                 ),
               ),
-              if (req.valorEstimado != null) ...[
-                const SizedBox(width: 8),
+              if (req.valorEstimado != null)
                 Text(
                   '(R\$ ${req.valorEstimado!.toStringAsFixed(2)})',
-                  style: const TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.greenAccent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ],
-              const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: Colors.redAccent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
@@ -978,6 +999,7 @@ class _MateriaisScreenState extends State<MateriaisScreen> with SingleTickerProv
           Text(
             'Solicitante: ${req.solicitanteNome} • Data: $dateStr',
             style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+            overflow: TextOverflow.ellipsis,
           ),
 
           if (req.observacao.isNotEmpty) ...[

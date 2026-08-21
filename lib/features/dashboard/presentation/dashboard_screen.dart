@@ -398,11 +398,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 28),
-
-          // Seção de Alternância Rápida de Perfil
+          // Seção de Notificações de Segurança da Conta
           const Text(
-            'PERFIL DE ACESSO ATIVO (DEMO)',
+            'NOTIFICAÇÕES DE SEGURANÇA',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 11,
@@ -412,73 +410,92 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.gridLine),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.amber.withValues(alpha: 0.5),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.amber.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Alternar Perfil para Teste:',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AuthService.isFuncionario ? AppColors.primaryGold : Colors.white70,
-                          side: BorderSide(
-                            color: AuthService.isFuncionario ? AppColors.primaryGold : AppColors.gridLine,
-                          ),
-                          backgroundColor: AuthService.isFuncionario ? AppColors.primaryGold.withValues(alpha: 0.15) : Colors.transparent,
-                        ),
-                        onPressed: () async {
-                          await AuthService.switchRole('FUNCIONARIO', 'Carlos Silva (Funcionário)', 'carlos.funcionario@vizion.com');
-                          setState(() {});
-                        },
-                        child: const Text('Funcionário', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notification_important_outlined,
+                        color: AppColors.primaryGold,
+                        size: 20,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AuthService.isEmpreiteiro ? Colors.blueAccent : Colors.white70,
-                          side: BorderSide(
-                            color: AuthService.isEmpreiteiro ? Colors.blueAccent : AppColors.gridLine,
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Novo dispositivo conectado nesta conta',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          backgroundColor: AuthService.isEmpreiteiro ? Colors.blueAccent.withValues(alpha: 0.15) : Colors.transparent,
-                        ),
-                        onPressed: () async {
-                          await AuthService.switchRole('EMPREITEIRO', 'Eng. Felipe (Empreiteiro)', 'felipe.empreiteiro@vizion.com');
-                          setState(() {});
-                        },
-                        child: const Text('Empreiteiro', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AuthService.isCliente ? Colors.greenAccent : Colors.white70,
-                          side: BorderSide(
-                            color: AuthService.isCliente ? Colors.greenAccent : AppColors.gridLine,
+                          SizedBox(height: 4),
+                          Text(
+                            'Um dispositivo móvel foi autenticado com sucesso nesta conta. Se não foi você, encerre a sessão imediatamente.',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
                           ),
-                          backgroundColor: AuthService.isCliente ? Colors.greenAccent.withValues(alpha: 0.15) : Colors.transparent,
-                        ),
-                        onPressed: () async {
-                          await AuthService.switchRole('CLIENTE', 'Dra. Mariana (Cliente)', 'mariana.cliente@vizion.com');
-                          setState(() {});
-                        },
-                        child: const Text('Cliente', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ],
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.gridLine),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.devices_outlined, size: 14, color: AppColors.primaryGold),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Sessão ativa vinculada ao usuário ${AuthService.nome ?? "conectado"}',
+                          style: const TextStyle(
+                            color: AppColors.primaryGold,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -18,7 +18,7 @@ class VizionApp extends StatelessWidget {
   final bool isLoggedIn;
   
   const VizionApp({super.key, required this.isLoggedIn});
-
+    
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
