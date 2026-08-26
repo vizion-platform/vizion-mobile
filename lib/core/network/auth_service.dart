@@ -378,4 +378,76 @@ class AuthService {
       return false;
     }
   }
+
+  // --- Tarefas / Agenda Database Integration ---
+
+  static Future<List<Map<String, dynamic>>> fetchTarefas({int? obraId}) async {
+    try {
+      final uri = obraId != null
+          ? Uri.parse('$baseUrl/tarefas?obraId=$obraId')
+          : Uri.parse('$baseUrl/tarefas');
+      final response = await http.get(uri, headers: getHeaders());
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        return data.map((item) => Map<String, dynamic>.from(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Erro ao carregar tarefas do servidor: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>?> createTarefa(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/tarefas'),
+        headers: getHeaders(),
+        body: jsonEncode({
+          'titulo': data['titulo'] ?? data['title'],
+          'descricao': data['descricao'] ?? data['description'] ?? '',
+          'dataInicio': data['dataInicio'] ?? data['startDate'],
+          'dataFim': data['dataFim'] ?? data['endDate'],
+          'categoria': data['categoria'] ?? data['category'] ?? 'Geral',
+          'corHex': data['corHex'] ?? data['colorHex'],
+          'concluida': data['concluida'] ?? data['isCompleted'] ?? false,
+          'prioridade': data['prioridade'] ?? data['priority'] ?? 'Média',
+          'idObra': data['idObra'] ?? data['obraId'],
+        }),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(utf8.decode(response.bodyBytes));
+      }
+      return null;
+    } catch (e) {
+      print('Erro ao salvar tarefa no banco de dados: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> toggleTarefaStatus(int id) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/tarefas/$id/toggle'),
+        headers: getHeaders(),
+      );
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('Erro ao alternar status da tarefa no banco: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> deleteTarefa(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/tarefas/$id'),
+        headers: getHeaders(),
+      );
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('Erro ao deletar tarefa no banco: $e');
+      return false;
+    }
+  }
 }

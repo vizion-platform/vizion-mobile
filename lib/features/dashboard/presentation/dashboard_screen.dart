@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_list_screen.dart';
 import '../../agenda/presentation/agenda_screen.dart';
-import '../../materiais/presentation/materiais_screen.dart';
 import '../../ponto/presentation/ponto_screen.dart';
 import 'widgets/home_dashboard_widget.dart';
 import 'widgets/obras_list_widget.dart';
@@ -18,47 +16,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedModuleIndex = 0;
-  bool _mfaEnabled = true;
-  bool _notificationsEnabled = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _mfaEnabled = prefs.getBool('mfaEnabled') ?? true;
-      _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-    });
-  }
-
-  Future<void> _toggleMfa(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('mfaEnabled', value);
-    setState(() {
-      _mfaEnabled = value;
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(value ? 'MFA ativado com sucesso.' : 'MFA desativado.'),
-          backgroundColor: value ? AppColors.primaryGold : Colors.orangeAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  Future<void> _toggleNotifications(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notificationsEnabled', value);
-    setState(() {
-      _notificationsEnabled = value;
-    });
-  }
 
   void _handleSignOut() {
     AuthService.signOut();
@@ -161,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     // Modules without outer padding (fullscreen internal padding)
-    final bool isFullScreenModule = _selectedModuleIndex == 1 || _selectedModuleIndex == 3;
+    final bool isFullScreenModule = _selectedModuleIndex == 1 || _selectedModuleIndex == 2;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -184,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         child: BottomNavigationBar(
           backgroundColor: AppColors.surface,
-          currentIndex: _selectedModuleIndex,
+          currentIndex: _selectedModuleIndex > 4 ? 0 : _selectedModuleIndex,
           onTap: (index) => setState(() => _selectedModuleIndex = index),
           selectedItemColor: AppColors.primaryGold,
           unselectedItemColor: AppColors.textSecondary,
@@ -208,11 +165,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: 'Ponto',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.inventory_2_outlined),
-              activeIcon: Icon(Icons.inventory_2, color: AppColors.primaryGold),
-              label: 'Materiais',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.calendar_month_outlined),
               activeIcon: Icon(
                 Icons.calendar_month,
@@ -233,11 +185,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               activeIcon: Icon(Icons.chat, color: AppColors.primaryGold),
               label: 'Chat',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person, color: AppColors.primaryGold),
-              label: 'Perfil',
-            ),
           ],
         ),
       ),
@@ -247,18 +194,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildModuleContent(int index) {
     switch (index) {
       case 0:
-        return const HomeDashboardWidget();
+        return HomeDashboardWidget(
+          onProfileTap: () {
+            setState(() {
+              _selectedModuleIndex = 5;
+            });
+          },
+        );
       case 1:
         return const PontoScreen();
       case 2:
-        return const MateriaisScreen();
-      case 3:
         return const AgendaScreen();
-      case 4:
+      case 3:
         return const ObrasListWidget();
-      case 5:
+      case 4:
         return const ChatListScreen();
-      case 6:
+      case 5:
         return _buildProfileContent();
       default:
         return const Center(
@@ -281,20 +232,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Central de Segurança',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            children: [
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  setState(() {
+                    _selectedModuleIndex = 0;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.gridLine),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.primaryGold,
+                    size: 18,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Meu Perfil',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Gerencie suas informações corporativas e sessão da conta.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Gerencie suas credenciais corporativas e autenticação multifator.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-          ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
 
           // Cartão do Perfil Corporativo
           Container(
@@ -371,208 +358,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.blueAccent.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        'Tenant: ${AuthService.tenantId ?? 'default'}',
-                        style: const TextStyle(
-                          color: Colors.blueAccent,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                   ],
-                ),
-              ],
-            ),
-          ),
-          // Seção de Notificações de Segurança da Conta
-          const Text(
-            'NOTIFICAÇÕES DE SEGURANÇA',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: Colors.amber.withValues(alpha: 0.5),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.amber.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notification_important_outlined,
-                        color: AppColors.primaryGold,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Novo dispositivo conectado nesta conta',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Um dispositivo móvel foi autenticado com sucesso nesta conta. Se não foi você, encerre a sessão imediatamente.',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.gridLine),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.devices_outlined, size: 14, color: AppColors.primaryGold),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Sessão ativa vinculada ao usuário ${AuthService.nome ?? "conectado"}',
-                          style: const TextStyle(
-                            color: AppColors.primaryGold,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-
-          // Seção Segurança
-          const Text(
-            'AUTENTICAÇÃO & SEGURANÇA',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // MFA Toggle
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.gridLine),
-            ),
-            child: Column(
-              children: [
-                SwitchListTile(
-                  value: _mfaEnabled,
-                  onChanged: _toggleMfa,
-                  activeThumbColor: AppColors.primaryGold,
-                  activeTrackColor: AppColors.primaryGold.withValues(
-                    alpha: 0.3,
-                  ),
-                  inactiveThumbColor: Colors.grey,
-                  inactiveTrackColor: AppColors.gridLine,
-                  title: const Text(
-                    'Autenticação de Duas Etapas (MFA)',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: const Text(
-                    'Exige código do Google Authenticator no login',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const Divider(height: 1, color: AppColors.gridLine),
-                SwitchListTile(
-                  value: _notificationsEnabled,
-                  onChanged: _toggleNotifications,
-                  activeThumbColor: AppColors.primaryGold,
-                  activeTrackColor: AppColors.primaryGold.withValues(
-                    alpha: 0.3,
-                  ),
-                  inactiveThumbColor: Colors.grey,
-                  inactiveTrackColor: AppColors.gridLine,
-                  title: const Text(
-                    'Alertas de Segurança',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: const Text(
-                    'Notificações de acessos de novos dispositivos',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
                 ),
               ],
             ),

@@ -6,7 +6,9 @@ import '../../../chat/data/chat_network_service.dart';
 import '../../../ponto/presentation/ponto_screen.dart';
 
 class HomeDashboardWidget extends StatefulWidget {
-  const HomeDashboardWidget({super.key});
+  final VoidCallback? onProfileTap;
+
+  const HomeDashboardWidget({super.key, this.onProfileTap});
 
   @override
   State<HomeDashboardWidget> createState() => _HomeDashboardWidgetState();
@@ -36,8 +38,9 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
     } catch (e) {
       if (mounted) {
         setState(() {
+          _obras = [];
           _isLoading = false;
-          _errorMessage = 'Erro ao carregar dados do dashboard.';
+          _errorMessage = '';
         });
       }
     }
@@ -188,53 +191,63 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header / Boas-vindas
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primaryGold, width: 1.5),
-                ),
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppColors.surface,
-                  child: Text(
-                    AuthService.nome != null && AuthService.nome!.isNotEmpty
-                        ? AuthService.nome![0].toUpperCase()
-                        : 'U',
-                    style: const TextStyle(
-                      color: AppColors.primaryGold,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+          GestureDetector(
+            onTap: widget.onProfileTap,
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primaryGold, width: 1.5),
+                  ),
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.surface,
+                    child: Text(
+                      AuthService.nome != null && AuthService.nome!.isNotEmpty
+                          ? AuthService.nome![0].toUpperCase()
+                          : 'U',
+                      style: const TextStyle(
+                        color: AppColors.primaryGold,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Olá, ${AuthService.nome ?? 'Membro Vizion'}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Olá, ${AuthService.nome ?? 'Membro Vizion'}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Perfil: ${role.toUpperCase()} • Tenant: ${AuthService.tenantId ?? 'default'}',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
+                      Text(
+                        'Perfil: ${role.toUpperCase()}',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                if (widget.onProfileTap != null)
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: AppColors.textSecondary,
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -558,7 +571,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                         const SizedBox(height: 4),
                         Text(
                           role == 'CLIENTE'
-                              ? 'Dúvidas sobre prazos ou materiais?'
+                              ? 'Dúvidas sobre prazos ou andamento do projeto?'
                               : 'Reporte incidentes ou andamento do serviço.',
                           style: const TextStyle(
                             color: AppColors.textSecondary,

@@ -6,21 +6,134 @@ import '../domain/agenda_task_model.dart';
 class AgendaService {
   static const String _storageKey = 'vizion_agenda_tasks_v2';
 
-  /// Loads tasks combining local storage with API obras/phases data (matching Desktop ApiService)
-  static Future<List<AgendaTask>> loadTasks() async {
+  /// Loads tasks combining database records, local storage, and API obras/phases data
+  static Future<List<AgendaTask>> loadTasks({int? obraId}) async {
     List<AgendaTask> localTasks = await _loadLocalTasks();
+    List<AgendaTask> dbTasks = await fetchDatabaseTasks(obraId: obraId);
     List<AgendaTask> apiEvents = await fetchApiCalendarEvents();
 
-    // Merge: preserve local user-created tasks and combine with API events
     final Map<String, AgendaTask> mergedMap = {};
+
+    // 1. Base events from obras / phases
     for (var ev in apiEvents) {
       mergedMap[ev.id] = ev;
     }
+
+    // 2. Local tasks from previous sessions
     for (var task in localTasks) {
       mergedMap[task.id] = task;
     }
 
-    return mergedMap.values.toList();
+    // 3. Official tasks from PostgreSQL Database (highest precedence)
+    for (var task in dbTasks) {
+      mergedMap[task.id] = task;
+    }
+
+    final result = mergedMap.values.toList();
+    // Cache current user-created / DB tasks locally for offline reliability
+    await saveTasks(result.where((t) => !t.id.startsWith('api_') && !t.id.startsWith('demo_')).toList());
+
+    return result;
+  }
+
+  /// Fetches tasks directly from PostgreSQL database via API
+  static Future<List<AgendaTask>> fetchDatabaseTasks({int? obraId}) async {
+    try {
+      final rawList = await AuthService.fetchTarefas(obraId: obraId);
+      return rawList.map((item) {
+        final id = item['id']?.toString() ?? '';
+        return AgendaTask.fromMap({
+          ...item,
+          'id': id.isNotEmpty ? 'db_$id' : id,
+        });
+      }).toList();
+    } catch (e) {
+      print('Erro ao carregar tarefas do banco: $e');
+      return [];
+    }
+  }
+
+  /// Creates a new task in the database and caches locally
+  static Future<AgendaTask> createTask(AgendaTask task, {int? obraId}) async {
+    AgendaTask finalTask = task;
+
+    try {
+      final payload = {
+        'titulo': task.title,
+        'descricao': task.description,
+        'dataInicio': task.startDate.toIso8601String(),
+        'dataFim': task.endDate.toIso8601String(),
+        'categoria': task.category,
+        'corHex': task.colorHex,
+        'concluida': task.isCompleted,
+        'prioridade': task.priority,
+        'idObra': obraId,
+      };
+
+      final response = await AuthService.createTarefa(payload);
+      if (response != null && response['id'] != null) {
+        final dbId = response['id'].toString();
+        finalTask = task.copyWith(id: 'db_$dbId');
+      }
+    } catch (e) {
+      print('Erro ao persistir tarefa no banco de dados, mantendo local: $e');
+    }
+
+    // Update local cache
+    List<AgendaTask> localTasks = await _loadLocalTasks();
+    localTasks.removeWhere((t) => t.id == finalTask.id || t.id == task.id);
+    localTasks.add(finalTask);
+    await saveTasks(localTasks);
+
+    return finalTask;
+  }
+
+  /// Toggles task completion status in database and locally
+  static Future<AgendaTask> toggleTaskCompletion(AgendaTask task) async {
+    final updated = task.copyWith(isCompleted: !task.isCompleted);
+
+    final numId = _extractNumericId(task.id);
+    if (numId != null) {
+      try {
+        await AuthService.toggleTarefaStatus(numId);
+      } catch (e) {
+        print('Erro ao atualizar status da tarefa no banco: $e');
+      }
+    }
+
+    List<AgendaTask> localTasks = await _loadLocalTasks();
+    final idx = localTasks.indexWhere((t) => t.id == task.id);
+    if (idx != -1) {
+      localTasks[idx] = updated;
+    } else {
+      localTasks.add(updated);
+    }
+    await saveTasks(localTasks);
+
+    return updated;
+  }
+
+  /// Deletes task in database and locally
+  static Future<void> deleteTask(AgendaTask task) async {
+    final numId = _extractNumericId(task.id);
+    if (numId != null) {
+      try {
+        await AuthService.deleteTarefa(numId);
+      } catch (e) {
+        print('Erro ao deletar tarefa no banco: $e');
+      }
+    }
+
+    List<AgendaTask> localTasks = await _loadLocalTasks();
+    localTasks.removeWhere((t) => t.id == task.id);
+    await saveTasks(localTasks);
+  }
+
+  static int? _extractNumericId(String id) {
+    if (id.startsWith('db_')) {
+      return int.tryParse(id.substring(3));
+    }
+    return int.tryParse(id);
   }
 
   /// Fetches calendar events directly from API obras & phases (same as Desktop ApiService)

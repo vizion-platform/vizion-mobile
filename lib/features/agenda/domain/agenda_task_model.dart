@@ -82,30 +82,40 @@ class AgendaTask {
     DateTime parsedStart;
     DateTime parsedEnd;
 
-    if (map['startDate'] != null) {
-      parsedStart = DateTime.parse(map['startDate']);
-    } else if (map['date'] != null) {
-      parsedStart = DateTime.parse(map['date']);
+    final startRaw = map['startDate'] ?? map['dataInicio'] ?? map['data_inicio'] ?? map['date'];
+    if (startRaw != null) {
+      parsedStart = DateTime.parse(startRaw.toString());
     } else {
       parsedStart = DateTime.now();
     }
 
-    if (map['endDate'] != null) {
-      parsedEnd = DateTime.parse(map['endDate']);
+    final endRaw = map['endDate'] ?? map['dataFim'] ?? map['data_fim'];
+    if (endRaw != null) {
+      parsedEnd = DateTime.parse(endRaw.toString());
     } else {
       parsedEnd = parsedStart;
     }
 
+    final dynamic rawColor = map['colorHex'] ?? map['corHex'] ?? map['cor_hex'];
+    int parsedColorHex = 0xFF4285F4;
+    if (rawColor is int) {
+      parsedColorHex = rawColor;
+    } else if (rawColor is num) {
+      parsedColorHex = rawColor.toInt();
+    } else if (rawColor is String) {
+      parsedColorHex = int.tryParse(rawColor) ?? 0xFF4285F4;
+    }
+
     return AgendaTask(
-      id: map['id'] ?? '',
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
+      id: map['id']?.toString() ?? '',
+      title: map['title'] ?? map['titulo'] ?? '',
+      description: map['description'] ?? map['descricao'] ?? '',
       startDate: parsedStart,
       endDate: parsedEnd,
-      category: map['category'] ?? 'Geral',
-      colorHex: map['colorHex'] ?? 0xFF4285F4,
-      isCompleted: map['isCompleted'] ?? false,
-      priority: map['priority'] ?? 'Média',
+      category: map['category'] ?? map['categoria'] ?? 'Geral',
+      colorHex: parsedColorHex,
+      isCompleted: map['isCompleted'] == true || map['concluida'] == true,
+      priority: map['priority'] ?? map['prioridade'] ?? 'Média',
     );
   }
 

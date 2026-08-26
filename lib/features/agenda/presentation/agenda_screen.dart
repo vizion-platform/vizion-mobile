@@ -62,7 +62,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   }
 
   /// Toggles completion status of a task
-  void _toggleTaskCompletion(String id) {
+  Future<void> _toggleTaskCompletion(String id) async {
     if (!_canModifyAgenda) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -74,18 +74,26 @@ class _AgendaScreenState extends State<AgendaScreen> {
       );
       return;
     }
-    setState(() {
-      final index = _allTasks.indexWhere((t) => t.id == id);
-      if (index != -1) {
-        final task = _allTasks[index];
+    final index = _allTasks.indexWhere((t) => t.id == id);
+    if (index != -1) {
+      final task = _allTasks[index];
+      setState(() {
         _allTasks[index] = task.copyWith(isCompleted: !task.isCompleted);
+      });
+      final updated = await AgendaService.toggleTaskCompletion(task);
+      if (mounted) {
+        setState(() {
+          final idx = _allTasks.indexWhere((t) => t.id == id || t.id == updated.id);
+          if (idx != -1) {
+            _allTasks[idx] = updated;
+          }
+        });
       }
-    });
-    _saveTasksData();
+    }
   }
 
   /// Deletes a task
-  void _deleteTask(String id) {
+  Future<void> _deleteTask(String id) async {
     if (!_canModifyAgenda) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -97,18 +105,24 @@ class _AgendaScreenState extends State<AgendaScreen> {
       );
       return;
     }
-    setState(() {
-      _allTasks.removeWhere((t) => t.id == id);
-    });
-    _saveTasksData();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tarefa removida da agenda.'),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    final index = _allTasks.indexWhere((t) => t.id == id);
+    if (index != -1) {
+      final task = _allTasks[index];
+      setState(() {
+        _allTasks.removeAt(index);
+      });
+      await AgendaService.deleteTask(task);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tarefa removida da agenda e do banco de dados.'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   /// Jumps to current week & today
@@ -1609,7 +1623,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
                             if (titleController.text.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -1620,7 +1634,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               return;
                             }
 
-                            final newTask = AgendaTask(
+                            final initialTask = AgendaTask(
                               id: 'task_${DateTime.now().millisecondsSinceEpoch}',
                               title: titleController.text.trim(),
                               description: descController.text.trim(),
@@ -1632,19 +1646,38 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             );
 
                             setState(() {
-                              _allTasks.add(newTask);
+                              _allTasks.add(initialTask);
                             });
-                            _saveTasksData();
 
                             Navigator.pop(context);
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Tarefa adicionada à agenda com sucesso!'),
-                                backgroundColor: Color(0xFF34A853),
+                                content: Text('Salvando tarefa no banco de dados...'),
+                                backgroundColor: Color(0xFF4285F4),
                                 behavior: SnackBarBehavior.floating,
+                                duration: Duration(milliseconds: 1200),
                               ),
                             );
+
+                            final savedTask = await AgendaService.createTask(initialTask);
+                            if (mounted) {
+                              setState(() {
+                                final idx = _allTasks.indexWhere((t) => t.id == initialTask.id);
+                                if (idx != -1) {
+                                  _allTasks[idx] = savedTask;
+                                }
+                              });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Tarefa registrada no banco de dados e adicionada à agenda!'),
+                                  backgroundColor: Color(0xFF34A853),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
                           },
                           child: const Text(
                             'SALVAR TAREFA',
