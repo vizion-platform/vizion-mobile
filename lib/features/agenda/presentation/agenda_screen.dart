@@ -5,7 +5,9 @@ import '../data/agenda_service.dart';
 import '../domain/agenda_task_model.dart';
 
 class AgendaScreen extends StatefulWidget {
-  const AgendaScreen({super.key});
+  final VoidCallback? onBackTap;
+
+  const AgendaScreen({super.key, this.onBackTap});
 
   @override
   State<AgendaScreen> createState() => _AgendaScreenState();
@@ -251,6 +253,30 @@ class _AgendaScreenState extends State<AgendaScreen> {
       ),
       child: Row(
         children: [
+          if (widget.onBackTap != null) ...[
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: widget.onBackTap,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.gridLine),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.primaryGold,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+
           // Calendar Icon
           Container(
             padding: const EdgeInsets.all(6),

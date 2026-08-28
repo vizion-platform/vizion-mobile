@@ -5,7 +5,9 @@ import 'contacts_list_screen.dart';
 import 'chat_room_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
-  const ChatListScreen({super.key});
+  final VoidCallback? onBackTap;
+
+  const ChatListScreen({super.key, this.onBackTap});
 
   @override
   State<ChatListScreen> createState() => _ChatListScreenState();
@@ -31,6 +33,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _chatService.disconnectSocket();
     super.dispose();
   }
 
@@ -126,12 +129,37 @@ class _ChatListScreenState extends State<ChatListScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: AppColors.background,
         elevation: 0,
+        leading: widget.onBackTap != null
+            ? Padding(
+                padding: const EdgeInsets.only(left: 12.0, top: 8.0, bottom: 8.0),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: widget.onBackTap,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.gridLine),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: AppColors.primaryGold,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : null,
         title: const Text(
           'Mensagens',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 24,
+            fontSize: 22,
           ),
         ),
         bottom: PreferredSize(

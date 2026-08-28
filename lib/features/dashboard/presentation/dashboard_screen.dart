@@ -16,6 +16,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedModuleIndex = 0;
+  bool _isFloatingBarVisible = true;
 
   void _handleSignOut() {
     AuthService.signOut();
@@ -30,9 +31,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _handleDeleteAccount() {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
@@ -62,7 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text(
                 'CANCELAR',
                 style: TextStyle(color: AppColors.textSecondary),
@@ -77,31 +81,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               onPressed: () async {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 bool success = await AuthService.deleteCurrentAccount();
                 if (success) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Sua conta foi excluída permanentemente.',
-                        ),
-                        backgroundColor: Colors.redAccent,
-                        behavior: SnackBarBehavior.floating,
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Sua conta foi excluída permanentemente.',
                       ),
-                    );
-                    Navigator.pushReplacementNamed(context, '/login');
-                  }
+                      backgroundColor: Colors.redAccent,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  navigator.pushReplacementNamed('/login');
                 } else {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Erro ao excluir conta.'),
-                        backgroundColor: Colors.redAccent,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Erro ao excluir conta.'),
+                      backgroundColor: Colors.redAccent,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
                 }
               },
               child: const Text(
@@ -115,77 +115,187 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _navigateToModule(int index) {
+    setState(() {
+      _selectedModuleIndex = index;
+      if (index == 0) {
+        _isFloatingBarVisible = true;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // Modules without outer padding (fullscreen internal padding)
-    final bool isFullScreenModule = _selectedModuleIndex == 1 || _selectedModuleIndex == 2;
+    final bool isFullScreenModule =
+        _selectedModuleIndex == 1 || _selectedModuleIndex == 2 || _selectedModuleIndex == 4;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: isFullScreenModule
-              ? EdgeInsets.zero
-              : const EdgeInsets.only(left: 20.0, right: 20.0, top: 24.0),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: _buildModuleContent(_selectedModuleIndex),
+    return PopScope(
+      canPop: _selectedModuleIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _navigateToModule(0);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (ScrollNotification notification) {
+              if (_selectedModuleIndex == 0 && notification.metrics.axis == Axis.vertical) {
+                if (notification.metrics.pixels <= 10) {
+                  if (!_isFloatingBarVisible) {
+                    setState(() {
+                      _isFloatingBarVisible = true;
+                    });
+                  }
+                } else if (notification is ScrollUpdateNotification) {
+                  final double? delta = notification.scrollDelta;
+                  if (delta != null) {
+                    if (delta > 2.0 && _isFloatingBarVisible) {
+                      setState(() {
+                        _isFloatingBarVisible = false;
+                      });
+                    } else if (delta < -2.0 && !_isFloatingBarVisible) {
+                      setState(() {
+                        _isFloatingBarVisible = true;
+                      });
+                    }
+                  }
+                }
+              }
+              return false;
+            },
+            child: Stack(
+              children: [
+                Padding(
+                  padding: isFullScreenModule
+                      ? EdgeInsets.zero
+                      : const EdgeInsets.only(left: 20.0, right: 20.0, top: 24.0),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: _buildModuleContent(_selectedModuleIndex),
+                  ),
+                ),
+
+                // Floating Bottom Bar locked on Home Dashboard only: Ponto Centered, Chat to the Right
+                // Smoothly hides when scrolled and reappears on top/scroll up
+                if (_selectedModuleIndex == 0)
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 18,
+                    child: AnimatedSlide(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                      offset: _isFloatingBarVisible ? Offset.zero : const Offset(0, 1.8),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        opacity: _isFloatingBarVisible ? 1.0 : 0.0,
+                        child: IgnorePointer(
+                          ignoring: !_isFloatingBarVisible,
+                          child: Row(
+                            children: [
+                              // Counterweight matching chat button width to keep Ponto perfectly centered
+                              const SizedBox(width: 48),
+                              const Spacer(),
+                              _buildFloatingPontoButton(),
+                              const Spacer(),
+                              _buildFloatingChatButton(),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: AppColors.gridLine, width: 1.5),
+    );
+  }
+
+  Widget _buildFloatingPontoButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30),
+        onTap: () => _navigateToModule(1),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                AppColors.primaryGold,
+                Color(0xFFE5C07B),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryGold.withValues(alpha: 0.4),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.fingerprint_rounded,
+                color: Colors.black,
+                size: 22,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'BATER PONTO',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
           ),
         ),
-        child: BottomNavigationBar(
-          backgroundColor: AppColors.surface,
-          currentIndex: _selectedModuleIndex > 4 ? 0 : _selectedModuleIndex,
-          onTap: (index) => setState(() => _selectedModuleIndex = index),
-          selectedItemColor: AppColors.primaryGold,
-          unselectedItemColor: AppColors.textSecondary,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 10,
-            letterSpacing: 0.3,
+      ),
+    );
+  }
+
+  Widget _buildFloatingChatButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(24),
+        onTap: () => _navigateToModule(4),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.primaryGold.withValues(alpha: 0.6),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          unselectedLabelStyle: const TextStyle(fontSize: 10),
-          type: BottomNavigationBarType.fixed,
-          elevation: 8,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.analytics_outlined),
-              activeIcon: Icon(Icons.analytics, color: AppColors.primaryGold),
-              label: 'Dashboard',
+          child: const Center(
+            child: Icon(
+              Icons.chat_bubble_outline_rounded,
+              color: AppColors.primaryGold,
+              size: 22,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.fingerprint_outlined),
-              activeIcon: Icon(Icons.fingerprint, color: AppColors.primaryGold),
-              label: 'Ponto',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_outlined),
-              activeIcon: Icon(
-                Icons.calendar_month,
-                color: AppColors.primaryGold,
-              ),
-              label: 'Agenda',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.construction_outlined),
-              activeIcon: Icon(
-                Icons.construction,
-                color: AppColors.primaryGold,
-              ),
-              label: 'Obras',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_outlined),
-              activeIcon: Icon(Icons.chat, color: AppColors.primaryGold),
-              label: 'Chat',
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -195,20 +305,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     switch (index) {
       case 0:
         return HomeDashboardWidget(
-          onProfileTap: () {
-            setState(() {
-              _selectedModuleIndex = 5;
-            });
-          },
+          onProfileTap: () => _navigateToModule(5),
+          onAgendaTap: () => _navigateToModule(2),
+          onObrasTap: () => _navigateToModule(3),
+          onPontoTap: () => _navigateToModule(1),
+          onChatTap: () => _navigateToModule(4),
         );
       case 1:
-        return const PontoScreen();
+        return PontoScreen(
+          onBackTap: () => _navigateToModule(0),
+        );
       case 2:
-        return const AgendaScreen();
+        return AgendaScreen(
+          onBackTap: () => _navigateToModule(0),
+        );
       case 3:
-        return const ObrasListWidget();
+        return ObrasListWidget(
+          onBackTap: () => _navigateToModule(0),
+        );
       case 4:
-        return const ChatListScreen();
+        return ChatListScreen(
+          onBackTap: () => _navigateToModule(0),
+        );
       case 5:
         return _buildProfileContent();
       default:
@@ -236,11 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  setState(() {
-                    _selectedModuleIndex = 0;
-                  });
-                },
+                onTap: () => _navigateToModule(0),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(

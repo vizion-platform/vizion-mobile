@@ -4,7 +4,9 @@ import '../../../../core/network/auth_service.dart';
 import '../obra_details_screen.dart';
 
 class ObrasListWidget extends StatefulWidget {
-  const ObrasListWidget({super.key});
+  final VoidCallback? onBackTap;
+
+  const ObrasListWidget({super.key, this.onBackTap});
 
   @override
   State<ObrasListWidget> createState() => _ObrasListWidgetState();
@@ -92,11 +94,33 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Cabeçalho com o Título e o Botão Nova Obra
+        // Cabeçalho com o Título e o Botão Voltar
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            if (widget.onBackTap != null) ...[
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: widget.onBackTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.gridLine),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppColors.primaryGold,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+            ],
             const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

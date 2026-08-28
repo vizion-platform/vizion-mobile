@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/ponto_record_model.dart';
 
@@ -49,12 +49,14 @@ class PontoTimelineWidget extends StatelessWidget {
       ),
     ];
 
+    final bool isSmallScreen = MediaQuery.of(context).size.width < 360;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.gridLine, width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -70,40 +72,47 @@ class PontoTimelineWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.timeline_rounded, color: AppColors.primaryGold, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Linha do Tempo do Dia',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.3,
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.timeline_rounded, color: AppColors.primaryGold, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Linha do Tempo',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isSmallScreen ? 13.5 : 15,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
                 ),
-                child: Text(
+                child: const Text(
                   '/4 Batidas',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primaryGold,
-                    fontSize: 10,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
           // Vertical Connected Timeline Items
           ...List.generate(stages.length, (index) {
@@ -113,10 +122,12 @@ class PontoTimelineWidget extends StatelessWidget {
             final isCurrent = stage.type == nextPunchType;
 
             return _buildTimelineItem(
+              context: context,
               stage: stage,
               isCompleted: isCompleted,
               isCurrent: isCurrent,
               isLast: isLast,
+              isSmallScreen: isSmallScreen,
             );
           }),
         ],
@@ -125,10 +136,12 @@ class PontoTimelineWidget extends StatelessWidget {
   }
 
   Widget _buildTimelineItem({
+    required BuildContext context,
     required _TimelineStage stage,
     required bool isCompleted,
     required bool isCurrent,
     required bool isLast,
+    required bool isSmallScreen,
   }) {
     final String timeDisplay = isCompleted
         ? stage.punch!.formattedTimeOnlyMin
@@ -144,8 +157,8 @@ class PontoTimelineWidget extends StatelessWidget {
               // Circle Node
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: 34,
-                height: 34,
+                width: isSmallScreen ? 30 : 34,
+                height: isSmallScreen ? 30 : 34,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCompleted
@@ -171,11 +184,11 @@ class PontoTimelineWidget extends StatelessWidget {
                 ),
                 child: Center(
                   child: isCompleted
-                      ? const Icon(Icons.check_rounded, color: AppColors.primaryGold, size: 18)
+                      ? Icon(Icons.check_rounded, color: AppColors.primaryGold, size: isSmallScreen ? 16 : 18)
                       : Icon(
                           stage.icon,
                           color: isCurrent ? AppColors.primaryGold : Colors.white38,
-                          size: 16,
+                          size: isSmallScreen ? 14 : 16,
                         ),
                 ),
               ),
@@ -185,7 +198,7 @@ class PontoTimelineWidget extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    margin: const EdgeInsets.symmetric(vertical: 3),
                     decoration: BoxDecoration(
                       color: isCompleted
                           ? AppColors.primaryGold.withValues(alpha: 0.4)
@@ -197,14 +210,17 @@ class PontoTimelineWidget extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(width: 14),
+          SizedBox(width: isSmallScreen ? 10 : 14),
 
           // Right: Content Details
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 20.0),
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 16.0),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 10 : 14,
+                  vertical: 9,
+                ),
                 decoration: BoxDecoration(
                   color: isCurrent
                       ? AppColors.primaryGold.withValues(alpha: 0.06)
@@ -224,45 +240,50 @@ class PontoTimelineWidget extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Row(
                             children: [
-                              Text(
-                                stage.title,
-                                style: TextStyle(
-                                  color: isCompleted || isCurrent
-                                      ? Colors.white
-                                      : AppColors.textSecondary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                              Flexible(
+                                child: Text(
+                                  stage.title,
+                                  style: TextStyle(
+                                    color: isCompleted || isCurrent
+                                        ? Colors.white
+                                        : AppColors.textSecondary,
+                                    fontSize: isSmallScreen ? 12.5 : 13.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              if (isCompleted)
+                              if (isCompleted) ...[
+                                const SizedBox(width: 4),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
+                                    horizontal: 4,
+                                    vertical: 1.5,
                                   ),
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryGold.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
-                                    'CONFIRMADO',
+                                    'OK',
                                     style: TextStyle(
                                       color: AppColors.primaryGold,
-                                      fontSize: 9,
+                                      fontSize: 8.5,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                )
-                              else if (isCurrent)
+                                ),
+                              ] else if (isCurrent) ...[
+                                const SizedBox(width: 4),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
+                                    horizontal: 4,
+                                    vertical: 1.5,
                                   ),
                                   decoration: BoxDecoration(
                                     color: AppColors.primaryGold.withValues(alpha: 0.2),
@@ -275,11 +296,12 @@ class PontoTimelineWidget extends StatelessWidget {
                                     'PRÓXIMO',
                                     style: TextStyle(
                                       color: AppColors.primaryGold,
-                                      fontSize: 9,
+                                      fontSize: 8.5,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 2),
@@ -291,7 +313,7 @@ class PontoTimelineWidget extends StatelessWidget {
                               color: isCompleted
                                   ? AppColors.textSecondary
                                   : Colors.white38,
-                              fontSize: 11,
+                              fontSize: isSmallScreen ? 10 : 11,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -299,6 +321,8 @@ class PontoTimelineWidget extends StatelessWidget {
                         ],
                       ),
                     ),
+
+                    const SizedBox(width: 6),
 
                     // Time badge (HH:mm format without seconds)
                     Column(
@@ -313,16 +337,16 @@ class PontoTimelineWidget extends StatelessWidget {
                                 : isCurrent
                                     ? AppColors.primaryGold
                                     : AppColors.textSecondary,
-                            fontSize: 18,
+                            fontSize: isSmallScreen ? 15 : 17,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
                           ),
                         ),
                         Text(
                           isCompleted ? 'registrado' : 'previsto',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 10,
+                            fontSize: isSmallScreen ? 8.5 : 9.5,
                           ),
                         ),
                       ],
