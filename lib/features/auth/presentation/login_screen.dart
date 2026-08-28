@@ -252,12 +252,20 @@ class _LoginScreenState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.blur_on_outlined,
-                  color: AppColors.primaryGold,
-                  size: 36,
+                Image.asset(
+                  'assets/logo.png',
+                  height: 38,
+                  width: 38,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.blur_on_outlined,
+                      color: AppColors.primaryGold,
+                      size: 38,
+                    );
+                  },
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 const Text(
                   'VIZION',
                   style: TextStyle(

@@ -314,9 +314,11 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           // Métricas em Cards
           LayoutBuilder(
             builder: (context, constraints) {
-              final cardWidth = (constraints.maxWidth - 16) / 2;
+              final isWide = constraints.maxWidth >= 560;
+              final halfWidth = (constraints.maxWidth - 16) / 2;
 
               if (role == 'CLIENTE') {
+                final cardWidth = isWide ? (constraints.maxWidth - 48) / 4 : halfWidth;
                 return Wrap(
                   spacing: 16,
                   runSpacing: 16,
@@ -352,72 +354,146 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   ],
                 );
               } else if (role == 'FUNCIONARIO') {
-                return Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
+                if (isWide) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          'Meu Canteiro',
+                          'Bella Vista',
+                          Icons.apartment_outlined,
+                          Colors.blueAccent,
+                          double.infinity,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Atividade Atual',
+                          'Fundação',
+                          Icons.construction_outlined,
+                          AppColors.primaryGold,
+                          double.infinity,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Status de Presença',
+                          'Registrada',
+                          Icons.verified_user_outlined,
+                          Colors.greenAccent,
+                          double.infinity,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return Column(
                   children: [
                     _buildStatCard(
                       'Meu Canteiro',
                       'Bella Vista',
                       Icons.apartment_outlined,
                       Colors.blueAccent,
-                      cardWidth,
+                      constraints.maxWidth,
                     ),
-                    _buildStatCard(
-                      'Atividade Atual',
-                      'Fundação',
-                      Icons.construction_outlined,
-                      AppColors.primaryGold,
-                      cardWidth,
-                    ),
-                    _buildStatCard(
-                      'Status de Presença',
-                      'Registrada',
-                      Icons.verified_user_outlined,
-                      Colors.greenAccent,
-                      cardWidth,
-                    ),
-                    _buildStatCard(
-                      'Segurança',
-                      'MFA OK',
-                      Icons.lock_outline,
-                      Colors.tealAccent,
-                      cardWidth,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            'Atividade Atual',
+                            'Fundação',
+                            Icons.construction_outlined,
+                            AppColors.primaryGold,
+                            double.infinity,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildStatCard(
+                            'Status de Presença',
+                            'Registrada',
+                            Icons.verified_user_outlined,
+                            Colors.greenAccent,
+                            double.infinity,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 );
               } else {
-                return Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
+                if (isWide) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          'Canteiros de Obra',
+                          totalObras.toString(),
+                          Icons.domain_outlined,
+                          AppColors.primaryGold,
+                          double.infinity,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Investimento Total',
+                          _formatCurrency(totalBudget),
+                          Icons.account_balance_wallet_outlined,
+                          Colors.greenAccent,
+                          double.infinity,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Custo Médio / Obra',
+                          _formatCurrency(avgBudget),
+                          Icons.analytics_outlined,
+                          Colors.blueAccent,
+                          double.infinity,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return Column(
                   children: [
-                    _buildStatCard(
-                      'Canteiros de Obra',
-                      totalObras.toString(),
-                      Icons.domain_outlined,
-                      AppColors.primaryGold,
-                      cardWidth,
-                    ),
                     _buildStatCard(
                       'Investimento Total',
                       _formatCurrency(totalBudget),
                       Icons.account_balance_wallet_outlined,
                       Colors.greenAccent,
-                      cardWidth,
+                      constraints.maxWidth,
                     ),
-                    _buildStatCard(
-                      'Custo Médio / Obra',
-                      _formatCurrency(avgBudget),
-                      Icons.analytics_outlined,
-                      Colors.blueAccent,
-                      cardWidth,
-                    ),
-                    _buildStatCard(
-                      'Status de Segurança',
-                      'MFA OK',
-                      Icons.lock_outline,
-                      Colors.tealAccent,
-                      cardWidth,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard(
+                            'Canteiros de Obra',
+                            totalObras.toString(),
+                            Icons.domain_outlined,
+                            AppColors.primaryGold,
+                            double.infinity,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildStatCard(
+                            'Custo Médio / Obra',
+                            _formatCurrency(avgBudget),
+                            Icons.analytics_outlined,
+                            Colors.blueAccent,
+                            double.infinity,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 );
