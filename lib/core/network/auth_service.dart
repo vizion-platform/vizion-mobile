@@ -296,15 +296,13 @@ class AuthService {
 
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/obrasDocumentos'),
+        Uri.parse('$baseUrl/obra-fotos'),
         headers: getHeaders(),
         body: jsonEncode({
-          'id_obra': obraId,
-          'tipo_documento': 'ARQUIVO',
-          'nome_arquivo':
-              'fase_${faseId}_${DateTime.now().millisecondsSinceEpoch}.jpg',
-          'url_arquivo': photoData,
-          'descricao_arquivo': 'Foto de progresso da fase $faseId',
+          'idObra': obraId,
+          'idFase': faseId,
+          'urlFoto': photoData,
+          'descricao': 'Foto de progresso da fase $faseId',
         }),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
