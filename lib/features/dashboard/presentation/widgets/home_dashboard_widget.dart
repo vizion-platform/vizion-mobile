@@ -7,8 +7,19 @@ import '../../../ponto/presentation/ponto_screen.dart';
 
 class HomeDashboardWidget extends StatefulWidget {
   final VoidCallback? onProfileTap;
+  final VoidCallback? onAgendaTap;
+  final VoidCallback? onObrasTap;
+  final VoidCallback? onPontoTap;
+  final VoidCallback? onChatTap;
 
-  const HomeDashboardWidget({super.key, this.onProfileTap});
+  const HomeDashboardWidget({
+    super.key,
+    this.onProfileTap,
+    this.onAgendaTap,
+    this.onObrasTap,
+    this.onPontoTap,
+    this.onChatTap,
+  });
 
   @override
   State<HomeDashboardWidget> createState() => _HomeDashboardWidgetState();
@@ -190,100 +201,85 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header / Boas-vindas
-          GestureDetector(
-            onTap: widget.onProfileTap,
-            behavior: HitTestBehavior.opaque,
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primaryGold, width: 1.5),
-                  ),
-                  child: CircleAvatar(
-                    radius: 22,
-                    backgroundColor: AppColors.surface,
-                    child: Text(
-                      AuthService.nome != null && AuthService.nome!.isNotEmpty
-                          ? AuthService.nome![0].toUpperCase()
-                          : 'U',
-                      style: const TextStyle(
-                        color: AppColors.primaryGold,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          // Header / Boas-vindas + Botões Obras e Agenda no canto superior direito
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: widget.onProfileTap,
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
                     children: [
-                      Text(
-                        'Olá, ${AuthService.nome ?? 'Membro Vizion'}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.primaryGold, width: 1.5),
+                        ),
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppColors.surface,
+                          child: Text(
+                            AuthService.nome != null && AuthService.nome!.isNotEmpty
+                                ? AuthService.nome![0].toUpperCase()
+                                : 'U',
+                            style: const TextStyle(
+                              color: AppColors.primaryGold,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
                         ),
                       ),
-                      Text(
-                        'Perfil: ${role.toUpperCase()}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Olá, ${AuthService.nome ?? 'Membro Vizion'}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Perfil: ${role.toUpperCase()}',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 10,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (widget.onProfileTap != null)
-                  const Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: AppColors.textSecondary,
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Security Banner corporativo
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.primaryGold.withValues(alpha: 0.06),
-              border: Border.all(
-                color: AppColors.primaryGold.withValues(alpha: 0.25),
-                width: 1,
               ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.verified_user_outlined,
-                  color: AppColors.primaryGold,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Autenticação de 2 etapas ativa. Sua conexão está criptografada de ponta a ponta.',
-                    style: TextStyle(
-                      color: AppColors.primaryGold,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              const SizedBox(width: 8),
+
+              // Botões Obras e Agenda lado a lado no canto superior direito
+              _buildTopHeaderButton(
+                icon: Icons.construction_outlined,
+                tooltip: 'Obras',
+                onTap: widget.onObrasTap,
+              ),
+              const SizedBox(width: 8),
+              _buildTopHeaderButton(
+                icon: Icons.calendar_month_outlined,
+                tooltip: 'Agenda',
+                onTap: widget.onAgendaTap,
+              ),
+            ],
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
 
           Text(
             role == 'CLIENTE'
@@ -491,10 +487,14 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PontoScreen()),
-                      );
+                      if (widget.onPontoTap != null) {
+                        widget.onPontoTap!();
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const PontoScreen()),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGold,
@@ -583,7 +583,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: _startChatWithContractor,
+                    onPressed: () {
+                      if (widget.onChatTap != null) {
+                        widget.onChatTap!();
+                      } else {
+                        _startChatWithContractor();
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryGold,
                       foregroundColor: Colors.black,
@@ -741,8 +747,48 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
               ],
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 90),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTopHeaderButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.primaryGold.withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.primaryGold,
+              size: 18,
+            ),
+          ),
+        ),
       ),
     );
   }

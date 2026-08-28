@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/ponto_record_model.dart';
 import '../../data/ponto_service.dart';
@@ -104,6 +104,8 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
     final balanceMinutes = summary.totalBalanceMinutes;
     final isPositiveBalance = balanceMinutes >= 0;
     final balanceFormatted = summary.formatBalance(balanceMinutes);
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isSmallScreen = screenWidth < 360;
 
     return RefreshIndicator(
       color: AppColors.primaryGold,
@@ -116,12 +118,12 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Month Selector Navigation Bar
-            _buildMonthNavigator(),
-            const SizedBox(height: 18),
+            _buildMonthNavigator(isSmallScreen),
+            const SizedBox(height: 16),
 
             // 2. Banco de Horas Metric Cards
-            _buildBancoHorasCards(summary, isPositiveBalance, balanceFormatted),
-            const SizedBox(height: 24),
+            _buildBancoHorasCards(summary, isPositiveBalance, balanceFormatted, isSmallScreen),
+            const SizedBox(height: 20),
 
             // 3. Filter Chips
             _buildFilterChips(),
@@ -131,15 +133,20 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'REGISTROS DIÁRIOS (${_filteredDays.length})',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                Expanded(
+                  child: Text(
+                    'REGISTROS DIÁRIOS (${_filteredDays.length})',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: isSmallScreen ? 10 : 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 InkWell(
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -150,15 +157,15 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                       ),
                     );
                   },
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.download_rounded, color: AppColors.primaryGold, size: 14),
-                      SizedBox(width: 4),
+                      const Icon(Icons.download_rounded, color: AppColors.primaryGold, size: 14),
+                      const SizedBox(width: 4),
                       Text(
                         'Exportar PDF',
                         style: TextStyle(
                           color: AppColors.primaryGold,
-                          fontSize: 11,
+                          fontSize: isSmallScreen ? 10.5 : 11,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -201,16 +208,16 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                 ),
               )
             else
-              ..._filteredDays.map((day) => _buildDayCard(day)),
+              ..._filteredDays.map((day) => _buildDayCard(day, isSmallScreen)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMonthNavigator() {
+  Widget _buildMonthNavigator(bool isSmallScreen) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -220,28 +227,33 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+            icon: const Icon(Icons.chevron_left, color: Colors.white, size: 22),
             onPressed: () => _changeMonth(-1),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),
-          Row(
-            children: [
-              const Icon(Icons.calendar_month, color: AppColors.primaryGold, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                _formatMonthYear(_selectedMonth),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
-                ),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month, color: AppColors.primaryGold, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    _formatMonthYear(_selectedMonth),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isSmallScreen ? 14 : 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right, color: Colors.white, size: 24),
+            icon: const Icon(Icons.chevron_right, color: Colors.white, size: 22),
             onPressed: () => _changeMonth(1),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -255,13 +267,14 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
     PontoMonthlySummary summary,
     bool isPositiveBalance,
     String balanceFormatted,
+    bool isSmallScreen,
   ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isSmallScreen ? 14 : 18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -277,61 +290,73 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'SALDO DO BANCO DE HORAS',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'SALDO DO BANCO DE HORAS',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        balanceFormatted,
-                        style: const TextStyle(
-                          color: AppColors.primaryGold,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              balanceFormatted,
+                              style: TextStyle(
+                                color: AppColors.primaryGold,
+                                fontSize: isSmallScreen ? 24 : 28,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        isPositiveBalance ? Icons.trending_up : Icons.trending_down,
-                        color: AppColors.primaryGold,
-                        size: 24,
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 6),
+                        Icon(
+                          isPositiveBalance ? Icons.trending_up : Icons.trending_down,
+                          color: AppColors.primaryGold,
+                          size: isSmallScreen ? 20 : 24,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGold.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   isPositiveBalance ? 'Crédito' : 'Débito',
                   style: const TextStyle(
                     color: AppColors.primaryGold,
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           const Divider(color: AppColors.gridLine, height: 1),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Sub-metrics 3 columns
           Row(
@@ -342,24 +367,27 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                   summary.formatMinutes(summary.totalWorkedMinutes),
                   Icons.access_time_rounded,
                   AppColors.primaryGold,
+                  isSmallScreen,
                 ),
               ),
-              Container(width: 1, height: 32, color: AppColors.gridLine),
+              Container(width: 1, height: 28, color: AppColors.gridLine),
               Expanded(
                 child: _buildMiniMetric(
                   'Previstas',
                   summary.formatMinutes(summary.totalExpectedMinutes),
                   Icons.schedule_rounded,
                   Colors.white70,
+                  isSmallScreen,
                 ),
               ),
-              Container(width: 1, height: 32, color: AppColors.gridLine),
+              Container(width: 1, height: 28, color: AppColors.gridLine),
               Expanded(
                 child: _buildMiniMetric(
                   'Dias Úteis',
                   '${summary.completedDaysCount} dias',
                   Icons.event_available_rounded,
                   AppColors.primaryGold,
+                  isSmallScreen,
                 ),
               ),
             ],
@@ -369,32 +397,40 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
     );
   }
 
-  Widget _buildMiniMetric(String label, String value, IconData icon, Color color) {
+  Widget _buildMiniMetric(String label, String value, IconData icon, Color color, bool isSmallScreen) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 3.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 12, color: color),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 10,
+              Icon(icon, size: 11, color: color),
+              const SizedBox(width: 3),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: isSmallScreen ? 8.5 : 9.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isSmallScreen ? 10.5 : 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -439,7 +475,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
     );
   }
 
-  Widget _buildDayCard(PontoDay day) {
+  Widget _buildDayCard(PontoDay day, bool isSmallScreen) {
     final dayNum = day.date.day.toString().padLeft(2, '0');
     final monthNum = day.date.month.toString().padLeft(2, '0');
     final weekdayAbbr = _getWeekdayAbbr(day.date.weekday);
@@ -465,64 +501,72 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                 }
               : null,
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(isSmallScreen ? 11 : 14),
             child: Column(
               children: [
                 // Top Row: Date, Status, and Total
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isWeekend ? Colors.white10 : AppColors.primaryGold.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '$dayNum/$monthNum • $weekdayAbbr',
-                            style: TextStyle(
-                              color: isWeekend ? Colors.white70 : AppColors.primaryGold,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                    // Left side: Date & Status
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isWeekend ? Colors.white10 : AppColors.primaryGold.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '$dayNum/$monthNum • $weekdayAbbr',
+                              style: TextStyle(
+                                color: isWeekend ? Colors.white70 : AppColors.primaryGold,
+                                fontSize: isSmallScreen ? 10.5 : 11.5,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF222222),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: AppColors.gridLine),
-                          ),
-                          child: Text(
-                            day.statusLabel,
-                            style: TextStyle(
-                              color: isWeekend ? AppColors.textSecondary : Colors.white70,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF222222),
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(color: AppColors.gridLine),
+                              ),
+                              child: Text(
+                                day.statusLabel,
+                                style: TextStyle(
+                                  color: isWeekend ? AppColors.textSecondary : Colors.white70,
+                                  fontSize: isSmallScreen ? 9 : 9.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
-                    if (!isWeekend && day.punches.isNotEmpty)
+                    if (!isWeekend && day.punches.isNotEmpty) ...[
+                      const SizedBox(width: 6),
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             day.formattedWorkedHours,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: isSmallScreen ? 11.5 : 12.5,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                             decoration: BoxDecoration(
                               color: AppColors.primaryGold.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(4),
@@ -530,18 +574,19 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                             ),
                             child: Text(
                               day.formattedBalanceHours,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.primaryGold,
-                                fontSize: 10,
+                                fontSize: isSmallScreen ? 9 : 9.5,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                         ],
                       ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // 4 Time slots
                 if (isWeekend)
@@ -558,12 +603,11 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                   )
                 else
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildTimeSlot('Entrada', day.entrada?.formattedTimeOnlyMin ?? '--:--', day.entrada != null),
-                      _buildTimeSlot('Saída Almoço', day.saidaAlmoco?.formattedTimeOnlyMin ?? '--:--', day.saidaAlmoco != null),
-                      _buildTimeSlot('Volta Almoço', day.retornoAlmoco?.formattedTimeOnlyMin ?? '--:--', day.retornoAlmoco != null),
-                      _buildTimeSlot('Saída', day.saida?.formattedTimeOnlyMin ?? '--:--', day.saida != null),
+                      Expanded(child: _buildTimeSlot('Entrada', day.entrada?.formattedTimeOnlyMin ?? '--:--', day.entrada != null, isSmallScreen)),
+                      Expanded(child: _buildTimeSlot(isSmallScreen ? 'Saída Alm.' : 'Saída Almoço', day.saidaAlmoco?.formattedTimeOnlyMin ?? '--:--', day.saidaAlmoco != null, isSmallScreen)),
+                      Expanded(child: _buildTimeSlot(isSmallScreen ? 'Volta Alm.' : 'Volta Almoço', day.retornoAlmoco?.formattedTimeOnlyMin ?? '--:--', day.retornoAlmoco != null, isSmallScreen)),
+                      Expanded(child: _buildTimeSlot('Saída', day.saida?.formattedTimeOnlyMin ?? '--:--', day.saida != null, isSmallScreen)),
                     ],
                   ),
               ],
@@ -574,25 +618,31 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
     );
   }
 
-  Widget _buildTimeSlot(String label, String time, bool isRecorded) {
+  Widget _buildTimeSlot(String label, String time, bool isRecorded, bool isSmallScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
-            fontSize: 9,
+            fontSize: isSmallScreen ? 8.5 : 9,
             fontWeight: FontWeight.w500,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
-        Text(
-          time,
-          style: TextStyle(
-            color: isRecorded ? Colors.white : Colors.white24,
-            fontSize: 12,
-            fontWeight: isRecorded ? FontWeight.bold : FontWeight.normal,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            time,
+            style: TextStyle(
+              color: isRecorded ? Colors.white : Colors.white24,
+              fontSize: isSmallScreen ? 11 : 12,
+              fontWeight: isRecorded ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ),
       ],

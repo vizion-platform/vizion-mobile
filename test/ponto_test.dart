@@ -5,6 +5,7 @@ import 'package:vizion_mobile/features/ponto/domain/ponto_record_model.dart';
 import 'package:vizion_mobile/features/ponto/data/ponto_service.dart';
 import 'package:vizion_mobile/features/ponto/presentation/ponto_screen.dart';
 import 'package:vizion_mobile/features/ponto/presentation/widgets/slide_to_punch_button.dart';
+import 'package:vizion_mobile/features/ponto/presentation/widgets/ponto_timeline_widget.dart';
 
 void main() {
   setUp(() {
@@ -62,6 +63,14 @@ void main() {
       expect(res2.punch.type, equals(PontoType.saidaAlmoco));
       expect(PontoService.getNextPunchType(res2.day), equals(PontoType.retornoAlmoco));
     });
+
+    test('PontoService loads and retains previous days history in Espelho de Ponto', () async {
+      final now = DateTime.now();
+      final summary = await PontoService.getMonthPonto(now.year, now.month);
+      expect(summary.year, equals(now.year));
+      expect(summary.month, equals(now.month));
+      expect(summary.days, isNotNull);
+    });
   });
 
   group('PontoScreen Widget Tests', () {
@@ -89,7 +98,7 @@ void main() {
       expect(find.text('Horas Trabalhadas Hoje'), findsOneWidget);
 
       // Verify Timeline section & stages
-      expect(find.text('Linha do Tempo do Dia'), findsOneWidget);
+      expect(find.text('Linha do Tempo'), findsOneWidget);
       expect(find.text('Entrada'), findsWidgets);
       expect(find.text('Saída Almoço'), findsWidgets);
       expect(find.text('Volta Almoço'), findsWidgets);
@@ -106,6 +115,70 @@ void main() {
       expect(find.text('Previstas'), findsOneWidget);
     });
 
+    testWidgets('Ponto subwidgets on narrow 340x831 dimensions', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(340, 831);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final today = await PontoService.getTodayPonto();
+      final nextType = PontoService.getNextPunchType(today);
+
+      // Subtest 1: SlideToPunchButton alone
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14.0),
+              child: SlideToPunchButton(
+                nextPunchType: nextType,
+                onConfirmed: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull, reason: 'SlideToPunchButton overflowed');
+
+      // Subtest 2: PontoTimelineWidget alone
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14.0),
+              child: PontoTimelineWidget(
+                todayDay: today,
+                nextPunchType: nextType,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull, reason: 'PontoTimelineWidget overflowed');
+
+      // Subtest 3: Full PontoScreen (Bater Ponto Tab)
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: PontoScreen(),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull, reason: 'PontoScreen Bater Ponto tab overflowed');
+
+      // Subtest 4: Switch to Espelho de Ponto Tab on 340x831
+      await tester.tap(find.text('Espelho de Ponto'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('SALDO DO BANCO DE HORAS'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'PontoScreen Espelho de Ponto tab overflowed');
+    });
+
     testWidgets('SlideToPunchButton triggers confirmation on slide', (tester) async {
       bool confirmed = false;
 
@@ -114,7 +187,7 @@ void main() {
           home: Scaffold(
             body: Center(
               child: SizedBox(
-                width: 350,
+                width: 340,
                 child: SlideToPunchButton(
                   nextPunchType: PontoType.entrada,
                   onConfirmed: () {

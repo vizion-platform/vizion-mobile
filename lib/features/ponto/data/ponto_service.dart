@@ -27,42 +27,65 @@ class PontoService {
     }
   }
 
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    if (value is List && value.isNotEmpty) {
+      final year = value[0] as int;
+      final month = value.length > 1 ? value[1] as int : 1;
+      final day = value.length > 2 ? value[2] as int : 1;
+      final hour = value.length > 3 ? value[3] as int : 0;
+      final minute = value.length > 4 ? value[4] as int : 0;
+      final second = value.length > 5 ? value[5] as int : 0;
+      return DateTime(year, month, day, hour, minute, second);
+    }
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    try {
+      return DateTime.parse(value.toString());
+    } catch (_) {
+      return DateTime.now();
+    }
+  }
+
   /// Converts a vizion-api RegistroPontoResponse Map into PontoDay
   static PontoDay _fromApiResponse(Map<String, dynamic> item) {
-    final DateTime date = DateTime.parse(item['data']);
+    final DateTime parsedDate = _parseDateTime(item['data']);
+    final DateTime date = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
     final List<PontoPunch> punches = [];
     final String location = item['localizacao'] ?? 'Canteiro de Obras • GPS Validado';
-    final int id = item['id'] ?? 0;
+    final dynamic rawId = item['id'] ?? 'db';
 
     if (item['horaEntrada'] != null) {
       punches.add(PontoPunch(
-        id: 'api_${id}_entrada',
+        id: 'api_${rawId}_entrada',
         type: PontoType.entrada,
-        timestamp: DateTime.parse(item['horaEntrada']),
+        timestamp: _parseDateTime(item['horaEntrada']),
         location: location,
       ));
     }
     if (item['horaSaidaAlmoco'] != null) {
       punches.add(PontoPunch(
-        id: 'api_${id}_saida_almoco',
+        id: 'api_${rawId}_saida_almoco',
         type: PontoType.saidaAlmoco,
-        timestamp: DateTime.parse(item['horaSaidaAlmoco']),
+        timestamp: _parseDateTime(item['horaSaidaAlmoco']),
         location: location,
       ));
     }
     if (item['horaRetornoAlmoco'] != null) {
       punches.add(PontoPunch(
-        id: 'api_${id}_retorno_almoco',
+        id: 'api_${rawId}_retorno_almoco',
         type: PontoType.retornoAlmoco,
-        timestamp: DateTime.parse(item['horaRetornoAlmoco']),
+        timestamp: _parseDateTime(item['horaRetornoAlmoco']),
         location: location,
       ));
     }
     if (item['horaSaida'] != null) {
       punches.add(PontoPunch(
-        id: 'api_${id}_saida',
+        id: 'api_${rawId}_saida',
         type: PontoType.saida,
-        timestamp: DateTime.parse(item['horaSaida']),
+        timestamp: _parseDateTime(item['horaSaida']),
         location: location,
       ));
     }
@@ -76,11 +99,11 @@ class PontoService {
     );
   }
 
-  /// Load today's PontoDay (from API or local cache)
+  /// Load today's PontoDay (from API database or local cache)
   static Future<PontoDay> getTodayPonto() async {
     final now = DateTime.now();
 
-    // 1. Try to fetch from API
+    // 1. Try to fetch from Database API
     try {
       final response = await http.get(
         Uri.parse('${AuthService.baseUrl}/ponto/meu-ponto'),
@@ -89,9 +112,14 @@ class PontoService {
 
       if (response.statusCode == 200) {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
-        final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
         final todayItem = list.firstWhere(
-          (e) => (e['data'] as String?)?.startsWith(todayStr) == true,
+          (e) {
+            if (e is! Map) return false;
+            final dataVal = e['data'];
+            if (dataVal == null) return false;
+            final dt = _parseDateTime(dataVal);
+            return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+          },
           orElse: () => null,
         );
 
@@ -138,10 +166,9 @@ class PontoService {
     PontoDay updatedDay;
     PontoPunch returnedPunch = localPunch;
 
-    // 1. Send to vizion-api backend
+    // 1. Send to vizion-api database backend
     try {
       final body = jsonEncode({
-        'idFuncionario': AuthService.userId,
         'tipoBatida': _mapTypeToApi(type),
         'localizacao': location,
       });
@@ -215,11 +242,27 @@ class PontoService {
     return null; // All 4 daily punches registered
   }
 
-  /// Loads full month timesheet (Espelho de Ponto) from vizion-api with local cache
+  /// Loads full month timesheet (Espelho de Ponto) from database API with local cache
   static Future<PontoMonthlySummary> getMonthPonto(int year, int month) async {
-    List<PontoDay> days = [];
+    final Map<String, PontoDay> dayMap = {};
 
-    // 1. Try to fetch from API
+    // 1. First, load existing local storage cache
+    final prefs = await SharedPreferences.getInstance();
+    final key = _getMonthKey(year, month);
+    final jsonStr = prefs.getString(key);
+
+    if (jsonStr != null && jsonStr.isNotEmpty) {
+      try {
+        final List<dynamic> list = jsonDecode(jsonStr);
+        for (var e in list) {
+          final day = PontoDay.fromMap(Map<String, dynamic>.from(e));
+          final dayKey = '${day.date.year}-${day.date.month.toString().padLeft(2, '0')}-${day.date.day.toString().padLeft(2, '0')}';
+          dayMap[dayKey] = day;
+        }
+      } catch (_) {}
+    }
+
+    // 2. Fetch fresh records from database API (/ponto/meu-ponto)
     try {
       final response = await http.get(
         Uri.parse('${AuthService.baseUrl}/ponto/meu-ponto'),
@@ -228,39 +271,28 @@ class PontoService {
 
       if (response.statusCode == 200) {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
-        final monthStr = '$year-${month.toString().padLeft(2, '0')}';
-
         for (var item in list) {
-          final dataStr = item['data'] as String?;
-          if (dataStr != null && dataStr.startsWith(monthStr)) {
-            days.add(_fromApiResponse(Map<String, dynamic>.from(item)));
+          if (item is Map) {
+            final pontoDay = _fromApiResponse(Map<String, dynamic>.from(item));
+            if (pontoDay.date.year == year && pontoDay.date.month == month) {
+              final dayKey = '${pontoDay.date.year}-${pontoDay.date.month.toString().padLeft(2, '0')}-${pontoDay.date.day.toString().padLeft(2, '0')}';
+              dayMap[dayKey] = pontoDay;
+            }
           }
-        }
-        days.sort((a, b) => a.date.compareTo(b.date));
-        if (days.isNotEmpty) {
-          await _saveMonthDays(year, month, days);
         }
       }
     } catch (_) {
       // Offline fallback
     }
 
-    // 2. If API was empty or offline, load from local storage
-    if (days.isEmpty) {
-      final prefs = await SharedPreferences.getInstance();
-      final key = _getMonthKey(year, month);
-      final jsonStr = prefs.getString(key);
+    final List<PontoDay> days = dayMap.values.toList();
+    days.sort((a, b) => a.date.compareTo(b.date));
 
-      if (jsonStr != null && jsonStr.isNotEmpty) {
-        try {
-          final List<dynamic> list = jsonDecode(jsonStr);
-          days = list.map((e) => PontoDay.fromMap(Map<String, dynamic>.from(e))).toList();
-          days.sort((a, b) => a.date.compareTo(b.date));
-        } catch (_) {}
-      }
+    // 3. Update local cache with complete merged history
+    if (days.isNotEmpty) {
+      await _saveMonthDays(year, month, days);
     }
 
-    // No fake mock history generated — starts clean (zerado) and accumulates actual records
     return PontoMonthlySummary(
       year: year,
       month: month,

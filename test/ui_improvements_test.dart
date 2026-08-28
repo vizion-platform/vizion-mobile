@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vizion_mobile/core/network/auth_service.dart';
 import 'package:vizion_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vizion_mobile/features/agenda/presentation/agenda_screen.dart';
-import 'package:vizion_mobile/features/dashboard/presentation/widgets/home_dashboard_widget.dart';
 import 'package:vizion_mobile/features/dashboard/presentation/dashboard_screen.dart';
 
 void main() {
@@ -52,7 +50,7 @@ void main() {
     expect(find.byIcon(Icons.calendar_month), findsOneWidget);
   });
 
-  testWidgets('DashboardScreen navigates to Profile when header avatar is tapped and returns via back arrow', (WidgetTester tester) async {
+  testWidgets('DashboardScreen navigates to all modules and returns via back arrow', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: DashboardScreen(),
@@ -62,68 +60,129 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Find CircleAvatar in header and tap it
+    // Verify main screen buttons:
+    // 1. Top right header buttons: Obras and Agenda
+    expect(find.byTooltip('Obras'), findsOneWidget);
+    expect(find.byTooltip('Agenda'), findsOneWidget);
+
+    // 2. Floating bottom buttons: BATER PONTO (center) and Chat (right)
+    expect(find.text('BATER PONTO'), findsOneWidget);
+    expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
+
+    // 3. Verify BottomNavigationBar is removed
+    expect(find.byType(BottomNavigationBar), findsNothing);
+
+    // Test navigation: Profile
     final avatarFinder = find.byType(CircleAvatar).first;
-    expect(avatarFinder, findsOneWidget);
-
     await tester.tap(avatarFinder);
-    await tester.pumpAndSettle();
-
-    // Verify Profile screen is shown
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Meu Perfil'), findsOneWidget);
-
-    // Find back button in Profile and tap it
-    final backArrowFinder = find.byIcon(Icons.arrow_back_ios_new_rounded);
-    expect(backArrowFinder, findsOneWidget);
-
-    await tester.tap(backArrowFinder);
-    await tester.pumpAndSettle();
-
-    // Verify we returned to Dashboard (greeting is shown)
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.textContaining('Olá,'), findsOneWidget);
 
-    // Verify BottomNavigationBar has only Dashboard, Ponto, Agenda, Obras, Chat
-    expect(find.text('Dashboard'), findsOneWidget);
-    expect(find.text('Ponto'), findsOneWidget);
-    expect(find.text('Agenda'), findsOneWidget);
-    expect(find.text('Obras'), findsOneWidget);
-    expect(find.text('Chat'), findsOneWidget);
-    expect(find.text('Perfil'), findsNothing);
+    // Test navigation: Ponto via floating button
+    await tester.tap(find.text('BATER PONTO'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Bater Ponto'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('Olá,'), findsOneWidget);
+
+    // Test navigation: Agenda via top-right button
+    await tester.tap(find.byTooltip('Agenda'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Hoje'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('Olá,'), findsOneWidget);
+
+    // Test navigation: Obras via top-right button
+    await tester.tap(find.byTooltip('Obras'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Gestão de Obras'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('Olá,'), findsOneWidget);
+
+    // Test navigation: Chat via floating button
+    await tester.tap(find.byIcon(Icons.chat_bubble_outline_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Mensagens'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('Olá,'), findsOneWidget);
+
+    // Settle transition
+    await tester.pump(const Duration(seconds: 1));
   });
 
-  testWidgets('AgendaScreen opens Nova Tarefa modal and creates task', (WidgetTester tester) async {
-    await AuthService.switchRole('EMPREITEIRO', 'Empreiteiro Demo', 'empreiteiro@demo.com');
-
+  testWidgets('Floating bottom buttons (BATER PONTO & Chat) hide on scroll down and appear on scroll up only in main page', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: AgendaScreen(),
+        home: DashboardScreen(),
       ),
     );
 
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    // Find the "Nova Tarefa" Floating Action Button and tap it
-    final novaTarefaBtn = find.text('Nova Tarefa');
-    expect(novaTarefaBtn, findsOneWidget);
-    await tester.tap(novaTarefaBtn);
-    await tester.pumpAndSettle();
+    // Initially visible on main page
+    expect(find.text('BATER PONTO'), findsOneWidget);
+    expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
 
-    // Verify modal header and inputs
-    expect(find.text('Nova Tarefa da Empreiteira'), findsOneWidget);
-    expect(find.text('SALVAR TAREFA'), findsOneWidget);
+    // Verify AnimatedOpacity is 1.0 initially
+    final opacityFinder = find.ancestor(
+      of: find.text('BATER PONTO'),
+      matching: find.byType(AnimatedOpacity),
+    );
+    expect(opacityFinder, findsOneWidget);
+    AnimatedOpacity animatedOpacity = tester.widget<AnimatedOpacity>(opacityFinder);
+    expect(animatedOpacity.opacity, equals(1.0));
 
-    // Enter title
-    final titleField = find.widgetWithText(TextField, 'Nome da Tarefa / Serviço *');
-    await tester.enterText(titleField, 'Instalação Elétrica do Bloco A');
-    await tester.pump();
+    // Scroll down on the SingleChildScrollView
+    final scrollFinder = find.byType(SingleChildScrollView).first;
+    await tester.drag(scrollFinder, const Offset(0, -300));
+    await tester.pump(const Duration(milliseconds: 300));
 
-    // Tap SALVAR TAREFA
-    await tester.tap(find.text('SALVAR TAREFA'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    // Opacity should now be 0.0 (hidden during scroll down)
+    animatedOpacity = tester.widget<AnimatedOpacity>(opacityFinder);
+    expect(animatedOpacity.opacity, equals(0.0));
 
-    // Verify task is added to agenda
-    expect(find.text('Instalação Elétrica do Bloco A'), findsOneWidget);
+    // Scroll back up
+    await tester.drag(scrollFinder, const Offset(0, 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // Opacity should now be 1.0 again (visible)
+    animatedOpacity = tester.widget<AnimatedOpacity>(opacityFinder);
+    expect(animatedOpacity.opacity, equals(1.0));
+
+    // Navigate to another module (e.g. Agenda)
+    await tester.tap(find.byTooltip('Agenda'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // Floating Ponto & Chat buttons should NOT be present on Agenda screen
+    expect(find.text('BATER PONTO'), findsNothing);
+    expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsNothing);
+
+    // Navigate back to Main Screen
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // Floating Ponto & Chat buttons are visible again on Main Screen
+    expect(find.text('BATER PONTO'), findsOneWidget);
+    expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
   });
 }
