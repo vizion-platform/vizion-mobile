@@ -29,7 +29,9 @@ class AuthService {
     final r = (_role ?? '').toUpperCase();
     return r == 'FUNCIONARIO' ||
         r == 'COLABORADOR' ||
-        r == 'MOBILE-FUNCIONARIO';
+        r == 'MOBILE-FUNCIONARIO' ||
+        r == 'PINTOR' ||
+        r == 'ALMOXARIFE';
   }
 
   static bool get isCliente {
