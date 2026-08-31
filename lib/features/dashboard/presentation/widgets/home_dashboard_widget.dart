@@ -790,7 +790,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Status: ${obra['status'] ?? 'PLANEJAMENTO'}',
+                                'Status: ${AuthService.formatStatus(obra['status'] ?? 'PLANEJAMENTO')}',
                                 style: const TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 11,

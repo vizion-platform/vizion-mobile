@@ -207,7 +207,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
                                               child: Text(
-                                                event['status'] ?? 'OK',
+                                                AuthService.formatStatus(event['status'] ?? 'OK'),
                                                 style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
                                               ),
                                             ),

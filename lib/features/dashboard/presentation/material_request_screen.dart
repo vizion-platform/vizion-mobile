@@ -231,7 +231,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  status,
+                                  AuthService.formatStatus(status),
                                   style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 11),
                                 ),
                               ),

@@ -308,7 +308,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                                       ),
                                     ),
                                     child: Text(
-                                      obra['status'] ?? 'N/A',
+                                      AuthService.formatStatus(obra['status'] ?? 'N/A'),
                                       style: TextStyle(
                                         color: statusColor,
                                         fontWeight: FontWeight.bold,

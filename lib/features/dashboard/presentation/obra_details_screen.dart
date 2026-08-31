@@ -460,7 +460,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                   border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
                                                 ),
                                                 child: Text(
-                                                  status,
+                                                  AuthService.formatStatus(status),
                                                   style: TextStyle(color: color, fontSize: 8.5, fontWeight: FontWeight.bold),
                                                 ),
                                               ),

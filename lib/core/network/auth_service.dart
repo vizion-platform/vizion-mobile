@@ -20,6 +20,28 @@ class AuthService {
   static String? get currentUserEmail => _email;
   static int? get userId => _userId;
 
+  static String formatStatus(Object? raw) {
+    final value = (raw ?? '').toString().trim().toUpperCase();
+    const labels = {
+      'AGUARDANDO_ACEITE': 'Aguardando aceite',
+      'AGUARDANDO_EQUIPE': 'Aguardando equipe',
+      'PLANEJADA': 'Planejada',
+      'PLANEJAMENTO': 'Planejamento',
+      'EM_ANDAMENTO': 'Em andamento',
+      'EM_EXECUCAO': 'Em execução',
+      'PAUSADA': 'Pausada',
+      'FINALIZADA': 'Finalizada',
+      'FINALIZADO': 'Finalizado',
+      'CONCLUIDA': 'Concluída',
+      'CONCLUIDO': 'Concluído',
+      'CANCELADA': 'Cancelada',
+      'CANCELADO': 'Cancelado',
+    };
+    if (labels.containsKey(value)) return labels[value]!;
+    return value.replaceAll('_', ' ').toLowerCase().split(' ').map((word) =>
+      word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}').join(' ');
+  }
+
   static bool get isEmpreiteiro {
     final r = (_role ?? '').toUpperCase();
     return r == 'EMPREITEIRO' || r == 'ADMIN' || r == 'GESTOR';
