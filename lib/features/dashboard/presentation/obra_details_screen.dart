@@ -502,11 +502,12 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                       height: 70,
                                                       color: AppColors.background,
                                                       child: photoStr.startsWith('data:image/')
-                                                              ? Image.memory(
-                                                                  base64Decode(photoStr.split(',')[1]),
-                                                                  fit: BoxFit.cover,
-                                                                )
-                                                              : const Icon(Icons.broken_image_outlined, color: AppColors.textSecondary),
+                                                          ? Image.memory(base64Decode(photoStr.split(',')[1]), fit: BoxFit.cover)
+                                                          : Image.network(
+                                                              photoStr,
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined, color: AppColors.textSecondary),
+                                                            ),
                                                     ),
                                                   );
                                                 },

@@ -60,8 +60,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       });
       if (!connected) {
         _startFallbackTimer();
-      } else {
-        _stopFallbackTimer();
       }
     }
   }
@@ -69,7 +67,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void _startFallbackTimer() {
     if (_fallbackTimer != null) return;
     print('Iniciando fallback de polling periodico HTTP...');
-    _fallbackTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+    // O backend persiste por REST, mas não publica eventos MQTT de saída.
+    // Mantemos a leitura sincronizada mesmo quando o socket conecta.
+    _fallbackTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       _pollMessages();
     });
   }
@@ -83,10 +83,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _pollMessages() async {
-    if (!_isSocketConnected && mounted) {
+    if (mounted) {
       try {
         final data = await _chatService.fetchMessages(widget.chatId);
-        if (mounted && !_isSocketConnected) {
+        if (mounted) {
           if (data.length != _messages.length) {
             setState(() {
               _messages = data;
@@ -139,6 +139,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       }
     });
     _chatService.subscribeToChat(widget.chatId);
+    _startFallbackTimer();
   }
 
   void _scrollToBottom({bool delayed = false}) {
@@ -168,8 +169,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         _errorMessage = '';
       });
       _scrollToBottom();
-    } catch (_) {
-      if (mounted) setState(() => _errorMessage = 'A mensagem não foi enviada. Tente novamente.');
+    } catch (error) {
+      if (mounted) setState(() => _errorMessage = _chatService.messageFromError(error));
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
