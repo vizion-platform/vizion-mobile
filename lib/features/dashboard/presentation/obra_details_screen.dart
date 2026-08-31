@@ -5,7 +5,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_room_screen.dart';
 import '../../chat/data/chat_network_service.dart';
-import 'widgets/camera_simulator_screen.dart';
 
 class ObraDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> obra;
@@ -160,33 +159,15 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         }
       }
     } catch (e) {
-      debugPrint('Erro ao acessar camera real, abrindo simulador: $e');
+      debugPrint('Erro ao acessar câmera: $e');
       if (!mounted) return;
-      final photoData = await Navigator.push<String>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CameraSimulatorScreen(
-            phaseName: fase['nome_fase'] ?? 'Fase',
-          ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível acessar a câmera. Verifique a permissão do aplicativo.'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
         ),
       );
-
-      if (photoData != null) {
-        setState(() {
-          _isLoading = true;
-        });
-        await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], photoData);
-        await _loadFases();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Foto simulada salva com sucesso!'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
     }
   }
 
@@ -520,14 +501,12 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                       width: 70,
                                                       height: 70,
                                                       color: AppColors.background,
-                                                      child: photoStr.startsWith('mock-camera-')
-                                                          ? _buildMockImagePreview(photoStr)
-                                                          : photoStr.startsWith('data:image/')
+                                                      child: photoStr.startsWith('data:image/')
                                                               ? Image.memory(
                                                                   base64Decode(photoStr.split(',')[1]),
                                                                   fit: BoxFit.cover,
                                                                 )
-                                                              : const Icon(Icons.image, color: AppColors.textSecondary),
+                                                              : const Icon(Icons.broken_image_outlined, color: AppColors.textSecondary),
                                                     ),
                                                   );
                                                 },
@@ -536,7 +515,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                           ],
 
                                           // Controles de Ação do Empreiteiro
-                                          if (role == 'EMPREITEIRO' || role == 'EMPREITEIRA' || role == 'ADMIN') ...[
+                                          if (role == 'EMPREITEIRO' || role == 'EMPREITEIRA' || role == 'ADMIN' || role == 'FUNCIONARIO' || role == 'SUPERVISOR' || role == 'PINTOR' || role == 'ALMOXARIFE') ...[
                                             const Divider(color: AppColors.gridLine, height: 24),
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -585,47 +564,6 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         const SizedBox(height: 2),
         Text(date, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
       ],
-    );
-  }
-
-  Widget _buildMockImagePreview(String photoStr) {
-    final phaseType = photoStr.replaceFirst('mock-camera-', '');
-    Color previewBg = Colors.grey;
-    IconData previewIcon = Icons.home;
-    String label = 'Construção';
-
-    if (phaseType.contains('Projetos')) {
-      previewBg = Colors.blueGrey;
-      previewIcon = Icons.draw_outlined;
-      label = 'Projetos';
-    } else if (phaseType.contains('Fundação')) {
-      previewBg = Colors.brown;
-      previewIcon = Icons.foundation_outlined;
-      label = 'Fundação';
-    } else if (phaseType.contains('Superestrutura')) {
-      previewBg = Colors.blue;
-      previewIcon = Icons.domain;
-      label = 'Estrutura';
-    } else if (phaseType.contains('Alvenaria')) {
-      previewBg = Colors.orange;
-      previewIcon = Icons.square;
-      label = 'Tijolos';
-    } else if (phaseType.contains('Acabamento')) {
-      previewBg = Colors.teal;
-      previewIcon = Icons.format_paint_outlined;
-      label = 'Acabamento';
-    }
-
-    return Container(
-      color: previewBg.withValues(alpha: 0.25),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(previewIcon, color: previewBg, size: 24),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: previewBg, fontSize: 7, fontWeight: FontWeight.bold)),
-        ],
-      ),
     );
   }
 

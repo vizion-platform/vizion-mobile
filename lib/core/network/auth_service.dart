@@ -27,26 +27,14 @@ class AuthService {
 
   static bool get isFuncionario {
     final r = (_role ?? '').toUpperCase();
-    return r == 'FUNCIONARIO' || r == 'COLABORADOR' || r == 'MOBILE-FUNCIONARIO';
+    return r == 'FUNCIONARIO' ||
+        r == 'COLABORADOR' ||
+        r == 'MOBILE-FUNCIONARIO';
   }
 
   static bool get isCliente {
     final r = (_role ?? '').toUpperCase();
     return r == 'CLIENTE';
-  }
-
-  static Future<void> switchRole(String newRole, String newName, String newEmail) async {
-    _role = newRole;
-    _nome = newName;
-    _email = newEmail;
-    if (_accessToken == null || _accessToken!.isEmpty) {
-      _accessToken = 'demo_session_token';
-    }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('role', newRole);
-    await prefs.setString('nome', newName);
-    await prefs.setString('email', newEmail);
-    await prefs.setString('accessToken', _accessToken!);
   }
 
   // Initialize and load session from SharedPreferences
@@ -349,6 +337,83 @@ class AuthService {
     } catch (e) {
       print('Erro ao criar obra: $e');
       rethrow;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchCalendarioEvents({
+    int? obraId,
+  }) async {
+    try {
+      final queryParameters =
+          obraId == null ? null : <String, String>{'obraId': obraId.toString()};
+      final response = await http.get(
+        Uri.parse('$baseUrl/calendario').replace(
+          queryParameters: queryParameters,
+        ),
+        headers: getHeaders(),
+      );
+
+      if (response.statusCode != 200) return [];
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data.map((item) => Map<String, dynamic>.from(item)).toList();
+    } catch (e) {
+      print('Erro ao carregar eventos do calendário: $e');
+      return [];
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchSolicitacoesMaterial({
+    int? obraId,
+  }) async {
+    try {
+      final queryParameters =
+          obraId == null ? null : <String, String>{'obraId': obraId.toString()};
+      final response = await http.get(
+        Uri.parse('$baseUrl/solicitacoes-material').replace(
+          queryParameters: queryParameters,
+        ),
+        headers: getHeaders(),
+      );
+
+      if (response.statusCode != 200) return [];
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data.map((item) => Map<String, dynamic>.from(item)).toList();
+    } catch (e) {
+      print('Erro ao carregar solicitações de material: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> createSolicitacaoMaterial(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/solicitacoes-material'),
+        headers: {...getHeaders(), 'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('Erro ao criar solicitação de material: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> aprovarSolicitacaoMaterial(
+    int id,
+    String observacaoSupervisor,
+  ) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/solicitacoes-material/$id/aprovar'),
+        headers: {...getHeaders(), 'Content-Type': 'application/json'},
+        body: jsonEncode({'observacaoSupervisor': observacaoSupervisor}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Erro ao aprovar solicitação de material: $e');
+      return false;
     }
   }
 

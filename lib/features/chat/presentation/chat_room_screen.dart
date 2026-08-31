@@ -31,6 +31,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   bool _isSocketConnected = false;
+  bool _isSending = false;
   Timer? _fallbackTimer;
 
   @override
@@ -152,23 +153,25 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     });
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-
-    final localMsg = _chatService.sendMessage(widget.chatId, text);
-    setState(() {
-      _messages.add(localMsg);
-    });
-    _messageController.clear();
-
-    // Smooth scrolling to bottom after sending
-    _scrollToBottom();
-
-    if (!_isSocketConnected) {
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        _pollMessages();
+    if (text.isEmpty || _isSending) return;
+    setState(() => _isSending = true);
+    try {
+      final persisted = await _chatService.sendMessage(widget.chatId, text);
+      if (!mounted) return;
+      setState(() {
+        if (!_messages.any((m) => m['id'] == persisted['id'])) {
+          _messages.add(persisted);
+        }
+        _messageController.clear();
+        _errorMessage = '';
       });
+      _scrollToBottom();
+    } catch (_) {
+      if (mounted) setState(() => _errorMessage = 'A mensagem não foi enviada. Tente novamente.');
+    } finally {
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
@@ -287,7 +290,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
               const SizedBox(width: 6),
               Text(
-                _isSocketConnected ? 'Online' : 'HTTP Fallback',
+                _isSocketConnected ? 'Online' : 'Reconectando tempo real',
                 style: TextStyle(
                   color: _isSocketConnected
                       ? Colors.greenAccent

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'dart:convert';
 import 'package:vizion_mobile/features/ponto/domain/ponto_record_model.dart';
 import 'package:vizion_mobile/features/ponto/data/ponto_service.dart';
 import 'package:vizion_mobile/features/ponto/presentation/ponto_screen.dart';
@@ -49,19 +52,28 @@ void main() {
       expect(day.formattedBalanceHours, equals('+00h 30m'));
     });
 
-    test('PontoService registers punches in sequence', () async {
-      SharedPreferences.setMockInitialValues({});
+    test('PontoService registra por POST e usa a resposta persistida', () async {
+      late http.Request captured;
+      final client = MockClient((request) async {
+        captured = request;
+        return http.Response(jsonEncode({
+          'id': 10,
+          'data': DateTime.now().toIso8601String().substring(0, 10),
+          'horaEntrada': '2026-08-25T08:00:00',
+          'localizacao': 'Obra A',
+        }), 201, headers: {'content-type': 'application/json; charset=utf-8'});
+      });
 
-      final today = await PontoService.getTodayPonto();
-      expect(PontoService.getNextPunchType(today), equals(PontoType.entrada));
+      final result = await http.runWithClient(
+        () => PontoService.registerPunch(type: PontoType.entrada, location: 'Obra A'),
+        () => client,
+      );
 
-      final res1 = await PontoService.registerPunch(type: PontoType.entrada);
-      expect(res1.punch.type, equals(PontoType.entrada));
-      expect(PontoService.getNextPunchType(res1.day), equals(PontoType.saidaAlmoco));
-
-      final res2 = await PontoService.registerPunch(type: PontoType.saidaAlmoco);
-      expect(res2.punch.type, equals(PontoType.saidaAlmoco));
-      expect(PontoService.getNextPunchType(res2.day), equals(PontoType.retornoAlmoco));
+      expect(captured.method, 'POST');
+      expect(captured.url.path, '/api/ponto/bater');
+      expect(jsonDecode(captured.body)['tipoBatida'], 'ENTRADA');
+      expect(result.punch.type, PontoType.entrada);
+      expect(PontoService.getNextPunchType(result.day), PontoType.saidaAlmoco);
     });
 
     test('PontoService loads and retains previous days history in Espelho de Ponto', () async {

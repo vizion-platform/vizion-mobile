@@ -255,37 +255,9 @@ class ChatNetworkService {
     }
   }
 
-  Map<String, dynamic> sendMessage(int chatId, String content) {
-    final currentUserId = AuthService.userId;
-    final payload = {
-      'id': 'client_${DateTime.now().millisecondsSinceEpoch}_$chatId',
-      'chatId': chatId,
-      'remetenteId': currentUserId,
-      'conteudo': content,
-      'dataCriacao': DateTime.now().toUtc().toIso8601String(),
-    };
-
-    if (_client == null ||
-        _client!.connectionStatus!.state != MqttConnectionState.connected) {
-      print(
-        'Aviso: Emitindo mensagem com MQTT offline. Enviando via REST HTTP...',
-      );
-      postMessage(chatId, content);
-      _connectMqtt();
-    } else {
-      try {
-        final String topic = 'chat/$chatId';
-        final builder = MqttClientPayloadBuilder();
-        builder.addString(jsonEncode(payload));
-
-        _client?.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
-        print('Mensagem enviada via MQTT para o chat $chatId: $content');
-      } catch (e) {
-        print('Erro ao enviar mensagem via MQTT, tentando REST HTTP: $e');
-        postMessage(chatId, content);
-      }
-    }
-
-    return payload;
+  Future<Map<String, dynamic>> sendMessage(int chatId, String content) async {
+    final persisted = await postMessage(chatId, content);
+    if (!isConnected) _connectMqtt();
+    return persisted;
   }
 }
