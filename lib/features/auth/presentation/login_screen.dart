@@ -16,7 +16,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _show2FA = false;
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   int _timerSeconds = 30;
   Timer? _countdownTimer;
   final _formKey = GlobalKey<FormState>();

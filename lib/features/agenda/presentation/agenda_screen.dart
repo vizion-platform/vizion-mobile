@@ -53,11 +53,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
     }
   }
 
-  /// Saves updated tasks list to persistence
-  Future<void> _saveTasksData() async {
-    await AgendaService.saveTasks(_allTasks);
-  }
-
   bool get _canModifyAgenda {
     final role = (AuthService.role ?? '').toUpperCase();
     return role == 'EMPREITEIRO' || role == 'ADMIN' || role == 'GESTOR';

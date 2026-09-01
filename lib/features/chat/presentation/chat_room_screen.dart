@@ -389,12 +389,138 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         final String content = message['conteudo'] ?? '';
         final String time = _formatTime(message['dataCriacao']);
 
-        return _buildMessageBubble(content, time, isMe);
+        return _buildMessageBubble(message, content, time, isMe);
       },
     );
   }
 
-  Widget _buildMessageBubble(String content, String time, bool isMe) {
+  void _showMessageOptions(Map<String, dynamic> message) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppColors.primaryGold),
+              title: const Text('Editar Mensagem', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showEditDialog(message);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              title: const Text('Excluir Mensagem', style: TextStyle(color: Colors.redAccent)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showDeleteConfirm(message);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditDialog(Map<String, dynamic> message) {
+    final editController = TextEditingController(text: message['conteudo'] ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Editar Mensagem', style: TextStyle(color: Colors.white, fontSize: 16)),
+        content: TextField(
+          controller: editController,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Digite o novo texto...',
+            hintStyle: TextStyle(color: AppColors.textSecondary),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGold)),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGold, width: 2)),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGold),
+            onPressed: () async {
+              final newText = editController.text.trim();
+              if (newText.isEmpty) return;
+              Navigator.pop(ctx);
+              try {
+                final updated = await _chatService.editMessage(message['id'], newText);
+                setState(() {
+                  final idx = _messages.indexWhere((m) => m['id'] == message['id']);
+                  if (idx != -1) {
+                    _messages[idx] = updated;
+                  }
+                });
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao editar: $e'), backgroundColor: Colors.redAccent),
+                  );
+                }
+              }
+            },
+            child: const Text('Salvar', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirm(Map<String, dynamic> message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Excluir Mensagem', style: TextStyle(color: Colors.white, fontSize: 16)),
+        content: const Text(
+          'Deseja realmente apagar esta mensagem?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await _chatService.deleteMessage(message['id']);
+                setState(() {
+                  final idx = _messages.indexWhere((m) => m['id'] == message['id']);
+                  if (idx != -1) {
+                    _messages[idx]['conteudo'] = 'Mensagem apagada';
+                  }
+                });
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao excluir: $e'), backgroundColor: Colors.redAccent),
+                  );
+                }
+              }
+            },
+            child: const Text('Excluir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> message, String content, String time, bool isMe) {
     final bubbleColor = isMe
         ? const Color(0xFF2C261B) // Elegant dark Gold/Bronze for current user
         : AppColors.surface; // Dark grey for other
@@ -424,50 +550,54 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
     return Align(
       alignment: alignment,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: bubbleColor,
-          borderRadius: borderRadius,
-          border: border,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              content,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14.5,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  time,
-                  style: TextStyle(
-                    color: AppColors.textSecondary.withValues(alpha: 0.8),
-                    fontSize: 10,
-                  ),
+      child: GestureDetector(
+        onLongPress: isMe && content != 'Mensagem apagada' ? () => _showMessageOptions(message) : null,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: bubbleColor,
+            borderRadius: borderRadius,
+            border: border,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                content,
+                style: TextStyle(
+                  color: content == 'Mensagem apagada' ? AppColors.textSecondary : Colors.white,
+                  fontStyle: content == 'Mensagem apagada' ? FontStyle.italic : FontStyle.normal,
+                  fontSize: 14.5,
+                  height: 1.3,
                 ),
-                if (isMe) ...[
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.done_all,
-                    color: AppColors.primaryGold,
-                    size: 12,
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    time,
+                    style: TextStyle(
+                      color: AppColors.textSecondary.withValues(alpha: 0.8),
+                      fontSize: 10,
+                    ),
                   ),
+                  if (isMe) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.done_all,
+                      color: AppColors.primaryGold,
+                      size: 12,
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -275,6 +275,44 @@ class ChatNetworkService {
     }
   }
 
+  Future<Map<String, dynamic>> editMessage(int messageId, String newContent) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${AuthService.baseUrl}/chats/mensagens/$messageId'),
+        headers: {
+          ...AuthService.getHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(newContent),
+      );
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(
+          jsonDecode(utf8.decode(response.bodyBytes)),
+        );
+      } else {
+        throw Exception(_serverMessage(response, 'Não foi possível editar a mensagem.'));
+      }
+    } catch (e) {
+      print('Erro ao editar mensagem: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> deleteMessage(int messageId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('${AuthService.baseUrl}/chats/mensagens/$messageId'),
+        headers: AuthService.getHeaders(),
+      );
+
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('Erro ao excluir mensagem: $e');
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>> sendMessage(int chatId, String content) async {
     final persisted = await postMessage(chatId, content);
     if (!isConnected) _connectMqtt();
