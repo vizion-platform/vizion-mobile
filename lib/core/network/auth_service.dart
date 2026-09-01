@@ -200,9 +200,6 @@ class AuthService {
     };
   }
 
-  // Local databases
-  static final Map<int, List<String>> _fasesPhotos = {};
-
   // Fetch contractor's works from API
   static Future<List<Map<String, dynamic>>> fetchObras() async {
     try {
@@ -232,39 +229,6 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-
-        // Sync uploaded photo documents from server to mobile phase gallery
-        final List<dynamic>? docs = data['documentos'];
-        if (docs != null) {
-          for (var doc in docs) {
-            if (doc['tipo_documento'] == 'ARQUIVO') {
-              final String name = doc['nome_arquivo'] ?? '';
-              final String desc = doc['descricao_arquivo'] ?? '';
-              final String url = doc['url_arquivo'] ?? '';
-              if (url.isNotEmpty) {
-                int? parsedFaseId;
-                final nameMatch = RegExp(r'fase_(\d+)').firstMatch(name);
-                if (nameMatch != null) {
-                  parsedFaseId = int.tryParse(nameMatch.group(1)!);
-                } else {
-                  final descMatch = RegExp(r'fase\s+(\d+)').firstMatch(desc);
-                  if (descMatch != null) {
-                    parsedFaseId = int.tryParse(descMatch.group(1)!);
-                  }
-                }
-
-                if (parsedFaseId != null) {
-                  if (!_fasesPhotos.containsKey(parsedFaseId)) {
-                    _fasesPhotos[parsedFaseId] = [];
-                  }
-                  if (!_fasesPhotos[parsedFaseId]!.contains(url)) {
-                    _fasesPhotos[parsedFaseId]!.add(url);
-                  }
-                }
-              }
-            }
-          }
-        }
 
         final List<dynamic>? phases = data['fases'];
         if (phases != null && phases.isNotEmpty) {
@@ -296,37 +260,65 @@ class AuthService {
     }
   }
 
-  static Future<void> addPhasePhoto(
-    int obraId,
-    int faseId,
-    String photoData,
-  ) async {
-    if (!_fasesPhotos.containsKey(faseId)) {
-      _fasesPhotos[faseId] = [];
+  static Future<List<Map<String, dynamic>>> fetchObraPhotos(int obraId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/obra-fotos/obra/$obraId'),
+      headers: getHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível carregar as fotos da obra (${response.statusCode}).');
     }
-    _fasesPhotos[faseId]!.add(photoData);
-
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/obra-fotos'),
-        headers: getHeaders(),
-        body: jsonEncode({
-          'idObra': obraId,
-          'idFase': faseId,
-          'urlFoto': photoData,
-          'descricao': 'Foto de progresso da fase $faseId',
-        }),
-      );
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        print('Erro do servidor ao salvar foto: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Erro de conexao ao salvar foto no servidor: $e');
-    }
+    final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data.map((item) => Map<String, dynamic>.from(item)).toList();
   }
 
-  static List<String> getPhasePhotos(int faseId) {
-    return _fasesPhotos[faseId] ?? [];
+  static Future<Map<String, dynamic>> addPhasePhoto(
+    int obraId,
+    int faseId,
+    List<int> bytes,
+    String fileName,
+  ) async {
+    final upload = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/storage/upload'),
+    );
+    upload.headers.addAll(Map<String, String>.from(getHeaders())..remove('Content-Type'));
+    upload.fields['path'] = 'obras/$obraId/fases/$faseId';
+    upload.files.add(http.MultipartFile.fromBytes('file', bytes, filename: fileName));
+
+    final streamed = await upload.send();
+    final uploadResponse = await http.Response.fromStream(streamed);
+    if (uploadResponse.statusCode != 200) {
+      throw Exception('Falha ao enviar a imagem (${uploadResponse.statusCode}).');
+    }
+    final uploadData = jsonDecode(utf8.decode(uploadResponse.bodyBytes));
+    final key = uploadData['key']?.toString();
+    if (key == null || key.isEmpty) {
+      throw Exception('O storage não retornou a identificação da imagem.');
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/obra-fotos'),
+      headers: getHeaders(),
+      body: jsonEncode({
+        'idObra': obraId,
+        'idFase': faseId,
+        'urlFoto': key,
+        'descricao': 'Foto de progresso da fase $faseId',
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Falha ao registrar a foto na fase (${response.statusCode}).');
+    }
+    return Map<String, dynamic>.from(jsonDecode(utf8.decode(response.bodyBytes)));
+  }
+
+  static String mediaUrl(String value) {
+    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
+      return value;
+    }
+    final clean = value.startsWith('/') ? value.substring(1) : value;
+    return '$baseUrl/storage/local/$clean';
   }
 
   // Create a new work associated with this contractor

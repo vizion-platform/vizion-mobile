@@ -55,7 +55,7 @@ void main() {
     test('PontoService registra por POST e usa a resposta persistida', () async {
       late http.Request captured;
       final client = MockClient((request) async {
-        captured = request;
+        if (request.method == 'POST') captured = request;
         return http.Response(jsonEncode({
           'id': 10,
           'data': DateTime.now().toIso8601String().substring(0, 10),

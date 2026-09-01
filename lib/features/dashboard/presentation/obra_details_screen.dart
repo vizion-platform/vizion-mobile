@@ -6,6 +6,15 @@ import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_room_screen.dart';
 import '../../chat/data/chat_network_service.dart';
 
+double calculatePhaseProgress(List<Map<String, dynamic>> phases) {
+  if (phases.isEmpty) return 0;
+  const completedStatuses = {'FINALIZADA', 'CONCLUIDA', 'CONCLUIDO'};
+  final completed = phases.where((phase) => completedStatuses.contains(
+    (phase['status'] ?? '').toString().trim().toUpperCase(),
+  )).length;
+  return completed / phases.length;
+}
+
 class ObraDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> obra;
 
@@ -18,6 +27,7 @@ class ObraDetailsScreen extends StatefulWidget {
 class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _fases = [];
+  Map<int, List<Map<String, dynamic>>> _photosByPhase = {};
   String _errorMessage = '';
 
   @override
@@ -28,13 +38,26 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
 
   Future<void> _loadFases() async {
     try {
-      final data = await AuthService.fetchFases(widget.obra['id']);
+      final result = await Future.wait([
+        AuthService.fetchFases(widget.obra['id']),
+        AuthService.fetchObraPhotos(widget.obra['id']),
+      ]);
+      final data = result[0];
+      final photos = result[1];
+      final groupedPhotos = <int, List<Map<String, dynamic>>>{};
+      for (final photo in photos) {
+        final rawPhaseId = photo['idFase'];
+        if (rawPhaseId is! num) continue;
+        groupedPhotos.putIfAbsent(rawPhaseId.toInt(), () => []).add(photo);
+      }
       if (mounted) {
         setState(() {
           // Sort by display order (ordem_exibicao)
           _fases = List<Map<String, dynamic>>.from(data)
             ..sort((a, b) => (a['ordem_exibicao'] ?? 0).compareTo(b['ordem_exibicao'] ?? 0));
+          _photosByPhase = groupedPhotos;
           _isLoading = false;
+          _errorMessage = '';
         });
       }
     } catch (e) {
@@ -48,10 +71,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   }
 
   double _calculateProgress() {
-    if (_fases.isEmpty) return 0.0;
-    final finishedCount = _fases.where((f) => f['status'] == 'FINALIZADA').length;
-    final inProgressCount = _fases.where((f) => f['status'] == 'EM_ANDAMENTO').length;
-    return (finishedCount + (inProgressCount * 0.5)) / _fases.length;
+    return calculatePhaseProgress(_fases);
   }
 
   String _formatCurrency(double value) {
@@ -131,27 +151,62 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     }
   }
 
-  Future<void> _openCameraForPhase(Map<String, dynamic> fase) async {
+  Future<void> _openPhotoForPhase(Map<String, dynamic> fase) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
+              child: Text('Registrar foto da fase', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primaryGold),
+              title: const Text('Tirar foto', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primaryGold),
+              title: const Text('Escolher da galeria', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
-        source: ImageSource.camera,
+        source: source,
         imageQuality: 70,
+        maxWidth: 1920,
       );
 
       if (image != null) {
         final bytes = await image.readAsBytes();
-        final String base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-
         setState(() {
           _isLoading = true;
         });
-        await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], base64Image);
+        await AuthService.addPhasePhoto(
+          widget.obra['id'],
+          fase['id_fase'],
+          bytes,
+          image.name,
+        );
         await _loadFases();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Foto tirada e salva com sucesso!'),
+              content: Text('Foto enviada e registrada na fase com sucesso!'),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
             ),
@@ -159,11 +214,12 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         }
       }
     } catch (e) {
-      debugPrint('Erro ao acessar câmera: $e');
+      debugPrint('Erro ao registrar foto da fase: $e');
+      if (mounted) setState(() => _isLoading = false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não foi possível acessar a câmera. Verifique a permissão do aplicativo.'),
+        SnackBar(
+          content: Text('Não foi possível registrar a foto: ${e.toString().replaceFirst('Exception: ', '')}'),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
         ),
@@ -399,7 +455,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                           final isLast = index == _fases.length - 1;
                           final status = (fase['status'] ?? 'PLANEJADA').toString().toUpperCase();
                           final color = _getStatusColor(status);
-                          final List<String> photos = AuthService.getPhasePhotos(fase['id_fase']);
+                          final List<Map<String, dynamic>> photos = _photosByPhase[fase['id_fase']] ?? const [];
 
                           return IntrinsicHeight(
                             child: Row(
@@ -494,7 +550,8 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                 itemCount: photos.length,
                                                 separatorBuilder: (context, idx) => const SizedBox(width: 8),
                                                 itemBuilder: (context, idx) {
-                                                  final photoStr = photos[idx];
+                                                  final photo = photos[idx];
+                                                  final photoStr = (photo['urlFoto'] ?? '').toString();
                                                   return ClipRRect(
                                                     borderRadius: BorderRadius.circular(6),
                                                     child: Container(
@@ -504,7 +561,8 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                       child: photoStr.startsWith('data:image/')
                                                           ? Image.memory(base64Decode(photoStr.split(',')[1]), fit: BoxFit.cover)
                                                           : Image.network(
-                                                              photoStr,
+                                                              AuthService.mediaUrl(photoStr),
+                                                              headers: AuthService.getHeaders(),
                                                               fit: BoxFit.cover,
                                                               errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined, color: AppColors.textSecondary),
                                                             ),
@@ -523,7 +581,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                               children: [
                                                 // Photo Taking Button
                                                 ElevatedButton.icon(
-                                                  onPressed: () => _openCameraForPhase(fase),
+                                                  onPressed: () => _openPhotoForPhase(fase),
                                                   icon: const Icon(Icons.camera_alt_outlined, size: 14),
                                                   label: const Text('FOTO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                                                   style: ElevatedButton.styleFrom(

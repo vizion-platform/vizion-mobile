@@ -161,7 +161,7 @@ class ChatNetworkService {
     _subscribedChatIds.remove(chatId);
     if (_client != null &&
         _client!.connectionStatus!.state == MqttConnectionState.connected) {
-      final topic = 'chat/$chatId';
+      final topic = 'vizion/chats/$chatId';
       _client!.unsubscribe(topic);
     }
   }
@@ -169,7 +169,7 @@ class ChatNetworkService {
   void _subscribeToTopic(int chatId) {
     if (_client != null &&
         _client!.connectionStatus!.state == MqttConnectionState.connected) {
-      final topic = 'chat/$chatId';
+      final topic = 'vizion/chats/$chatId';
       print('Inscrevendo no topico MQTT: $topic');
       _client!.subscribe(topic, MqttQos.atLeastOnce);
     }
@@ -224,8 +224,11 @@ class ChatNetworkService {
       );
       print('Mensagem MQTT recebida no topico ${c[0].topic}: $pt');
       try {
-        final data = jsonDecode(pt);
-        if (_onNewMessageCallback != null && data != null) {
+        final decoded = jsonDecode(pt);
+        final data = decoded is Map && decoded['message'] is Map
+            ? decoded['message']
+            : decoded;
+        if (_onNewMessageCallback != null && data is Map) {
           _onNewMessageCallback!(Map<String, dynamic>.from(data));
         }
       } catch (e) {
@@ -299,23 +302,24 @@ class ChatNetworkService {
     }
   }
 
-  Future<bool> deleteMessage(int messageId) async {
+  Future<Map<String, dynamic>> deleteMessage(int messageId) async {
     try {
       final response = await http.delete(
         Uri.parse('${AuthService.baseUrl}/chats/mensagens/$messageId'),
         headers: AuthService.getHeaders(),
       );
 
-      return response.statusCode == 200 || response.statusCode == 204;
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(utf8.decode(response.bodyBytes)));
+      }
+      throw Exception(_serverMessage(response, 'Não foi possível excluir a mensagem.'));
     } catch (e) {
       print('Erro ao excluir mensagem: $e');
-      return false;
+      rethrow;
     }
   }
 
   Future<Map<String, dynamic>> sendMessage(int chatId, String content) async {
-    final persisted = await postMessage(chatId, content);
-    if (!isConnected) _connectMqtt();
-    return persisted;
+    return postMessage(chatId, content);
   }
 }

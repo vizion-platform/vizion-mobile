@@ -38,4 +38,40 @@ void main() {
       throwsException,
     );
   });
+
+  test('chat edita mensagem pela API e retorna o estado persistido', () async {
+    late http.Request captured;
+    final client = MockClient((request) async {
+      captured = request;
+      return http.Response(
+        jsonEncode({'id': 99, 'chatId': 7, 'remetenteId': 42, 'conteudo': 'Texto novo', 'editada': true, 'excluida': false}),
+        200,
+      );
+    });
+
+    final response = await http.runWithClient(
+      () => ChatNetworkService().editMessage(99, 'Texto novo'),
+      () => client,
+    );
+
+    expect(captured.method, 'PUT');
+    expect(captured.url.path, '/api/chats/mensagens/99');
+    expect(response['conteudo'], 'Texto novo');
+    expect(response['editada'], isTrue);
+  });
+
+  test('chat exclui mensagem e usa a resposta oficial da API', () async {
+    final client = MockClient((request) async => http.Response(
+      jsonEncode({'id': 99, 'chatId': 7, 'remetenteId': 42, 'conteudo': 'Mensagem apagada', 'editada': false, 'excluida': true}),
+      200,
+    ));
+
+    final response = await http.runWithClient(
+      () => ChatNetworkService().deleteMessage(99),
+      () => client,
+    );
+
+    expect(response['conteudo'], 'Mensagem apagada');
+    expect(response['excluida'], isTrue);
+  });
 }
