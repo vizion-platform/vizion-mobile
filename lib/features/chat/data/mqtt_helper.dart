@@ -1,4 +1,4 @@
-﻿import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_client.dart';
 import 'mqtt_helper_io.dart'
     if (dart.library.js_interop) 'mqtt_helper_web.dart'
     if (dart.library.html) 'mqtt_helper_web.dart' as helper;

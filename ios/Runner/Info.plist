@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
+		<key>NSCameraUsageDescription</key>
+		<string>O VIZION usa a câmera para registrar fotos de progresso das fases da obra.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>O VIZION acessa suas fotos para anexar imagens às fases da obra.</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>

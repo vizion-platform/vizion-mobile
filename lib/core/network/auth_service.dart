@@ -1,6 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../log.dart';
+import 'api_client.dart';
+import 'token_store.dart';
+
+enum RenovacaoSessao { renovada, rejeitada, indisponivel }
 
 class AuthService {
   static const String baseUrl = 'https://vizion.cognisgroup.cloud/api';
@@ -12,6 +20,15 @@ class AuthService {
   static String? _tenantId;
   static String? _email;
   static int? _userId;
+  static bool _trocaSenhaObrigatoria = false;
+
+  /// Chamado quando a sessão não pode mais ser renovada (o app volta ao login).
+  static Future<void> Function()? onSessionExpired;
+
+  /// Chamado quando o servidor exige a troca da senha temporária.
+  static void Function()? onPasswordChangeRequired;
+
+  static Future<RenovacaoSessao>? _renovacaoEmAndamento;
 
   static String? get accessToken => _accessToken;
   static String? get tenantId => _tenantId;
@@ -19,6 +36,7 @@ class AuthService {
   static String? get role => _role;
   static String? get currentUserEmail => _email;
   static int? get userId => _userId;
+  static bool get mustChangePassword => _trocaSenhaObrigatoria;
 
   static bool get isEmpreiteiro {
     final r = (_role ?? '').toUpperCase();
@@ -35,34 +53,30 @@ class AuthService {
     return r == 'CLIENTE';
   }
 
-  static Future<void> switchRole(String newRole, String newName, String newEmail) async {
-    _role = newRole;
-    _nome = newName;
-    _email = newEmail;
-    if (_accessToken == null || _accessToken!.isEmpty) {
-      _accessToken = 'demo_session_token';
-    }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('role', newRole);
-    await prefs.setString('nome', newName);
-    await prefs.setString('email', newEmail);
-    await prefs.setString('accessToken', _accessToken!);
+  /// Apenas para testes de widget: define o papel em memória, sem token e sem persistir nada.
+  @visibleForTesting
+  static void definirPapelParaTeste(String role, String nome, String email) {
+    _role = role;
+    _nome = nome;
+    _email = email;
   }
 
   // Initialize and load session from SharedPreferences
   static Future<bool> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _accessToken = prefs.getString('accessToken');
-      _refreshToken = prefs.getString('refreshToken');
+      await TokenStore.migrateFromPrefs(prefs);
+      _accessToken = await TokenStore.readAccess();
+      _refreshToken = await TokenStore.readRefresh();
       _nome = prefs.getString('nome');
       _role = prefs.getString('role');
       _tenantId = prefs.getString('tenantId');
       _email = prefs.getString('email');
       _userId = prefs.getInt('userId');
+      _trocaSenhaObrigatoria = prefs.getBool('trocaSenhaObrigatoria') ?? false;
       return _accessToken != null;
     } catch (e) {
-      print('Erro ao inicializar AuthService: $e');
+      logDebug('Erro ao inicializar AuthService: $e');
       return false;
     }
   }
@@ -83,15 +97,16 @@ class AuthService {
         _role = data['role'];
         _tenantId = data['tenantId'];
         _email = email.toLowerCase().trim();
+        _trocaSenhaObrigatoria = data['trocaSenhaObrigatoria'] == true;
 
         // Save session locally
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('accessToken', _accessToken!);
-        await prefs.setString('refreshToken', _refreshToken ?? '');
+        await TokenStore.save(access: _accessToken, refresh: _refreshToken);
         await prefs.setString('nome', _nome ?? '');
         await prefs.setString('role', _role ?? '');
         await prefs.setString('tenantId', _tenantId ?? '');
         await prefs.setString('email', _email!);
+        await prefs.setBool('trocaSenhaObrigatoria', _trocaSenhaObrigatoria);
 
         // Try to fetch detailed profile to get the user ID
         await fetchProfile();
@@ -99,7 +114,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Erro no login: $e');
+      logDebug('Erro no login: $e');
       return false;
     }
   }
@@ -108,7 +123,7 @@ class AuthService {
   static Future<void> fetchProfile() async {
     if (_accessToken == null) return;
     try {
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('$baseUrl/auth/me'),
         headers: getHeaders(),
       );
@@ -121,7 +136,7 @@ class AuthService {
         }
       }
     } catch (e) {
-      print('Erro ao carregar perfil /me: $e');
+      logDebug('Erro ao carregar perfil /me: $e');
     }
   }
 
@@ -154,13 +169,26 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Erro no registro: $e');
+      logDebug('Erro no registro: $e');
       return false;
     }
   }
 
   // Sign out and clear stored session
   static Future<void> signOut() async {
+    // Revoga o refresh token no servidor; sem rede a saída local continua valendo.
+    if (_accessToken != null) {
+      try {
+        await http
+            .post(Uri.parse('$baseUrl/auth/logout'), headers: getHeaders())
+            .timeout(const Duration(seconds: 5));
+      } catch (_) {}
+    }
+    await _limparSessaoLocal();
+  }
+
+  static Future<void> _limparSessaoLocal() async {
+    _trocaSenhaObrigatoria = false;
     _accessToken = null;
     _refreshToken = null;
     _nome = null;
@@ -169,14 +197,93 @@ class AuthService {
     _email = null;
     _userId = null;
 
+    await TokenStore.clear();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('accessToken');
-    await prefs.remove('refreshToken');
+    // Remove também os caches de ponto/agenda (chaves vizion_*) para não vazar dados a outro usuário no aparelho.
+    for (final chave in prefs.getKeys().where((k) => k.startsWith('vizion_')).toList()) {
+      await prefs.remove(chave);
+    }
     await prefs.remove('nome');
     await prefs.remove('role');
     await prefs.remove('tenantId');
     await prefs.remove('email');
     await prefs.remove('userId');
+    await prefs.remove('trocaSenhaObrigatoria');
+  }
+
+  /// Renova o access token com o refresh token (uso único; o servidor devolve um novo par).
+  /// Chamadas simultâneas compartilham a mesma renovação.
+  static Future<RenovacaoSessao> renovarSessao() {
+    return _renovacaoEmAndamento ??= _renovar().whenComplete(() {
+      _renovacaoEmAndamento = null;
+    });
+  }
+
+  static Future<RenovacaoSessao> _renovar() async {
+    final refresh = _refreshToken;
+    if (refresh == null || refresh.isEmpty) return RenovacaoSessao.rejeitada;
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/auth/refresh'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refreshToken': refresh}),
+          )
+          .timeout(ApiClient.timeout);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        _accessToken = data['accessToken'];
+        _refreshToken = data['refreshToken'];
+        await TokenStore.save(access: _accessToken, refresh: _refreshToken);
+        return RenovacaoSessao.renovada;
+      }
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return RenovacaoSessao.rejeitada;
+      }
+      return RenovacaoSessao.indisponivel;
+    } catch (_) {
+      return RenovacaoSessao.indisponivel;
+    }
+  }
+
+  static Future<void> encerrarSessaoExpirada() async {
+    await _limparSessaoLocal();
+    await onSessionExpired?.call();
+  }
+
+  static void sinalizarTrocaDeSenhaObrigatoria() {
+    if (_trocaSenhaObrigatoria) return;
+    _trocaSenhaObrigatoria = true;
+    onPasswordChangeRequired?.call();
+  }
+
+  /// Troca a senha (inclusive a temporária). Devolve null em sucesso ou a mensagem de erro.
+  static Future<String?> trocarSenha(String senhaAtual, String novaSenha) async {
+    try {
+      final response = await ApiClient.post(
+        Uri.parse('$baseUrl/auth/trocar-senha'),
+        headers: getHeaders(),
+        body: jsonEncode({'senhaAtual': senhaAtual, 'novaSenha': novaSenha}),
+      );
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        _trocaSenhaObrigatoria = false;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('trocaSenhaObrigatoria', false);
+        // O servidor revoga os refresh tokens ao trocar a senha; o access token atual segue válido.
+        _refreshToken = null;
+        await TokenStore.clear();
+        await TokenStore.save(access: _accessToken);
+        return null;
+      }
+      try {
+        final corpo = jsonDecode(utf8.decode(response.bodyBytes));
+        if (corpo is Map && corpo['message'] is String) return corpo['message'];
+      } catch (_) {}
+      return 'Não foi possível alterar a senha.';
+    } catch (_) {
+      return 'Sem conexão com o servidor. Tente novamente.';
+    }
   }
 
   // Generate headers for API requests
@@ -184,7 +291,6 @@ class AuthService {
     return {
       'Content-Type': 'application/json',
       if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-      if (_tenantId != null) 'X-Tenant-ID': _tenantId!,
     };
   }
 
@@ -194,7 +300,7 @@ class AuthService {
   // Fetch contractor's works from API
   static Future<List<Map<String, dynamic>>> fetchObras() async {
     try {
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('$baseUrl/obra/minhas-obras'),
         headers: getHeaders(),
       );
@@ -206,14 +312,14 @@ class AuthService {
         throw Exception('Erro ao buscar obras: ${response.statusCode}');
       }
     } catch (e) {
-      print('Erro ao carregar obras: $e');
+      logDebug('Erro ao carregar obras: $e');
       rethrow;
     }
   }
 
   static Future<List<Map<String, dynamic>>> fetchFases(int obraId) async {
     try {
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('$baseUrl/obra/$obraId/detalhar'),
         headers: getHeaders(),
       );
@@ -261,7 +367,7 @@ class AuthService {
       }
       return [];
     } catch (e) {
-      print('Erro ao carregar fases do servidor: $e');
+      logDebug('Erro ao carregar fases do servidor: $e');
       rethrow;
     }
   }
@@ -272,30 +378,26 @@ class AuthService {
     String acao,
   ) async {
     try {
-      final response = await http.patch(
+      final response = await ApiClient.patch(
         Uri.parse('$baseUrl/fasesObra/$faseId/status'),
         headers: getHeaders(),
         body: jsonEncode({'acao': acao}),
       );
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Erro ao salvar transicao de status no servidor: $e');
+      logDebug('Erro ao salvar transicao de status no servidor: $e');
       return false;
     }
   }
 
-  static Future<void> addPhasePhoto(
+  /// Envia a foto ao servidor. Só entra na galeria local se o servidor aceitar.
+  static Future<bool> addPhasePhoto(
     int obraId,
     int faseId,
     String photoData,
   ) async {
-    if (!_fasesPhotos.containsKey(faseId)) {
-      _fasesPhotos[faseId] = [];
-    }
-    _fasesPhotos[faseId]!.add(photoData);
-
     try {
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse('$baseUrl/obra-fotos'),
         headers: getHeaders(),
         body: jsonEncode({
@@ -306,10 +408,14 @@ class AuthService {
         }),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        print('Erro do servidor ao salvar foto: ${response.statusCode}');
+        logDebug('Erro do servidor ao salvar foto: ${response.statusCode}');
+        return false;
       }
+      _fasesPhotos.putIfAbsent(faseId, () => []).add(photoData);
+      return true;
     } catch (e) {
-      print('Erro de conexao ao salvar foto no servidor: $e');
+      logDebug('Erro de conexao ao salvar foto no servidor: ${e.runtimeType}');
+      return false;
     }
   }
 
@@ -320,7 +426,7 @@ class AuthService {
   // Create a new work associated with this contractor
   static Future<bool> createObra(Map<String, dynamic> data) async {
     try {
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse('$baseUrl/obra/aggregate'),
         headers: getHeaders(),
         body: jsonEncode({
@@ -347,7 +453,7 @@ class AuthService {
 
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      print('Erro ao criar obra: $e');
+      logDebug('Erro ao criar obra: $e');
       rethrow;
     }
   }
@@ -360,7 +466,7 @@ class AuthService {
       }
 
       if (_userId != null) {
-        final response = await http.delete(
+        final response = await ApiClient.delete(
           Uri.parse('$baseUrl/empreiteiro/$_userId'),
           headers: getHeaders(),
         );
@@ -372,7 +478,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Erro ao deletar conta: $e');
+      logDebug('Erro ao deletar conta: $e');
       return false;
     }
   }
@@ -384,21 +490,21 @@ class AuthService {
       final uri = obraId != null
           ? Uri.parse('$baseUrl/tarefas?obraId=$obraId')
           : Uri.parse('$baseUrl/tarefas');
-      final response = await http.get(uri, headers: getHeaders());
+      final response = await ApiClient.get(uri, headers: getHeaders());
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
         return data.map((item) => Map<String, dynamic>.from(item)).toList();
       }
       return [];
     } catch (e) {
-      print('Erro ao carregar tarefas do servidor: $e');
+      logDebug('Erro ao carregar tarefas do servidor: $e');
       return [];
     }
   }
 
   static Future<Map<String, dynamic>?> createTarefa(Map<String, dynamic> data) async {
     try {
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse('$baseUrl/tarefas'),
         headers: getHeaders(),
         body: jsonEncode({
@@ -418,33 +524,33 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Erro ao salvar tarefa no banco de dados: $e');
+      logDebug('Erro ao salvar tarefa no banco de dados: $e');
       return null;
     }
   }
 
   static Future<bool> toggleTarefaStatus(int id) async {
     try {
-      final response = await http.patch(
+      final response = await ApiClient.patch(
         Uri.parse('$baseUrl/tarefas/$id/toggle'),
         headers: getHeaders(),
       );
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Erro ao alternar status da tarefa no banco: $e');
+      logDebug('Erro ao alternar status da tarefa no banco: $e');
       return false;
     }
   }
 
   static Future<bool> deleteTarefa(int id) async {
     try {
-      final response = await http.delete(
+      final response = await ApiClient.delete(
         Uri.parse('$baseUrl/tarefas/$id'),
         headers: getHeaders(),
       );
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Erro ao deletar tarefa no banco: $e');
+      logDebug('Erro ao deletar tarefa no banco: $e');
       return false;
     }
   }

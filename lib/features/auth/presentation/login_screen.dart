@@ -99,7 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   behavior: SnackBarBehavior.floating,
                 ),
               );
-              Navigator.pushReplacementNamed(context, '/dashboard');
+              Navigator.pushReplacementNamed(
+                context,
+                AuthService.mustChangePassword ? '/trocar-senha' : '/dashboard',
+              );
             }
           } else {
             if (mounted) {
