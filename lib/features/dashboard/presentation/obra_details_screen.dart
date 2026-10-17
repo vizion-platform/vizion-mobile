@@ -87,13 +87,13 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'FINALIZADA':
-        return Colors.greenAccent;
+        return AppColors.success;
       case 'EM_ANDAMENTO':
-        return Colors.blueAccent;
+        return AppColors.primaryGold;
       case 'PAUSADA':
-        return Colors.orangeAccent;
+        return AppColors.warning;
       case 'CANCELADA':
-        return Colors.redAccent;
+        return AppColors.danger;
       default:
         return AppColors.textSecondary;
     }
@@ -113,7 +113,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
             content: Text(ok
                 ? 'Fase atualizada com sucesso para a ação: $acao.'
                 : 'Não foi possível atualizar a fase. Verifique sua conexão e permissões.'),
-            backgroundColor: ok ? AppColors.primaryGold : Colors.redAccent,
+            backgroundColor: ok ? AppColors.primaryGold : AppColors.danger,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -126,7 +126,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erro ao atualizar status da fase: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -155,7 +155,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(salvou ? 'Foto tirada e salva com sucesso!' : 'Não foi possível enviar a foto. Tente novamente.'),
-              backgroundColor: salvou ? Colors.green : Colors.redAccent,
+              backgroundColor: salvou ? AppColors.success : AppColors.danger,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -183,7 +183,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(salvou ? 'Foto simulada salva com sucesso!' : 'Não foi possível enviar a foto. Tente novamente.'),
-              backgroundColor: salvou ? Colors.green : Colors.redAccent,
+              backgroundColor: salvou ? AppColors.success : AppColors.danger,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -196,7 +196,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (context) => Center(
         child: CircularProgressIndicator(color: AppColors.primaryGold),
       ),
     );
@@ -241,7 +241,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Não foi possível iniciar chat com o empreiteiro: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -260,18 +260,18 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.obra['nome_projeto'] ?? 'Detalhes da Obra',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGold))
+          ? Center(child: CircularProgressIndicator(color: AppColors.primaryGold))
           : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.redAccent)))
+              ? Center(child: Text(_errorMessage, style: TextStyle(color: AppColors.danger)))
               : SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -283,7 +283,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: AppColors.gridLine, width: 1.5),
                         ),
                         child: Column(
@@ -292,7 +292,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Evolução Físico-Temporal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                                Text('Evolução Físico-Temporal', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15)),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
@@ -302,7 +302,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                   ),
                                   child: Text(
                                     '${(progress * 100).toStringAsFixed(0)}% OK',
-                                    style: const TextStyle(color: AppColors.primaryGold, fontSize: 10, fontWeight: FontWeight.bold),
+                                    style: TextStyle(color: AppColors.primaryGold, fontSize: 10, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
@@ -324,35 +324,35 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('PREVISÃO DE ENTREGA', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                    Text('PREVISÃO DE ENTREGA', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
                                     const SizedBox(height: 4),
-                                    Text(_formatDate(widget.obra['data_previsao_entrega']), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                    Text(_formatDate(widget.obra['data_previsao_entrega']), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
                                   ],
                                 ),
                                 if (role != 'FUNCIONARIO')
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      const Text('INVESTIMENTO TOTAL', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                      Text('INVESTIMENTO TOTAL', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
                                       const SizedBox(height: 4),
                                       Text(
                                         _formatCurrency((widget.obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0),
-                                        style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 13),
+                                        style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
                                     ],
                                   ),
                               ],
                             ),
                             if (widget.obra['logradouro'] != null) ...[
-                              const Divider(color: AppColors.gridLine, height: 24),
+                              Divider(color: AppColors.gridLine, height: 24),
                               Row(
                                 children: [
-                                  const Icon(Icons.location_on_outlined, color: AppColors.textSecondary, size: 16),
+                                  Icon(Icons.location_on_outlined, color: AppColors.textSecondary, size: 16),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       '${widget.obra['logradouro']}, ${widget.obra['numero']} - ${widget.obra['cidade']}/${widget.obra['estado']}',
-                                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -369,30 +369,30 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.blueAccent.withValues(alpha: 0.08),
-                            border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
-                            borderRadius: BorderRadius.circular(12),
+                            color: AppColors.primaryGold.withValues(alpha: 0.08),
+                            border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.forum_outlined, color: Colors.blueAccent, size: 20),
+                              Icon(Icons.forum_outlined, color: AppColors.primaryGold, size: 20),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   role == 'CLIENTE' 
                                       ? 'Acompanhe as fotos e status das fases abaixo. Dúvidas? Fale com o empreiteiro.' 
                                       : 'Consulte os prazos das fases e tire dúvidas com o mestre de obras.',
-                                  style: const TextStyle(color: Colors.white, fontSize: 11.5),
+                                  style: TextStyle(color: AppColors.textPrimary, fontSize: 11.5),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton(
                                 onPressed: _startChatWithContractor,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blueAccent,
-                                  foregroundColor: Colors.white,
+                                  backgroundColor: AppColors.goldFill,
+                                  foregroundColor: AppColors.textPrimary,
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                 ),
                                 child: const Text('CHAT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                               ),
@@ -402,9 +402,9 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                       ],
 
                       const SizedBox(height: 32),
-                      const Text(
+                      Text(
                         'Cronograma de Fases',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: 20),
 
@@ -433,9 +433,6 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                       decoration: BoxDecoration(
                                         color: color,
                                         shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 4, spreadRadius: 1),
-                                        ],
                                       ),
                                     ),
                                     if (!isLast)
@@ -456,7 +453,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
                                         color: AppColors.surface,
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(6),
                                         border: Border.all(color: AppColors.gridLine, width: 1),
                                       ),
                                       child: Column(
@@ -468,14 +465,14 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                               Expanded(
                                                 child: Text(
                                                   fase['nome_fase'] ?? 'Sem Nome',
-                                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14.5),
+                                                  style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14.5),
                                                 ),
                                               ),
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                                 decoration: BoxDecoration(
                                                   color: color.withValues(alpha: 0.12),
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  borderRadius: BorderRadius.circular(6),
                                                   border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
                                                 ),
                                                 child: Text(
@@ -488,7 +485,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                           const SizedBox(height: 6),
                                           Text(
                                             fase['descricao'] ?? '',
-                                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                                           ),
                                           const SizedBox(height: 12),
                                           Row(
@@ -504,7 +501,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                           // Seção de Fotos Anexadas
                                           if (photos.isNotEmpty) ...[
                                             const SizedBox(height: 16),
-                                            const Text('FOTOS DE PROGRESSO', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+                                            Text('FOTOS DE PROGRESSO', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
                                             const SizedBox(height: 8),
                                             SizedBox(
                                               height: 70,
@@ -527,7 +524,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                                   base64Decode(photoStr.split(',')[1]),
                                                                   fit: BoxFit.cover,
                                                                 )
-                                                              : const Icon(Icons.image, color: AppColors.textSecondary),
+                                                              : Icon(Icons.image, color: AppColors.textSecondary),
                                                     ),
                                                   );
                                                 },
@@ -537,7 +534,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
 
                                           // Controles de Ação do Empreiteiro
                                           if (role == 'EMPREITEIRO' || role == 'EMPREITEIRA' || role == 'ADMIN') ...[
-                                            const Divider(color: AppColors.gridLine, height: 24),
+                                            Divider(color: AppColors.gridLine, height: 24),
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
@@ -548,7 +545,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                   label: const Text('FOTO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                                                   style: ElevatedButton.styleFrom(
                                                     backgroundColor: AppColors.gridLine,
-                                                    foregroundColor: Colors.white,
+                                                    foregroundColor: AppColors.textPrimary,
                                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                                   ),
@@ -581,9 +578,9 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
         const SizedBox(height: 2),
-        Text(date, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+        Text(date, style: TextStyle(color: AppColors.textPrimary.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -607,7 +604,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
       previewIcon = Icons.domain;
       label = 'Estrutura';
     } else if (phaseType.contains('Alvenaria')) {
-      previewBg = Colors.orange;
+      previewBg = AppColors.warning;
       previewIcon = Icons.square;
       label = 'Tijolos';
     } else if (phaseType.contains('Acabamento')) {
@@ -635,19 +632,19 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     
     if (status == 'PLANEJADA') {
       return [
-        _buildTransitionButton('INICIAR', () => _handleStatusTransition(id, 'INICIAR'), Colors.blueAccent),
+        _buildTransitionButton('Iniciar', () => _handleStatusTransition(id, 'INICIAR'), AppColors.primaryGold),
       ];
     } else if (status == 'EM_ANDAMENTO') {
       return [
-        _buildTransitionButton('PAUSAR', () => _handleStatusTransition(id, 'PAUSAR'), Colors.orangeAccent),
+        _buildTransitionButton('Pausar', () => _handleStatusTransition(id, 'PAUSAR'), AppColors.warning),
         const SizedBox(width: 8),
-        _buildTransitionButton('FINALIZAR', () => _handleStatusTransition(id, 'FINALIZAR'), Colors.greenAccent),
+        _buildTransitionButton('Finalizar', () => _handleStatusTransition(id, 'FINALIZAR'), AppColors.success),
       ];
     } else if (status == 'PAUSADA') {
       return [
-        _buildTransitionButton('RETOMAR', () => _handleStatusTransition(id, 'RETOMAR'), Colors.blueAccent),
+        _buildTransitionButton('Retomar', () => _handleStatusTransition(id, 'RETOMAR'), AppColors.primaryGold),
         const SizedBox(width: 8),
-        _buildTransitionButton('FINALIZAR', () => _handleStatusTransition(id, 'FINALIZAR'), Colors.greenAccent),
+        _buildTransitionButton('Finalizar', () => _handleStatusTransition(id, 'FINALIZAR'), AppColors.success),
       ];
     }
     

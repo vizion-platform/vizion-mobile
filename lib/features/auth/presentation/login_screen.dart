@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   content: Text(
                     'Autenticado com sucesso! Bem-vindo, ${AuthService.nome}!',
                   ),
-                  backgroundColor: AppColors.primaryGold,
+                  backgroundColor: AppColors.goldFill,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -107,9 +107,9 @@ class _LoginScreenState extends State<LoginScreen> {
           } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('E-mail ou senha incorretos.'),
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: AppColors.danger,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -127,9 +127,9 @@ class _LoginScreenState extends State<LoginScreen> {
           if (success) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('Conta criada! Faça o login para entrar.'),
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -141,9 +141,9 @@ class _LoginScreenState extends State<LoginScreen> {
           } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('Erro: E-mail já cadastrado ou CPF inválido.'),
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: AppColors.danger,
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Erro de rede: $e'),
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppColors.danger,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -174,9 +174,9 @@ class _LoginScreenState extends State<LoginScreen> {
     String code = _codeControllers.map((c) => c.text).join();
     if (code.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Por favor, insira o código de 6 dígitos.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
             content: Text(
               'Autenticado com sucesso! Bem-vindo, ${AuthService.nome}!',
             ),
-            backgroundColor: AppColors.primaryGold,
+            backgroundColor: AppColors.goldFill,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -235,15 +235,8 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.all(36.0),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.gridLine, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       child: Form(
         key: _formKey,
@@ -255,18 +248,18 @@ class _LoginScreenState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.blur_on_outlined,
                   color: AppColors.primaryGold,
                   size: 36,
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'VIZION',
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 4,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -277,15 +270,15 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Container(
                 width: 50,
                 height: 2,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primaryGold, Colors.orangeAccent],
+                    colors: [AppColors.primaryGold, AppColors.warning],
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Acesse o portal corporativo',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
@@ -295,10 +288,10 @@ class _LoginScreenState extends State<LoginScreen> {
             // E-mail
             TextFormField(
               controller: _emailController,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.textPrimary),
               keyboardType: TextInputType.emailAddress,
               decoration: _inputStyle(
-                'E-MAIL CORPORATIVO',
+                'E-mail corporativo',
                 Icons.email_outlined,
               ),
               validator: (value) {
@@ -319,9 +312,9 @@ class _LoginScreenState extends State<LoginScreen> {
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: _inputStyle(
-                'SENHA DE ACESSO',
+                'Senha de acesso',
                 Icons.lock_outline,
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -352,28 +345,28 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGold,
-                foregroundColor: Colors.black,
+                backgroundColor: AppColors.goldFill,
+                foregroundColor: AppColors.onGold,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                elevation: 4,
+                elevation: 0,
               ),
               child: _isLoading
                   ? const SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                        color: Colors.black,
+                        color: AppColors.onGold,
                         strokeWidth: 2.5,
                       ),
                     )
                   : const Text(
-                      'ENTRAR COM CREDENCIAIS',
+                      'Entrar',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
+                        letterSpacing: 0.4,
                         fontSize: 13,
                       ),
                     ),
@@ -392,40 +385,33 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.all(36.0),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: AppColors.primaryGold.withValues(alpha: 0.3),
           width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryGold.withValues(alpha: 0.05),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(
+          Icon(
             Icons.security_outlined,
             color: AppColors.primaryGold,
             size: 54,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Verificação de Segurança',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.textPrimary,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Insira o código gerado pelo Google Authenticator no seu dispositivo móvel.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
@@ -442,7 +428,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _codeControllers[index],
                   focusNode: _focusNodes[index],
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primaryGold,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -452,15 +438,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: InputDecoration(
                     counterText: '',
                     enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.gridLine),
-                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: AppColors.gridLine),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
+                      borderSide: BorderSide(
                         color: AppColors.primaryGold,
                         width: 2,
                       ),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
                   onChanged: (value) {
@@ -488,7 +474,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.timer_outlined,
                 color: AppColors.textSecondary,
                 size: 16,
@@ -501,7 +487,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(
                   color: _timerSeconds > 10
                       ? AppColors.textSecondary
-                      : Colors.redAccent,
+                      : AppColors.danger,
                   fontSize: 12,
                 ),
               ),
@@ -509,7 +495,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: _start2FATimer,
-                  child: const Text(
+                  child: Text(
                     'Reenviar',
                     style: TextStyle(
                       color: AppColors.primaryGold,
@@ -526,11 +512,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ElevatedButton(
             onPressed: _isLoading ? null : _verify2FA,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGold,
-              foregroundColor: Colors.black,
+              backgroundColor: AppColors.goldFill,
+              foregroundColor: AppColors.onGold,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(6),
               ),
             ),
             child: _isLoading
@@ -538,7 +524,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
-                      color: Colors.black,
+                      color: AppColors.onGold,
                       strokeWidth: 2.5,
                     ),
                   )
@@ -546,7 +532,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'VERIFICAR E ENTRAR',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
+                      letterSpacing: 0.4,
                     ),
                   ),
           ),
@@ -560,7 +546,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _show2FA = false;
                     });
                   },
-            child: const Text(
+            child: Text(
               'Voltar para o Login',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -570,29 +556,13 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Campos no padrão do design system (caixa de 4 px, foco dourado): o estilo vem do tema.
   InputDecoration _inputStyle(String label, IconData icon, {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(
-        color: AppColors.textSecondary,
-        fontSize: 10,
-        letterSpacing: 2,
-      ),
-      errorStyle: const TextStyle(color: Colors.redAccent, fontSize: 11),
+      errorStyle: TextStyle(color: AppColors.danger, fontSize: 12),
       prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 18),
       suffixIcon: suffixIcon,
-      enabledBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: AppColors.gridLine),
-      ),
-      focusedBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: AppColors.primaryGold),
-      ),
-      errorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.redAccent),
-      ),
-      focusedErrorBorder: const UnderlineInputBorder(
-        borderSide: BorderSide(color: Colors.redAccent, width: 2),
-      ),
     );
   }
 }

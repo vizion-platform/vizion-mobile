@@ -50,8 +50,8 @@ class _CriarObraModalState extends State<CriarObraModal> {
       backgroundColor: AppColors.surface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: AppColors.gridLine),
+        borderRadius: BorderRadius.circular(6),
+        side: BorderSide(color: AppColors.gridLine),
       ),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 500),

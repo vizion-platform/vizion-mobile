@@ -154,7 +154,7 @@ void main() {
 
       // Verify Digital Clock Header
       expect(find.text('HORA ATUAL OFICIAL'), findsOneWidget);
-      expect(find.text('GPS Ativo'), findsOneWidget);
+      expect(find.text('Horário do servidor'), findsOneWidget);
 
       // Verify Worked Hours section
       expect(find.text('Horas Trabalhadas Hoje'), findsOneWidget);

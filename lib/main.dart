@@ -10,6 +10,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppTheme.load();
   
   // Initialize auth session from local storage
   final bool isLoggedIn = await AuthService.init();
@@ -32,10 +33,13 @@ class VizionApp extends StatelessWidget {
     
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // O tema (claro/escuro) é trocado em tempo de execução, como no desktop.
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: AppTheme.mode,
+      builder: (context, _, __) => MaterialApp(
       title: 'Vizion - Gestão de Obras',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.theme,
       navigatorKey: navigatorKey,
       initialRoute: !isLoggedIn
           ? '/login'
@@ -46,6 +50,6 @@ class VizionApp extends StatelessWidget {
         '/dashboard': (context) => const DashboardScreen(),
         '/ponto': (context) => const PontoScreen(),
       },
-    );
+    ));
   }
 }

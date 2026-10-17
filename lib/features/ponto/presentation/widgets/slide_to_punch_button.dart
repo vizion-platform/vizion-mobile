@@ -226,7 +226,7 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                 width: 1.5,
               ),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.check_circle_rounded, color: AppColors.primaryGold, size: 22),
@@ -265,13 +265,6 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                 color: AppColors.primaryGold.withValues(alpha: _isDragging ? 0.6 : 0.3),
                 width: 1.5,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: Stack(
               alignment: Alignment.centerLeft,
@@ -317,10 +310,10 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                                     shimmerPos.clamp(0.0, 1.0),
                                     (shimmerPos + 0.3).clamp(0.0, 1.0),
                                   ],
-                                  colors: const [
-                                    Color(0xFF7A7A7A),
-                                    Color(0xFFFFFFFF),
-                                    Color(0xFF7A7A7A),
+                                  colors: [
+                                    AppColors.textSecondary,
+                                    AppColors.textPrimary,
+                                    AppColors.textSecondary,
                                   ],
                                 ).createShader(bounds);
                               },
@@ -330,20 +323,20 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                                   Flexible(
                                     child: Text(
                                       _getSlideText(nextType),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: 0.4,
-                                        color: Colors.white,
+                                        color: AppColors.textPrimary,
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  const Icon(
+                                  Icon(
                                     Icons.keyboard_double_arrow_right_rounded,
-                                    color: Colors.white,
+                                    color: AppColors.textPrimary,
                                     size: 18,
                                   ),
                                 ],
@@ -370,22 +363,14 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                           height: knobSize,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: const RadialGradient(
+                            gradient: RadialGradient(
                               colors: [
                                 AppColors.primaryGold,
-                                Color(0xFFB8A684),
+                                AppColors.goldFill,
                               ],
                               center: Alignment(-0.2, -0.2),
                               radius: 0.8,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primaryGold.withValues(alpha: 0.4),
-                                blurRadius: 10 + (_pulseController.value * 5),
-                                spreadRadius: _isDragging ? 2.5 : 1,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
                           ),
                           child: Center(
                             child: widget.isLoading
@@ -393,13 +378,13 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                                     width: 22,
                                     height: 22,
                                     child: CircularProgressIndicator(
-                                      color: Colors.black,
+                                      color: AppColors.onGold,
                                       strokeWidth: 2.5,
                                     ),
                                   )
                                 : Icon(
                                     _getKnobIcon(nextType),
-                                    color: Colors.black,
+                                    color: AppColors.onGold,
                                     size: 22,
                                   ),
                           ),

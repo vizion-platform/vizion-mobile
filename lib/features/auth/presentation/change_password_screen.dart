@@ -63,12 +63,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     'Defina sua nova senha',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Sua senha atual é temporária. Escolha uma nova senha para continuar.',
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
@@ -95,7 +95,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   ),
                   if (_erro != null) ...[
                     const SizedBox(height: 12),
-                    Text(_erro!, style: const TextStyle(color: Colors.redAccent)),
+                    Text(_erro!, style: TextStyle(color: AppColors.danger)),
                   ],
                   const SizedBox(height: 24),
                   ElevatedButton(

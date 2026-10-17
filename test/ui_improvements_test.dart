@@ -133,7 +133,7 @@ void main() {
 
       // Verify modal header and inputs
       expect(find.text('Nova Tarefa da Empreiteira'), findsOneWidget);
-      expect(find.text('SALVAR TAREFA'), findsOneWidget);
+      expect(find.text('Salvar tarefa'), findsOneWidget);
 
       // Enter title
       final titleField = find.widgetWithText(TextField, 'Nome da Tarefa / Serviço *');
@@ -141,7 +141,7 @@ void main() {
       await tester.pump();
 
       // Tap SALVAR TAREFA
-      await tester.tap(find.text('SALVAR TAREFA'));
+      await tester.tap(find.text('Salvar tarefa'));
       for (var i = 0; i < 5; i++) {
         await tester.pump(const Duration(milliseconds: 300));
       }

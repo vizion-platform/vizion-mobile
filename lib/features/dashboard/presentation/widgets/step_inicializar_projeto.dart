@@ -39,12 +39,12 @@ class StepInicializarProjeto extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'STEP 01 / 02',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 11, letterSpacing: 1.5, fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 11, letterSpacing: 0.4, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Inicializar Projeto',
             style: TextStyle(color: AppColors.textPrimary, fontSize: 24, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),
           ),
@@ -53,8 +53,8 @@ class StepInicializarProjeto extends StatelessWidget {
           // Nome do Projeto
           TextFormField(
             controller: nameController,
-            style: const TextStyle(color: Colors.white),
-            decoration: _inputStyle('NOME DO PROJETO', hint: 'Ex: Edifício Horizonte'),
+            style: TextStyle(color: AppColors.textPrimary),
+            decoration: _inputStyle('Nome do projeto', hint: 'Ex: Edifício Horizonte'),
             validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
           ),
           const SizedBox(height: 16),
@@ -66,8 +66,8 @@ class StepInicializarProjeto extends StatelessWidget {
                 flex: 3,
                 child: TextFormField(
                   controller: logradouroController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _inputStyle('LOGRADOURO', hint: 'Rua, Avenida...'),
+                  style: TextStyle(color: AppColors.textPrimary),
+                  decoration: _inputStyle('Logradouro', hint: 'Rua, Avenida...'),
                   validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
                 ),
               ),
@@ -76,8 +76,8 @@ class StepInicializarProjeto extends StatelessWidget {
                 flex: 1,
                 child: TextFormField(
                   controller: numeroController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _inputStyle('NÚMERO', hint: '123'),
+                  style: TextStyle(color: AppColors.textPrimary),
+                  decoration: _inputStyle('Número', hint: '123'),
                   validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
                 ),
               ),
@@ -91,8 +91,8 @@ class StepInicializarProjeto extends StatelessWidget {
               Expanded(
                 child: TextFormField(
                   controller: bairroController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _inputStyle('BAIRRO', hint: 'Centro'),
+                  style: TextStyle(color: AppColors.textPrimary),
+                  decoration: _inputStyle('Bairro', hint: 'Centro'),
                   validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
                 ),
               ),
@@ -100,7 +100,7 @@ class StepInicializarProjeto extends StatelessWidget {
               Expanded(
                 child: TextFormField(
                   controller: cepController,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: _inputStyle('CEP', hint: '00000-000'),
                   validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
                 ),
@@ -116,8 +116,8 @@ class StepInicializarProjeto extends StatelessWidget {
                 flex: 2,
                 child: TextFormField(
                   controller: cidadeController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _inputStyle('CIDADE', hint: 'Cidade'),
+                  style: TextStyle(color: AppColors.textPrimary),
+                  decoration: _inputStyle('Cidade', hint: 'Cidade'),
                   validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
                 ),
               ),
@@ -126,8 +126,8 @@ class StepInicializarProjeto extends StatelessWidget {
                 flex: 1,
                 child: TextFormField(
                   controller: estadoController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _inputStyle('ESTADO (UF)', hint: 'SP'),
+                  style: TextStyle(color: AppColors.textPrimary),
+                  decoration: _inputStyle('Estado (UF)', hint: 'SP'),
                   validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
                 ),
               ),
@@ -136,8 +136,8 @@ class StepInicializarProjeto extends StatelessWidget {
                 flex: 2,
                 child: TextFormField(
                   controller: complementoController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _inputStyle('COMPLEMENTO', hint: 'Apto, Bloco...'),
+                  style: TextStyle(color: AppColors.textPrimary),
+                  decoration: _inputStyle('Complemento', hint: 'Apto, Bloco...'),
                 ),
               ),
             ],
@@ -147,10 +147,10 @@ class StepInicializarProjeto extends StatelessWidget {
           // Data de Início
           TextFormField(
             controller: dataController,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: AppColors.textPrimary),
             readOnly: true,
-            decoration: _inputStyle('DATA DE INÍCIO', hint: 'dd/mm/aaaa').copyWith(
-              suffixIcon: const Icon(Icons.calendar_today_outlined, color: AppColors.textSecondary, size: 18),
+            decoration: _inputStyle('Data de início', hint: 'dd/mm/aaaa').copyWith(
+              suffixIcon: Icon(Icons.calendar_today_outlined, color: AppColors.textSecondary, size: 18),
             ),
             onTap: () async {
               DateTime? pickedDate = await showDatePicker(
@@ -161,11 +161,11 @@ class StepInicializarProjeto extends StatelessWidget {
                 builder: (context, child) {
                   return Theme(
                     data: ThemeData.dark().copyWith(
-                      colorScheme: const ColorScheme.dark(
+                      colorScheme: ColorScheme.dark(
                         primary: AppColors.primaryGold,
-                        onPrimary: Colors.black,
+                        onPrimary: AppColors.onGold,
                         surface: AppColors.surface,
-                        onSurface: Colors.white,
+                        onSurface: AppColors.textPrimary,
                       ),
                     ),
                     child: child!,
@@ -186,24 +186,24 @@ class StepInicializarProjeto extends StatelessWidget {
               ElevatedButton(
                 onPressed: onBackToHome, // <-- Fecha a modal e volta para o início
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC4B89B), // Cor bege idêntica à imagem
-                  foregroundColor: Colors.black,
+                  backgroundColor: AppColors.goldFill, // Cor bege idêntica à imagem
+                  foregroundColor: AppColors.onGold,
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   elevation: 0,
                 ),
-                child: const Text('VOLTAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13)),
+                child: const Text('VOLTAR', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.4, fontSize: 13)),
               ),
               ElevatedButton(
                 onPressed: onNext,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGold,
-                  foregroundColor: Colors.black,
+                  backgroundColor: AppColors.goldFill,
+                  foregroundColor: AppColors.onGold,
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 18),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   elevation: 0,
                 ),
-                child: const Text('PRÓXIMO', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 13)),
+                child: const Text('Próximo', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.4, fontSize: 13)),
               ),
             ],
           ),
@@ -216,13 +216,13 @@ class StepInicializarProjeto extends StatelessWidget {
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold),
-      hintStyle: const TextStyle(color: Colors.white24, fontSize: 14),
+      labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 10, letterSpacing: 0.4, fontWeight: FontWeight.bold),
+      hintStyle: TextStyle(color: AppColors.gridLine, fontSize: 14),
       floatingLabelBehavior: FloatingLabelBehavior.always,
-      enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.gridLine)),
-      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGold, width: 2)),
-      errorBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.redAccent)),
-      focusedErrorBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.redAccent, width: 2)),
+      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.gridLine)),
+      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGold, width: 2)),
+      errorBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.danger)),
+      focusedErrorBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.danger, width: 2)),
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
     );
   }

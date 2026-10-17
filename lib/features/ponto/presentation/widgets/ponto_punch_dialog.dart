@@ -20,15 +20,8 @@ class PontoPunchReceiptDialog extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.4), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryGold.withValues(alpha: 0.15),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -42,7 +35,7 @@ class PontoPunchReceiptDialog extends StatelessWidget {
                 color: AppColors.primaryGold.withValues(alpha: 0.15),
                 border: Border.all(color: AppColors.primaryGold, width: 2),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_circle_rounded,
                 color: AppColors.primaryGold,
                 size: 36,
@@ -50,10 +43,10 @@ class PontoPunchReceiptDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            const Text(
+            Text(
               'Ponto Registrado!',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.3,
@@ -75,15 +68,15 @@ class PontoPunchReceiptDialog extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F0F0F),
-                borderRadius: BorderRadius.circular(14),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: AppColors.gridLine),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildReceiptRow('Tipo de Batida:', punch.type.label, isHighlighted: true),
-                  const Divider(color: AppColors.gridLine, height: 16),
+                  Divider(color: AppColors.gridLine, height: 16),
                   _buildReceiptRow('Horário Oficial:', punch.formattedTimeWithSec),
                   const SizedBox(height: 8),
                   _buildReceiptRow('Data:', formattedDate),
@@ -103,11 +96,11 @@ class PontoPunchReceiptDialog extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGold,
-                  foregroundColor: Colors.black,
+                  backgroundColor: AppColors.goldFill,
+                  foregroundColor: AppColors.onGold,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                 ),
                 onPressed: () => Navigator.pop(context),
@@ -132,7 +125,7 @@ class PontoPunchReceiptDialog extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 11,
           ),
@@ -143,7 +136,7 @@ class PontoPunchReceiptDialog extends StatelessWidget {
             value,
             textAlign: TextAlign.right,
             style: TextStyle(
-              color: isHighlighted ? AppColors.primaryGold : Colors.white,
+              color: isHighlighted ? AppColors.primaryGold : AppColors.textPrimary,
               fontSize: 11,
               fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
               fontFamily: isMono ? 'monospace' : null,

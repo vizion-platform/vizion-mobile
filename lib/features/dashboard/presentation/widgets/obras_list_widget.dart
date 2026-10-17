@@ -78,12 +78,12 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
       case 'EM_EXECUCAO':
       case 'EXECUCAO':
       case 'EM ANDAMENTO':
-        return Colors.blueAccent;
+        return AppColors.primaryGold;
       case 'FINALIZADO':
       case 'CONCLUIDO':
-        return Colors.greenAccent;
+        return AppColors.success;
       default:
-        return Colors.orangeAccent;
+        return AppColors.warning;
     }
   }
 
@@ -97,7 +97,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -106,7 +106,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -128,7 +128,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
         // Listagem Dinâmica das Obras
         Expanded(
           child: _isLoading
-              ? const Center(
+              ? Center(
                   child: CircularProgressIndicator(
                     color: AppColors.primaryGold,
                   ),
@@ -138,7 +138,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.cloud_off_outlined,
                         color: AppColors.textSecondary,
                         size: 40,
@@ -146,24 +146,24 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                       const SizedBox(height: 12),
                       Text(
                         _errorMessage,
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _refreshObras,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGold,
+                          backgroundColor: AppColors.goldFill,
                         ),
                         child: const Text(
                           'Recarregar',
-                          style: TextStyle(color: Colors.black),
+                          style: TextStyle(color: AppColors.onGold),
                         ),
                       ),
                     ],
                   ),
                 )
               : _obras.isEmpty
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -205,23 +205,16 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                             ),
                           ).then((_) => _refreshObras());
                         },
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(6),
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(6),
                             border: Border.all(
                               color: AppColors.gridLine,
                               width: 1.5,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
                           ),
                           child: Row(
                             children: [
@@ -230,10 +223,10 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                                 height: 44,
                                 decoration: BoxDecoration(
                                   color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(6),
                                   border: Border.all(color: AppColors.gridLine),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.apartment_outlined,
                                   color: AppColors.primaryGold,
                                   size: 20,
@@ -246,10 +239,10 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                                   children: [
                                     Text(
                                       obra['nome_projeto'] ?? 'Sem Nome',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                        color: AppColors.textPrimary,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -257,7 +250,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                                     const SizedBox(height: 4),
                                     Text(
                                       'Orçamento: ${_formatCurrency(val)}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppColors.textSecondary,
                                         fontSize: 12,
                                       ),
@@ -296,7 +289,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                                   const SizedBox(height: 6),
                                   Text(
                                     'Início: ${_formatDate(obra['data_inicio'])}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AppColors.textSecondary,
                                       fontSize: 10,
                                     ),

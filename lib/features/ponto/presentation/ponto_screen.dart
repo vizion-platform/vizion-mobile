@@ -82,7 +82,7 @@ class _PontoScreenState extends State<PontoScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e is PontoException ? e.message : 'Erro ao registrar ponto. Tente novamente.'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -147,7 +147,7 @@ class _PontoScreenState extends State<PontoScreen> {
   Widget _buildTabHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(
           bottom: BorderSide(color: AppColors.gridLine, width: 1.2),
@@ -159,8 +159,8 @@ class _PontoScreenState extends State<PontoScreen> {
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F0F0F),
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: AppColors.gridLine),
               ),
               child: Row(
@@ -202,17 +202,8 @@ class _PontoScreenState extends State<PontoScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryGold : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primaryGold.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
+          color: isSelected ? AppColors.goldFill : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -220,13 +211,13 @@ class _PontoScreenState extends State<PontoScreen> {
             Icon(
               icon,
               size: 16,
-              color: isSelected ? Colors.black : AppColors.textSecondary,
+              color: isSelected ? AppColors.onGold : AppColors.textSecondary,
             ),
             const SizedBox(width: 6),
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.black : AppColors.textSecondary,
+                color: isSelected ? AppColors.onGold : AppColors.textSecondary,
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                 letterSpacing: 0.2,
@@ -241,7 +232,7 @@ class _PontoScreenState extends State<PontoScreen> {
   /// 1. Bater Ponto Tab Content
   Widget _buildBaterPontoTab() {
     if (_isLoading || _todayPonto == null) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primaryGold),
       );
     }
@@ -285,7 +276,7 @@ class _PontoScreenState extends State<PontoScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.shield_outlined,
                   color: AppColors.textSecondary,
                   size: 12,
@@ -319,30 +310,30 @@ class _PontoScreenState extends State<PontoScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'HORA ATUAL OFICIAL',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+                letterSpacing: 0.4,
               ),
             ),
             const SizedBox(height: 4),
             // Digital Live Clock with Seconds
             Text(
               timeStr,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 34,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               dateStr,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.primaryGold,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -356,18 +347,18 @@ class _PontoScreenState extends State<PontoScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(
               color: AppColors.primaryGold.withValues(alpha: 0.4),
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.location_on, color: AppColors.primaryGold, size: 12),
+              Icon(Icons.verified_outlined, color: AppColors.primaryGold, size: 12),
               SizedBox(width: 4),
               Text(
-                'GPS Ativo',
+                'Horário do servidor',
                 style: TextStyle(
                   color: AppColors.primaryGold,
                   fontSize: 10,
@@ -408,15 +399,8 @@ class _PontoScreenState extends State<PontoScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.gridLine, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,7 +408,7 @@ class _PontoScreenState extends State<PontoScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
                   Icon(Icons.timer_outlined, color: AppColors.primaryGold, size: 18),
                   SizedBox(width: 8),
@@ -443,12 +427,12 @@ class _PontoScreenState extends State<PontoScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGold.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   statusText,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primaryGold,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -466,15 +450,15 @@ class _PontoScreenState extends State<PontoScreen> {
             children: [
               Text(
                 workedFormatted,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 '/ 08h 00m meta',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -485,7 +469,7 @@ class _PontoScreenState extends State<PontoScreen> {
               const Spacer(),
               Text(
                 '$percent%',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.primaryGold,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -497,10 +481,10 @@ class _PontoScreenState extends State<PontoScreen> {
 
           // Linear Progress Bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: const Color(0xFF1E1E1E),
+              backgroundColor: AppColors.surfaceAlt,
               color: AppColors.primaryGold,
               minHeight: 8,
             ),
@@ -515,12 +499,12 @@ class _PontoScreenState extends State<PontoScreen> {
                 today.entrada != null
                     ? 'Início às ${today.entrada!.formattedTimeOnlyMin}'
                     : 'Entrada ainda não registrada',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 11,
                 ),
               ),
-              const Text(
+              Text(
                 'Previsão de saída: 17:00',
                 style: TextStyle(
                   color: AppColors.primaryGold,

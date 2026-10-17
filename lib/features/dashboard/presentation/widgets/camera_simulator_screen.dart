@@ -91,11 +91,11 @@ class _CameraSimulatorScreenState extends State<CameraSimulatorScreen> with Sing
                   ),
                   Text(
                     widget.phaseName.toUpperCase(),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.primaryGold,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+                      letterSpacing: 0.4,
                     ),
                   ),
                   IconButton(
@@ -141,7 +141,7 @@ class _CameraSimulatorScreenState extends State<CameraSimulatorScreen> with Sing
                                   border: Border.all(color: AppColors.primaryGold, width: 1.5),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Icon(Icons.filter_center_focus, color: AppColors.primaryGold, size: 14),
                                 ),
                               ),
@@ -306,7 +306,7 @@ class _CameraSimulatorScreenState extends State<CameraSimulatorScreen> with Sing
     if (_isFrontCamera) {
       return Container(
         color: AppColors.surface,
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

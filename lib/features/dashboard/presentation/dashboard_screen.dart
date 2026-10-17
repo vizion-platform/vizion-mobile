@@ -24,7 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await AuthService.signOut();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Sessão encerrada com segurança.'),
         backgroundColor: AppColors.textSecondary,
         behavior: SnackBarBehavior.floating,
@@ -40,44 +40,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return AlertDialog(
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.gridLine),
+            borderRadius: BorderRadius.circular(6),
+            side: BorderSide(color: AppColors.gridLine),
           ),
-          title: const Row(
+          title: Row(
             children: [
               Icon(
                 Icons.warning_amber_rounded,
-                color: Colors.redAccent,
+                color: AppColors.danger,
                 size: 24,
               ),
               SizedBox(width: 8),
               Text(
                 'Excluir Conta?',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          content: const Text(
+          content: Text(
             'Esta ação é irreversível. Todos os seus acessos e dados na plataforma VIZION serão removidos permanentemente.',
             style: TextStyle(color: AppColors.textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'CANCELAR',
+              child: Text(
+                'Cancelar',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.danger,
+                foregroundColor: AppColors.textPrimary,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                 ),
               ),
               onPressed: () async {
@@ -86,11 +86,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 if (success) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
                           'Sua conta foi excluída permanentemente.',
                         ),
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor: AppColors.danger,
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -99,9 +99,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 } else {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text('Erro ao excluir conta.'),
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor: AppColors.danger,
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -138,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(
             top: BorderSide(color: AppColors.gridLine, width: 1.5),
           ),
@@ -156,8 +156,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           unselectedLabelStyle: const TextStyle(fontSize: 10),
           type: BottomNavigationBarType.fixed,
-          elevation: 8,
-          items: const [
+          elevation: 0,
+          items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.analytics_outlined),
               activeIcon: Icon(Icons.analytics, color: AppColors.primaryGold),
@@ -216,10 +216,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 5:
         return _buildProfileContent();
       default:
-        return const Center(
+        return Center(
           child: Text(
             'Módulo não encontrado',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: AppColors.textPrimary),
           ),
         );
     }
@@ -239,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               InkWell(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 onTap: () {
                   setState(() {
                     _selectedModuleIndex = 0;
@@ -249,10 +249,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: AppColors.gridLine),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_ios_new_rounded,
                     color: AppColors.primaryGold,
                     size: 18,
@@ -260,7 +260,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -269,7 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     SizedBox(height: 2),
@@ -293,24 +293,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(color: AppColors.gridLine, width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: Column(
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundColor: AppColors.primaryGold.withValues(alpha: 0.1),
+                  backgroundColor: AppColors.goldFill.withValues(alpha: 0.1),
                   child: Text(
                     initial,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.primaryGold,
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -321,8 +314,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   AuthService.nome ?? 'Usuário Vizion',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -331,7 +324,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(
                   AuthService.currentUserEmail ?? 'sem-email@vizion.com',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 13,
                   ),
@@ -347,14 +340,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryGold.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: AppColors.primaryGold.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Text(
                         AuthService.role ?? 'COLABORADOR',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.primaryGold,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -370,13 +363,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 28),
 
           // Seção Sessões Ativas
-          const Text(
+          Text(
             'SESSÃO ATIVA',
             style: TextStyle(
-              color: Colors.white70,
+              color: AppColors.textPrimary.withValues(alpha: 0.7),
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
+              letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: 12),
@@ -384,7 +377,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(color: AppColors.gridLine),
             ),
             child: Row(
@@ -392,24 +385,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.phone_android,
-                    color: Colors.green,
+                    color: AppColors.success,
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Dispositivo Atual (Este Celular)',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -418,7 +411,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         'Online • São Paulo, Brasil',
                         style: TextStyle(
-                          color: Colors.green,
+                          color: AppColors.success,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -432,13 +425,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 28),
 
           // Botões de Saída/Ações
-          const Text(
+          Text(
             'CONTA',
             style: TextStyle(
-              color: Colors.white70,
+              color: AppColors.textPrimary.withValues(alpha: 0.7),
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
+              letterSpacing: 0.4,
             ),
           ),
           const SizedBox(height: 12),
@@ -450,23 +443,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             tileColor: AppColors.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: AppColors.gridLine),
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(color: AppColors.gridLine),
             ),
-            leading: const Icon(Icons.logout, color: AppColors.primaryGold),
-            title: const Text(
+            leading: Icon(Icons.logout, color: AppColors.primaryGold),
+            title: Text(
               'Encerrar Sessão',
               style: TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            subtitle: const Text(
+            subtitle: Text(
               'Desconecta sua conta corporativa com segurança',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
-            trailing: const Icon(
+            trailing: Icon(
               Icons.arrow_forward_ios,
               size: 12,
               color: AppColors.textSecondary,
@@ -474,6 +467,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: _handleSignOut,
           ),
           const SizedBox(height: 12),
+          // Tema claro/escuro, como no desktop; a escolha fica salva no aparelho.
+          SwitchListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            tileColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(color: AppColors.gridLine),
+            ),
+            secondary: Icon(Icons.dark_mode_outlined, color: AppColors.primaryGold),
+            title: Text(
+              'Tema escuro',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              'Alterna entre o visual claro e o escuro',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
+            value: AppTheme.isDark,
+            onChanged: (dark) => AppTheme.setDark(dark),
+          ),
+          const SizedBox(height: 12),
 
           ListTile(
             contentPadding: const EdgeInsets.symmetric(
@@ -482,23 +496,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             tileColor: AppColors.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: AppColors.gridLine),
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(color: AppColors.gridLine),
             ),
-            leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
-            title: const Text(
+            leading: Icon(Icons.delete_forever, color: AppColors.danger),
+            title: Text(
               'Excluir Conta Corporativa',
               style: TextStyle(
-                color: Colors.redAccent,
+                color: AppColors.danger,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            subtitle: const Text(
+            subtitle: Text(
               'Remove permanentemente seu registro da plataforma',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             ),
-            trailing: const Icon(
+            trailing: Icon(
               Icons.arrow_forward_ios,
               size: 12,
               color: AppColors.textSecondary,

@@ -86,16 +86,16 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primaryGold),
       );
     }
 
     if (_summary == null) {
-      return const Center(
+      return Center(
         child: Text(
           'Nenhum dado encontrado para o mês selecionado.',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textPrimary),
         ),
       );
     }
@@ -133,24 +133,24 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
               children: [
                 Text(
                   'REGISTROS DIÁRIOS (${_filteredDays.length})',
-                  style: const TextStyle(
-                    color: Colors.white70,
+                  style: TextStyle(
+                    color: AppColors.textPrimary.withValues(alpha: 0.7),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+                    letterSpacing: 0.4,
                   ),
                 ),
                 InkWell(
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text('Espelho de Ponto pronto para exportação.'),
-                        backgroundColor: AppColors.primaryGold,
+                        backgroundColor: AppColors.goldFill,
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
                   },
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(Icons.download_rounded, color: AppColors.primaryGold, size: 14),
                       SizedBox(width: 4),
@@ -176,17 +176,17 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                 padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppColors.gridLine),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
                     Icon(Icons.access_time_rounded, color: AppColors.textSecondary, size: 36),
                     SizedBox(height: 12),
                     Text(
                       'Nenhum registro de ponto neste mês',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -213,26 +213,26 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.gridLine, width: 1.2),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+            icon: Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 24),
             onPressed: () => _changeMonth(-1),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),
           Row(
             children: [
-              const Icon(Icons.calendar_month, color: AppColors.primaryGold, size: 18),
+              Icon(Icons.calendar_month, color: AppColors.primaryGold, size: 18),
               const SizedBox(width: 8),
               Text(
                 _formatMonthYear(_selectedMonth),
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.3,
@@ -241,7 +241,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right, color: Colors.white, size: 24),
+            icon: Icon(Icons.chevron_right, color: AppColors.textPrimary, size: 24),
             onPressed: () => _changeMonth(1),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -261,15 +261,8 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,13 +273,13 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'SALDO DO BANCO DE HORAS',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
+                      letterSpacing: 0.4,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -294,7 +287,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                     children: [
                       Text(
                         balanceFormatted,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.primaryGold,
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -315,12 +308,12 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGold.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   isPositiveBalance ? 'Crédito' : 'Débito',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primaryGold,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -330,7 +323,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(color: AppColors.gridLine, height: 1),
+          Divider(color: AppColors.gridLine, height: 1),
           const SizedBox(height: 16),
 
           // Sub-metrics 3 columns
@@ -350,7 +343,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                   'Previstas',
                   summary.formatMinutes(summary.totalExpectedMinutes),
                   Icons.schedule_rounded,
-                  Colors.white70,
+                  AppColors.textPrimary.withValues(alpha: 0.7),
                 ),
               ),
               Container(width: 1, height: 32, color: AppColors.gridLine),
@@ -381,7 +374,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
               const SizedBox(width: 4),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 10,
                 ),
@@ -391,8 +384,8 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: AppColors.textPrimary,
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
@@ -426,7 +419,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(6),
                 side: BorderSide(
                   color: isSelected ? AppColors.primaryGold : AppColors.gridLine,
                 ),
@@ -449,13 +442,13 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.gridLine),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(6),
           onTap: day.punches.isNotEmpty
               ? () {
                   showDialog(
@@ -477,13 +470,13 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: isWeekend ? Colors.white10 : AppColors.primaryGold.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
+                            color: isWeekend ? AppColors.gridLine : AppColors.primaryGold.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             '$dayNum/$monthNum • $weekdayAbbr',
                             style: TextStyle(
-                              color: isWeekend ? Colors.white70 : AppColors.primaryGold,
+                              color: isWeekend ? AppColors.textPrimary.withValues(alpha: 0.7) : AppColors.primaryGold,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -493,14 +486,14 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF222222),
+                            color: AppColors.surfaceAlt,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: AppColors.gridLine),
                           ),
                           child: Text(
                             day.statusLabel,
                             style: TextStyle(
-                              color: isWeekend ? AppColors.textSecondary : Colors.white70,
+                              color: isWeekend ? AppColors.textSecondary : AppColors.textPrimary.withValues(alpha: 0.7),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
@@ -514,8 +507,8 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                         children: [
                           Text(
                             day.formattedWorkedHours,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
@@ -530,7 +523,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                             ),
                             child: Text(
                               day.formattedBalanceHours,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.primaryGold,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -549,7 +542,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       day.customNote ?? 'Descanso Semanal',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
@@ -580,7 +573,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 9,
             fontWeight: FontWeight.w500,
@@ -590,7 +583,7 @@ class _EspelhoPontoTabState extends State<EspelhoPontoTab> {
         Text(
           time,
           style: TextStyle(
-            color: isRecorded ? Colors.white : Colors.white24,
+            color: isRecorded ? AppColors.textPrimary : AppColors.gridLine,
             fontSize: 12,
             fontWeight: isRecorded ? FontWeight.bold : FontWeight.normal,
           ),

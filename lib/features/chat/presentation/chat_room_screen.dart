@@ -175,9 +175,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       setState(() => _isSending = false);
       // O texto continua no campo para o usuário tentar de novo.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Não foi possível enviar a mensagem. Tente novamente.'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -199,14 +199,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   Color _getRoleColor(String? role) {
     switch (role?.toUpperCase()) {
       case 'ADMIN':
-        return Colors.redAccent;
+        return AppColors.danger;
       case 'EMPREITEIRO':
       case 'EMPREITEIRA':
         return AppColors.primaryGold;
       case 'CLIENTE':
-        return Colors.blueAccent;
+        return AppColors.primaryGold;
       case 'FUNCIONARIO':
-        return Colors.greenAccent;
+        return AppColors.success;
       default:
         return Colors.grey;
     }
@@ -226,18 +226,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         leadingWidth: 70,
         leading: InkWell(
           onTap: () => Navigator.pop(context),
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(6),
           child: Row(
             children: [
               const SizedBox(width: 4),
-              const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+              Icon(Icons.arrow_back, color: AppColors.textPrimary, size: 22),
               const SizedBox(width: 4),
               CircleAvatar(
                 radius: 18,
-                backgroundColor: AppColors.primaryGold.withValues(alpha: 0.12),
+                backgroundColor: AppColors.goldFill.withValues(alpha: 0.12),
                 child: Text(
                   otherInitial,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primaryGold,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -252,8 +252,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           children: [
             Text(
               widget.otherParticipantName,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
               ),
@@ -282,19 +282,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _isSocketConnected
-                      ? Colors.greenAccent
+                      ? AppColors.success
                       : Colors.amberAccent,
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          (_isSocketConnected
-                                  ? Colors.greenAccent
-                                  : Colors.amberAccent)
-                              .withValues(alpha: 0.5),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                    ),
-                  ],
                 ),
               ),
               const SizedBox(width: 6),
@@ -302,7 +291,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 _isSocketConnected ? 'Online' : 'HTTP Fallback',
                 style: TextStyle(
                   color: _isSocketConnected
-                      ? Colors.greenAccent
+                      ? AppColors.success
                       : Colors.amberAccent,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
@@ -324,7 +313,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Widget _buildMessagesList() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primaryGold),
       );
     }
@@ -334,9 +323,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.cloud_off, color: Colors.redAccent, size: 40),
+            Icon(Icons.cloud_off, color: AppColors.danger, size: 40),
             const SizedBox(height: 12),
-            Text(_errorMessage, style: const TextStyle(color: Colors.white)),
+            Text(_errorMessage, style: TextStyle(color: AppColors.textPrimary)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
@@ -346,11 +335,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 _loadMessages();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGold,
+                backgroundColor: AppColors.goldFill,
               ),
               child: const Text(
                 'Tentar Novamente',
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: AppColors.onGold),
               ),
             ),
           ],
@@ -404,23 +393,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Widget _buildMessageBubble(String content, String time, bool isMe) {
     final bubbleColor = isMe
-        ? const Color(0xFF2C261B) // Elegant dark Gold/Bronze for current user
+        ? AppColors.goldSoft // Elegant dark Gold/Bronze for current user
         : AppColors.surface; // Dark grey for other
 
     final alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
 
     final borderRadius = isMe
         ? const BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
-            bottomLeft: Radius.circular(16),
+            topLeft: Radius.circular(6),
+            topRight: Radius.circular(6),
+            bottomLeft: Radius.circular(6),
             bottomRight: Radius.zero,
           )
         : const BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
+            topLeft: Radius.circular(6),
+            topRight: Radius.circular(6),
             bottomLeft: Radius.zero,
-            bottomRight: Radius.circular(16),
+            bottomRight: Radius.circular(6),
           );
 
     final border = isMe
@@ -448,8 +437,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           children: [
             Text(
               content,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 14.5,
                 height: 1.3,
               ),
@@ -467,7 +456,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ),
                 if (isMe) ...[
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     Icons.done_all,
                     color: AppColors.primaryGold,
                     size: 12,
@@ -483,7 +472,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   Widget _buildInputBar() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.gridLine, width: 1.5)),
       ),
@@ -499,7 +488,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.background,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: AppColors.gridLine, width: 1.5),
               ),
               child: TextField(
@@ -508,8 +497,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 minLines: 1,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendMessage(),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: const InputDecoration(
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                decoration: InputDecoration(
                   hintText: 'Mensagem...',
                   hintStyle: TextStyle(
                     color: AppColors.textSecondary,
@@ -527,9 +516,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           const SizedBox(width: 8),
           CircleAvatar(
             radius: 22,
-            backgroundColor: AppColors.primaryGold,
+            backgroundColor: AppColors.goldFill,
             child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.black, size: 18),
+              icon: const Icon(Icons.send, color: AppColors.onGold, size: 18),
               onPressed: _sendMessage,
             ),
           ),

@@ -54,15 +54,8 @@ class PontoTimelineWidget extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.gridLine, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,14 +63,14 @@ class PontoTimelineWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
                   Icon(Icons.timeline_rounded, color: AppColors.primaryGold, size: 18),
                   SizedBox(width: 8),
                   Text(
                     'Linha do Tempo do Dia',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.3,
@@ -94,7 +87,7 @@ class PontoTimelineWidget extends StatelessWidget {
                 ),
                 child: Text(
                   '/4 Batidas',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primaryGold,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -152,29 +145,20 @@ class PontoTimelineWidget extends StatelessWidget {
                       ? AppColors.primaryGold.withValues(alpha: 0.2)
                       : isCurrent
                           ? AppColors.primaryGold.withValues(alpha: 0.15)
-                          : const Color(0xFF1E1E1E),
+                          : AppColors.surfaceAlt,
                   border: Border.all(
                     color: (isCompleted || isCurrent)
                         ? AppColors.primaryGold
                         : AppColors.gridLine,
                     width: isCurrent ? 2.0 : 1.5,
                   ),
-                  boxShadow: isCurrent
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primaryGold.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ]
-                      : null,
                 ),
                 child: Center(
                   child: isCompleted
-                      ? const Icon(Icons.check_rounded, color: AppColors.primaryGold, size: 18)
+                      ? Icon(Icons.check_rounded, color: AppColors.primaryGold, size: 18)
                       : Icon(
                           stage.icon,
-                          color: isCurrent ? AppColors.primaryGold : Colors.white38,
+                          color: isCurrent ? AppColors.primaryGold : AppColors.textSecondary,
                           size: 16,
                         ),
                 ),
@@ -209,15 +193,15 @@ class PontoTimelineWidget extends StatelessWidget {
                   color: isCurrent
                       ? AppColors.primaryGold.withValues(alpha: 0.06)
                       : isCompleted
-                          ? const Color(0xFF1B1B1B)
-                          : const Color(0xFF141414),
-                  borderRadius: BorderRadius.circular(12),
+                          ? AppColors.surfaceAlt
+                          : AppColors.surface,
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: isCurrent
                         ? AppColors.primaryGold.withValues(alpha: 0.35)
                         : isCompleted
                             ? AppColors.gridLine
-                            : Colors.white10,
+                            : AppColors.gridLine,
                   ),
                 ),
                 child: Row(
@@ -232,7 +216,7 @@ class PontoTimelineWidget extends StatelessWidget {
                                 stage.title,
                                 style: TextStyle(
                                   color: isCompleted || isCurrent
-                                      ? Colors.white
+                                      ? AppColors.textPrimary
                                       : AppColors.textSecondary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
@@ -249,7 +233,7 @@ class PontoTimelineWidget extends StatelessWidget {
                                     color: AppColors.primaryGold.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'CONFIRMADO',
                                     style: TextStyle(
                                       color: AppColors.primaryGold,
@@ -271,8 +255,8 @@ class PontoTimelineWidget extends StatelessWidget {
                                       color: AppColors.primaryGold.withValues(alpha: 0.5),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'PRÓXIMO',
+                                  child: Text(
+                                    'Próximo',
                                     style: TextStyle(
                                       color: AppColors.primaryGold,
                                       fontSize: 9,
@@ -290,7 +274,7 @@ class PontoTimelineWidget extends StatelessWidget {
                             style: TextStyle(
                               color: isCompleted
                                   ? AppColors.textSecondary
-                                  : Colors.white38,
+                                  : AppColors.textSecondary,
                               fontSize: 11,
                             ),
                             maxLines: 1,
@@ -309,7 +293,7 @@ class PontoTimelineWidget extends StatelessWidget {
                           timeDisplay,
                           style: TextStyle(
                             color: isCompleted
-                                ? Colors.white
+                                ? AppColors.textPrimary
                                 : isCurrent
                                     ? AppColors.primaryGold
                                     : AppColors.textSecondary,
@@ -320,7 +304,7 @@ class PontoTimelineWidget extends StatelessWidget {
                         ),
                         Text(
                           isCompleted ? 'registrado' : 'previsto',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 10,
                           ),

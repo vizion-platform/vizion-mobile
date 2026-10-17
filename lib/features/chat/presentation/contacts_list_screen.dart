@@ -95,14 +95,14 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
   Color _getRoleColor(String? role) {
     switch (role?.toUpperCase()) {
       case 'ADMIN':
-        return Colors.redAccent;
+        return AppColors.danger;
       case 'EMPREITEIRO':
       case 'EMPREITEIRA':
         return AppColors.primaryGold;
       case 'CLIENTE':
-        return Colors.blueAccent;
+        return AppColors.primaryGold;
       case 'FUNCIONARIO':
-        return Colors.greenAccent;
+        return AppColors.success;
       default:
         return Colors.grey;
     }
@@ -115,7 +115,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (context) => Center(
         child: CircularProgressIndicator(color: AppColors.primaryGold),
       ),
     );
@@ -153,7 +153,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
             content: Text(
               'Não foi possível iniciar a conversa: ${e.toString().replaceAll('Exception: ', '')}',
             ),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -168,16 +168,16 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Contatos Disponíveis',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         bottom: PreferredSize(
@@ -190,21 +190,21 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
             ),
             child: TextField(
               controller: _searchController,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Buscar contatos...',
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
                 ),
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search,
                   color: AppColors.textSecondary,
                   size: 20,
                 ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.clear,
                           color: AppColors.textSecondary,
                           size: 18,
@@ -219,15 +219,15 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                   horizontal: 16,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
                     color: AppColors.gridLine,
                     width: 1.5,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
                     color: AppColors.primaryGold,
                     width: 1.5,
                   ),
@@ -243,7 +243,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primaryGold),
       );
     }
@@ -253,9 +253,9 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+            Icon(Icons.error_outline, color: AppColors.danger, size: 48),
             const SizedBox(height: 16),
-            Text(_errorMessage, style: const TextStyle(color: Colors.white)),
+            Text(_errorMessage, style: TextStyle(color: AppColors.textPrimary)),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
@@ -265,11 +265,11 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                 _loadContacts();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGold,
+                backgroundColor: AppColors.goldFill,
               ),
               child: const Text(
                 'Tentar Novamente',
-                style: TextStyle(color: Colors.black),
+                style: TextStyle(color: AppColors.onGold),
               ),
             ),
           ],
@@ -288,12 +288,12 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
               size: 64,
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Nenhum contato encontrado.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Contatos devem pertencer ao mesmo Tenant e cumprir as regras.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
               textAlign: TextAlign.center,
@@ -318,7 +318,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(color: AppColors.gridLine, width: 1),
           ),
           child: ListTile(
@@ -328,10 +328,10 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
             ),
             leading: CircleAvatar(
               radius: 22,
-              backgroundColor: AppColors.primaryGold.withValues(alpha: 0.12),
+              backgroundColor: AppColors.goldFill.withValues(alpha: 0.12),
               child: Text(
                 initial,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.primaryGold,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -343,8 +343,8 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                 Expanded(
                   child: Text(
                     name,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -361,7 +361,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: _getRoleColor(role).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: _getRoleColor(role).withValues(alpha: 0.3),
                         width: 0.8,
@@ -383,7 +383,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
                 email,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),
@@ -391,7 +391,7 @@ class _ContactsListScreenState extends State<ContactsListScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            trailing: const Icon(
+            trailing: Icon(
               Icons.chevron_right,
               color: AppColors.textSecondary,
               size: 18,

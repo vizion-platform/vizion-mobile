@@ -126,10 +126,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Mensagens',
           style: TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 24,
           ),
@@ -140,21 +140,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
             padding: const EdgeInsets.only(left: 0.0, right: 0.0, bottom: 12.0),
             child: TextField(
               controller: _searchController,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Buscar conversas...',
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
                 ),
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search,
                   color: AppColors.textSecondary,
                   size: 20,
                 ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.clear,
                           color: AppColors.textSecondary,
                           size: 18,
@@ -169,15 +169,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   horizontal: 16,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
                     color: AppColors.gridLine,
                     width: 1.5,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(
                     color: AppColors.primaryGold,
                     width: 1.5,
                   ),
@@ -195,15 +195,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToContacts,
-        backgroundColor: AppColors.primaryGold,
-        child: const Icon(Icons.chat_bubble_rounded, color: Colors.black),
+        backgroundColor: AppColors.goldFill,
+        child: const Icon(Icons.chat_bubble_rounded, color: AppColors.onGold),
       ),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.primaryGold),
       );
     }
@@ -217,11 +217,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.cloud_off, color: Colors.redAccent, size: 48),
+                Icon(Icons.cloud_off, color: AppColors.danger, size: 48),
                 const SizedBox(height: 16),
                 Text(
                   _errorMessage,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
@@ -232,11 +232,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     _loadChats();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryGold,
+                    backgroundColor: AppColors.goldFill,
                   ),
                   child: const Text(
                     'Tentar Novamente',
-                    style: TextStyle(color: Colors.black),
+                    style: TextStyle(color: AppColors.onGold),
                   ),
                 ),
               ],
@@ -263,16 +263,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     size: 64,
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Nenhuma conversa ativa',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Toque no botão flutuante para iniciar um chat com um contato disponível de sua organização.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -285,9 +285,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     onPressed: _navigateToContacts,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryGold,
-                      side: const BorderSide(color: AppColors.primaryGold),
+                      side: BorderSide(color: AppColors.primaryGold),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                     icon: const Icon(Icons.search, size: 18),
@@ -317,7 +317,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           margin: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(color: AppColors.gridLine, width: 1),
           ),
           child: ListTile(
@@ -329,12 +329,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.primaryGold.withValues(
+                  backgroundColor: AppColors.goldFill.withValues(
                     alpha: 0.12,
                   ),
                   child: Text(
                     initial,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.primaryGold,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -348,7 +348,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.green,
+                      color: AppColors.success,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.surface, width: 1.5),
                     ),
@@ -358,8 +358,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             title: Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
               ),
@@ -370,7 +370,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               padding: const EdgeInsets.only(top: 4.0),
               child: Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),
@@ -378,7 +378,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            trailing: const Column(
+            trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
