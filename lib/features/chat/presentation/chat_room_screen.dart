@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
 import '../data/chat_network_service.dart';
+import 'package:vizion_mobile/core/log.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final int chatId;
@@ -67,7 +68,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   void _startFallbackTimer() {
     if (_fallbackTimer != null) return;
-    print('Iniciando fallback de polling periodico HTTP...');
+    logDebug('Iniciando fallback de polling periodico HTTP...');
     _fallbackTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       _pollMessages();
     });
@@ -75,7 +76,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   void _stopFallbackTimer() {
     if (_fallbackTimer != null) {
-      print('Parando fallback de polling periodico HTTP.');
+      logDebug('Parando fallback de polling periodico HTTP.');
       _fallbackTimer!.cancel();
       _fallbackTimer = null;
     }
@@ -94,7 +95,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           }
         }
       } catch (e) {
-        print('Erro no fallback polling: $e');
+        logDebug('Erro no fallback polling: $e');
       }
     }
   }
@@ -152,23 +153,34 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     });
   }
 
-  void _sendMessage() {
+  bool _isSending = false;
+
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _isSending) return;
 
-    final localMsg = _chatService.sendMessage(widget.chatId, text);
-    setState(() {
-      _messages.add(localMsg);
-    });
-    _messageController.clear();
-
-    // Smooth scrolling to bottom after sending
-    _scrollToBottom();
-
-    if (!_isSocketConnected) {
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        _pollMessages();
+    setState(() => _isSending = true);
+    try {
+      // A mensagem só aparece depois que o servidor a persiste (id real, sem duplicar no polling).
+      final saved = await _chatService.sendMessage(widget.chatId, text);
+      if (!mounted) return;
+      setState(() {
+        if (!_messages.any((m) => m['id'] == saved['id'])) _messages.add(saved);
+        _isSending = false;
       });
+      _messageController.clear();
+      _scrollToBottom();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isSending = false);
+      // O texto continua no campo para o usuário tentar de novo.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível enviar a mensagem. Tente novamente.'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 

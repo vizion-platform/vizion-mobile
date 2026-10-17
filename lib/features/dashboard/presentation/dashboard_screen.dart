@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
+import '../../chat/data/chat_network_service.dart';
 import '../../chat/presentation/chat_list_screen.dart';
 import '../../agenda/presentation/agenda_screen.dart';
 import '../../ponto/presentation/ponto_screen.dart';
@@ -17,8 +18,11 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedModuleIndex = 0;
 
-  void _handleSignOut() {
-    AuthService.signOut();
+  Future<void> _handleSignOut() async {
+    // Desconecta o chat antes de limpar a sessão: o MQTT usa o token do usuário.
+    ChatNetworkService().disconnectSocket();
+    await AuthService.signOut();
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Sessão encerrada com segurança.'),

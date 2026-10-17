@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:vizion_mobile/core/network/auth_service.dart';
 import 'package:vizion_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vizion_mobile/features/agenda/presentation/agenda_screen.dart';
@@ -92,38 +95,60 @@ void main() {
   });
 
   testWidgets('AgendaScreen opens Nova Tarefa modal and creates task', (WidgetTester tester) async {
-    await AuthService.switchRole('EMPREITEIRO', 'Empreiteiro Demo', 'empreiteiro@demo.com');
+    AuthService.definirPapelParaTeste('EMPREITEIRO', 'Empreiteiro Demo', 'empreiteiro@demo.com');
 
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: AgendaScreen(),
-      ),
-    );
+    // API simulada: o teste não depende de rede (e as respostas chegam dentro do tempo falso do widget test).
+    final tarefasNoServidor = <Map<String, dynamic>>[];
+    final api = MockClient((req) async {
+      final json = {'content-type': 'application/json'};
+      if (req.method == 'POST' && req.url.path.endsWith('/tarefas')) {
+        final criada = {...jsonDecode(req.body) as Map<String, dynamic>, 'id': tarefasNoServidor.length + 1};
+        tarefasNoServidor.add(criada);
+        return http.Response(jsonEncode(criada), 201, headers: json);
+      }
+      if (req.method == 'GET' && req.url.path.endsWith('/tarefas')) {
+        return http.Response(jsonEncode(tarefasNoServidor), 200, headers: json);
+      }
+      return http.Response('[]', 200, headers: json);
+    });
 
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    await http.runWithClient(() async {
 
-    // Find the "Nova Tarefa" Floating Action Button and tap it
-    final novaTarefaBtn = find.text('Nova Tarefa');
-    expect(novaTarefaBtn, findsOneWidget);
-    await tester.tap(novaTarefaBtn);
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AgendaScreen(),
+        ),
+      );
 
-    // Verify modal header and inputs
-    expect(find.text('Nova Tarefa da Empreiteira'), findsOneWidget);
-    expect(find.text('SALVAR TAREFA'), findsOneWidget);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
-    // Enter title
-    final titleField = find.widgetWithText(TextField, 'Nome da Tarefa / Serviço *');
-    await tester.enterText(titleField, 'Instalação Elétrica do Bloco A');
-    await tester.pump();
+      // Find the "Nova Tarefa" Floating Action Button and tap it
+      final novaTarefaBtn = find.text('Nova Tarefa');
+      expect(novaTarefaBtn, findsOneWidget);
+      await tester.tap(novaTarefaBtn);
+      // O modal tem animação contínua, então pumpAndSettle nunca assenta: avança um tempo fixo.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
 
-    // Tap SALVAR TAREFA
-    await tester.tap(find.text('SALVAR TAREFA'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+      // Verify modal header and inputs
+      expect(find.text('Nova Tarefa da Empreiteira'), findsOneWidget);
+      expect(find.text('SALVAR TAREFA'), findsOneWidget);
 
-    // Verify task is added to agenda
-    expect(find.text('Instalação Elétrica do Bloco A'), findsOneWidget);
+      // Enter title
+      final titleField = find.widgetWithText(TextField, 'Nome da Tarefa / Serviço *');
+      await tester.enterText(titleField, 'Instalação Elétrica do Bloco A');
+      await tester.pump();
+
+      // Tap SALVAR TAREFA
+      await tester.tap(find.text('SALVAR TAREFA'));
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+
+      // A tarefa foi enviada à API com o título digitado (a lista da tela é atualizada de forma otimista).
+      expect(tarefasNoServidor, hasLength(1));
+      expect(tarefasNoServidor.single['titulo'], 'Instalação Elétrica do Bloco A');
+    }, () => api);
   });
 }

@@ -63,7 +63,7 @@ class PontoPunch {
     required this.id,
     required this.type,
     required this.timestamp,
-    this.location = 'Canteiro de Obras • GPS Validado',
+    this.location = 'Localização não informada',
     this.device = 'Vizion Mobile App (Portaria 671)',
     String? hashReceipt,
   }) : hashReceipt = hashReceipt ?? _generateHash(id, timestamp);
@@ -104,7 +104,7 @@ class PontoPunch {
         orElse: () => PontoType.entrada,
       ),
       timestamp: DateTime.parse(map['timestamp']),
-      location: map['location'] ?? 'Canteiro de Obras • GPS Validado',
+      location: map['location'] ?? 'Localização não informada',
       device: map['device'] ?? 'Vizion Mobile App',
       hashReceipt: map['hashReceipt'],
     );

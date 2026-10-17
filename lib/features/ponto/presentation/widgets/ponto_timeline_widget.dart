@@ -285,7 +285,7 @@ class PontoTimelineWidget extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             isCompleted
-                                ? (stage.punch?.location ?? 'GPS Validado')
+                                ? (stage.punch?.location ?? 'Localização não informada')
                                 : stage.subtitle,
                             style: TextStyle(
                               color: isCompleted

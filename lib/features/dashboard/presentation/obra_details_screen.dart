@@ -105,13 +105,15 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     });
 
     try {
-      await AuthService.transitionPhaseStatus(widget.obra['id'], faseId, acao);
+      final ok = await AuthService.transitionPhaseStatus(widget.obra['id'], faseId, acao);
       await _loadFases();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fase atualizada com sucesso para a ação: $acao.'),
-            backgroundColor: AppColors.primaryGold,
+            content: Text(ok
+                ? 'Fase atualizada com sucesso para a ação: $acao.'
+                : 'Não foi possível atualizar a fase. Verifique sua conexão e permissões.'),
+            backgroundColor: ok ? AppColors.primaryGold : Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -147,13 +149,13 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         setState(() {
           _isLoading = true;
         });
-        await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], base64Image);
+        final salvou = await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], base64Image);
         await _loadFases();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Foto tirada e salva com sucesso!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: Text(salvou ? 'Foto tirada e salva com sucesso!' : 'Não foi possível enviar a foto. Tente novamente.'),
+              backgroundColor: salvou ? Colors.green : Colors.redAccent,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -175,13 +177,13 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         setState(() {
           _isLoading = true;
         });
-        await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], photoData);
+        final salvou = await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], photoData);
         await _loadFases();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Foto simulada salva com sucesso!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: Text(salvou ? 'Foto simulada salva com sucesso!' : 'Não foi possível enviar a foto. Tente novamente.'),
+              backgroundColor: salvou ? Colors.green : Colors.redAccent,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -200,22 +202,20 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     );
 
     try {
-      int contractorId = 1001;
-      String contractorName = 'Eng. Felipe (Empreiteiro)';
-      
-      try {
-        final contacts = await ChatNetworkService().fetchContacts();
-        final realContractor = contacts.firstWhere(
-          (c) => (c['role'] ?? '').toString().toUpperCase() == 'EMPREITEIRO',
-          orElse: () => <String, dynamic>{},
-        );
-        if (realContractor.isNotEmpty) {
-          contractorId = realContractor['id'] ?? 1001;
-          contractorName = realContractor['nome'] ?? contractorName;
-        }
-      } catch (e) {
-        debugPrint('Erro ao buscar contatos, usando padrão: $e');
+      // Sem contato real do empreiteiro não há conversa: nada de id ou nome fixos.
+      final contacts = await ChatNetworkService().fetchContacts();
+      final realContractor = contacts.firstWhere(
+        (c) {
+          final role = (c['role'] ?? '').toString().toUpperCase();
+          return role == 'EMPREITEIRO' || role == 'EMPREITEIRA';
+        },
+        orElse: () => <String, dynamic>{},
+      );
+      if (realContractor.isEmpty || realContractor['id'] == null) {
+        throw Exception('Nenhum empreiteiro disponível para conversar nesta obra.');
       }
+      final int contractorId = realContractor['id'] as int;
+      final String contractorName = (realContractor['nome'] ?? 'Empreiteiro').toString();
 
       final chatData = await ChatNetworkService().startPrivateChat(contractorId);
       final chatId = chatData['id'];

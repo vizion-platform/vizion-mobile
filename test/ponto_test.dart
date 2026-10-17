@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vizion_mobile/features/ponto/domain/ponto_record_model.dart';
 import 'package:vizion_mobile/features/ponto/data/ponto_service.dart';
@@ -48,19 +51,87 @@ void main() {
       expect(day.formattedBalanceHours, equals('+00h 30m'));
     });
 
-    test('PontoService registers punches in sequence', () async {
-      SharedPreferences.setMockInitialValues({});
+    // Servidor simulado: guarda o registro do dia e devolve o JSON do RegistroPontoResponse.
+    http.Client servidorDePonto({List<Map<String, dynamic>>? requisicoes, int? statusFixo, bool semRede = false}) {
+      final registro = <String, dynamic>{'id': 1, 'data': PontoService.hojeBrasilia().toIso8601String().substring(0, 10)};
+      return MockClient((req) async {
+        if (semRede) throw http.ClientException('sem rede');
+        if (req.url.path.endsWith('/ponto/bater')) {
+          final corpo = jsonDecode(req.body) as Map<String, dynamic>;
+          requisicoes?.add(corpo);
+          if (statusFixo != null) {
+            return http.Response(jsonEncode({'message': 'A entrada de hoje já foi registrada'}), statusFixo,
+                headers: {'content-type': 'application/json'});
+          }
+          final campo = {
+            'ENTRADA': 'horaEntrada',
+            'SAIDA_ALMOCO': 'horaSaidaAlmoco',
+            'RETORNO_ALMOCO': 'horaRetornoAlmoco',
+            'SAIDA': 'horaSaida',
+          }[corpo['tipoBatida']]!;
+          registro[campo] = DateTime.now().toIso8601String();
+          return http.Response(jsonEncode(registro), 200, headers: {'content-type': 'application/json'});
+        }
+        if (req.url.path.endsWith('/ponto/meu-ponto')) {
+          return http.Response(jsonEncode(registro.containsKey('horaEntrada') ? [registro] : []), 200,
+              headers: {'content-type': 'application/json'});
+        }
+        return http.Response('{}', 404);
+      });
+    }
 
-      final today = await PontoService.getTodayPonto();
-      expect(PontoService.getNextPunchType(today), equals(PontoType.entrada));
+    test('PontoService registers punches in sequence (horário vem do servidor)', () async {
+      final requisicoes = <Map<String, dynamic>>[];
+      // o cliente é criado uma vez: o estado do servidor simulado precisa durar entre as chamadas
+      final servidor = servidorDePonto(requisicoes: requisicoes);
+      await http.runWithClient(() async {
+        final today = await PontoService.getTodayPonto();
+        expect(PontoService.getNextPunchType(today), equals(PontoType.entrada));
 
-      final res1 = await PontoService.registerPunch(type: PontoType.entrada);
-      expect(res1.punch.type, equals(PontoType.entrada));
-      expect(PontoService.getNextPunchType(res1.day), equals(PontoType.saidaAlmoco));
+        final res1 = await PontoService.registerPunch(type: PontoType.entrada);
+        expect(res1.punch.type, equals(PontoType.entrada));
+        expect(PontoService.getNextPunchType(res1.day), equals(PontoType.saidaAlmoco));
 
-      final res2 = await PontoService.registerPunch(type: PontoType.saidaAlmoco);
-      expect(res2.punch.type, equals(PontoType.saidaAlmoco));
-      expect(PontoService.getNextPunchType(res2.day), equals(PontoType.retornoAlmoco));
+        final res2 = await PontoService.registerPunch(type: PontoType.saidaAlmoco);
+        expect(res2.punch.type, equals(PontoType.saidaAlmoco));
+        expect(PontoService.getNextPunchType(res2.day), equals(PontoType.retornoAlmoco));
+      }, () => servidor);
+
+      // nunca envia id de funcionário nem localização inventada
+      for (final corpo in requisicoes) {
+        expect(corpo.containsKey('idFuncionario'), isFalse);
+        expect(corpo.containsKey('localizacao'), isFalse);
+      }
+    });
+
+    test('recusa do servidor chega ao usuário e nada é gravado como sucesso', () async {
+      await http.runWithClient(() async {
+        await expectLater(
+          PontoService.registerPunch(type: PontoType.entrada),
+          throwsA(isA<PontoException>().having((e) => e.message, 'message', contains('já foi registrada'))),
+        );
+        final hoje = await PontoService.getTodayPonto();
+        expect(hoje.punches, isEmpty);
+      }, () => servidorDePonto(statusFixo: 400));
+    });
+
+    test('erro 403/500 não vira sucesso local', () async {
+      for (final status in [403, 500]) {
+        await http.runWithClient(() async {
+          await expectLater(PontoService.registerPunch(type: PontoType.entrada), throwsA(isA<PontoException>()));
+        }, () => servidorDePonto(statusFixo: status));
+      }
+    });
+
+    test('sem conexão a batida não é registrada', () async {
+      await http.runWithClient(() async {
+        await expectLater(
+          PontoService.registerPunch(type: PontoType.entrada),
+          throwsA(isA<PontoException>().having((e) => e.message, 'message', contains('Sem conexão'))),
+        );
+      }, () => servidorDePonto(semRede: true));
+      final hoje = await PontoService.getTodayPonto();
+      expect(hoje.punches, isEmpty);
     });
   });
 

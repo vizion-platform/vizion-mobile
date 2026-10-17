@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/auth_service.dart';
 import '../domain/agenda_task_model.dart';
+import 'package:vizion_mobile/core/log.dart';
 
 class AgendaService {
   static const String _storageKey = 'vizion_agenda_tasks_v2';
@@ -48,7 +49,7 @@ class AgendaService {
         });
       }).toList();
     } catch (e) {
-      print('Erro ao carregar tarefas do banco: $e');
+      logDebug('Erro ao carregar tarefas do banco: $e');
       return [];
     }
   }
@@ -76,7 +77,7 @@ class AgendaService {
         finalTask = task.copyWith(id: 'db_$dbId');
       }
     } catch (e) {
-      print('Erro ao persistir tarefa no banco de dados, mantendo local: $e');
+      logDebug('Erro ao persistir tarefa no banco de dados, mantendo local: $e');
     }
 
     // Update local cache
@@ -97,7 +98,7 @@ class AgendaService {
       try {
         await AuthService.toggleTarefaStatus(numId);
       } catch (e) {
-        print('Erro ao atualizar status da tarefa no banco: $e');
+        logDebug('Erro ao atualizar status da tarefa no banco: $e');
       }
     }
 
@@ -120,7 +121,7 @@ class AgendaService {
       try {
         await AuthService.deleteTarefa(numId);
       } catch (e) {
-        print('Erro ao deletar tarefa no banco: $e');
+        logDebug('Erro ao deletar tarefa no banco: $e');
       }
     }
 
@@ -168,7 +169,7 @@ class AgendaService {
               ),
             );
           } catch (e) {
-            print('Erro ao parsear data inicio: $e');
+            logDebug('Erro ao parsear data inicio: $e');
           }
         }
 
@@ -190,7 +191,7 @@ class AgendaService {
               ),
             );
           } catch (e) {
-            print('Erro ao parsear data entrega: $e');
+            logDebug('Erro ao parsear data entrega: $e');
           }
         }
 
@@ -199,91 +200,47 @@ class AgendaService {
           try {
             final fases = await AuthService.fetchFases(obraId);
             for (var fase in fases) {
-              final int faseId = fase['id'] ?? 0;
-              final String faseNome = fase['nome_fase'] ?? fase['nome'] ?? 'Etapa da Obra';
-              final String? faseStart = fase['data_inicio'];
-              final String? faseEnd = fase['data_fim'] ?? fase['prazo'];
-              final String faseStatus = fase['status'] ?? 'PENDENTE';
+              // Um dado inválido numa fase não pode derrubar as demais da obra.
+              try {
+                // Contrato da API (FasesObraResponse): id_fase, data_inicio_estimada, data_fim_estimada.
+                final int faseId = (fase['id_fase'] ?? fase['id'] ?? 0) as int;
+                final String faseNome = fase['nome_fase'] ?? fase['nome'] ?? 'Etapa da Obra';
+                final String? faseStart = fase['data_inicio_estimada'] as String?;
+                final String? faseEnd = fase['data_fim_estimada'] as String?;
+                final String faseStatus = fase['status'] ?? 'PENDENTE';
 
-              if (faseStart != null || faseEnd != null) {
-                final dtStart = faseStart != null ? DateTime.parse(faseStart) : DateTime.parse(faseEnd!);
-                final dtEnd = faseEnd != null ? DateTime.parse(faseEnd) : dtStart;
+                if (faseStart != null || faseEnd != null) {
+                  final dtStart = faseStart != null ? DateTime.parse(faseStart) : DateTime.parse(faseEnd!);
+                  final dtEnd = faseEnd != null ? DateTime.parse(faseEnd) : dtStart;
 
-                events.add(
-                  AgendaTask(
-                    id: 'api_fase_${obraId}_$faseId',
-                    title: 'Prazo Etapa: $faseNome',
-                    description: 'Etapa $faseNome para $obraNome.',
-                    startDate: dtStart,
-                    endDate: dtEnd,
-                    category: 'Vistoria',
-                    colorHex: 0xFF00ACC1, // Cyan
-                    isCompleted: faseStatus == 'CONCLUIDO' || faseStatus == 'CONCLUIDA',
-                    priority: 'Média',
-                  ),
-                );
+                  events.add(
+                    AgendaTask(
+                      id: 'api_fase_${obraId}_$faseId',
+                      title: 'Prazo Etapa: $faseNome',
+                      description: 'Etapa $faseNome para $obraNome.',
+                      startDate: dtStart,
+                      endDate: dtEnd,
+                      category: 'Vistoria',
+                      colorHex: 0xFF00ACC1, // Cyan
+                      isCompleted: faseStatus == 'CONCLUIDO' || faseStatus == 'CONCLUIDA',
+                      priority: 'Média',
+                    ),
+                  );
+                }
+              } catch (e) {
+                logDebug('Fase ignorada por dado inválido (obra $obraId): ${e.runtimeType}');
               }
             }
           } catch (e) {
-            print('Erro ao buscar fases para obra $obraId: $e');
+            logDebug('Erro ao buscar fases para obra $obraId: $e');
           }
         }
       }
     } catch (e) {
-      print('API offline ou sem resposta, carregando eventos padrão de canteiro: $e');
+      logDebug('API offline ou sem resposta, carregando eventos padrão de canteiro: $e');
     }
 
-    // If API returns no events (e.g. offline/mock), populate desktop standard events
-    if (events.isEmpty) {
-      final now = DateTime.now();
-      events = [
-        AgendaTask(
-          id: 'demo_1',
-          title: 'Início da Terraplenagem - Res. Bella Vista',
-          description: 'Início oficial dos trabalhos em canteiro.',
-          startDate: DateTime(now.year, now.month, 2),
-          endDate: DateTime(now.year, now.month, 4),
-          category: 'Obra',
-          colorHex: 0xFF4285F4,
-          isCompleted: true,
-          priority: 'Alta',
-        ),
-        AgendaTask(
-          id: 'demo_2',
-          title: 'Medição da Fundação & Armação',
-          description: 'Prazo limite para medição da etapa de fundações.',
-          startDate: DateTime(now.year, now.month, 10),
-          endDate: DateTime(now.year, now.month, 12),
-          category: 'Vistoria',
-          colorHex: 0xFF00ACC1,
-          isCompleted: false,
-          priority: 'Média',
-        ),
-        AgendaTask(
-          id: 'demo_3',
-          title: 'Prazo Concretagem Laje 1º Pavimento',
-          description: 'Prazo limite de concretagem da primeira laje.',
-          startDate: DateTime(now.year, now.month, 18),
-          endDate: DateTime(now.year, now.month, 21),
-          category: 'Obra',
-          colorHex: 0xFFFF9800,
-          isCompleted: false,
-          priority: 'Alta',
-        ),
-        AgendaTask(
-          id: 'demo_4',
-          title: 'Entrega da Obra - Res. Bella Vista',
-          description: 'Previsão de entrega da chave aos proprietários.',
-          startDate: DateTime(now.year, now.month, 28),
-          endDate: DateTime(now.year, now.month, 28),
-          category: 'Entrega',
-          colorHex: 0xFF34A853,
-          isCompleted: false,
-          priority: 'Alta',
-        ),
-      ];
-    }
-
+    // Sem eventos reais a agenda fica vazia: dados de demonstração nunca são exibidos como se fossem da obra.
     return events;
   }
 

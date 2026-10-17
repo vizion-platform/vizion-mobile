@@ -80,22 +80,20 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
     );
 
     try {
-      int contractorId = 1001;
-      String contractorName = 'Eng. Felipe (Empreiteiro)';
-
-      try {
-        final contacts = await ChatNetworkService().fetchContacts();
-        final realContractor = contacts.firstWhere(
-          (c) => (c['role'] ?? '').toString().toUpperCase() == 'EMPREITEIRO',
-          orElse: () => <String, dynamic>{},
-        );
-        if (realContractor.isNotEmpty) {
-          contractorId = realContractor['id'] ?? 1001;
-          contractorName = realContractor['nome'] ?? contractorName;
-        }
-      } catch (e) {
-        print('Erro ao buscar contatos, usando padrão: $e');
+      // Sem contato real do empreiteiro não há conversa: nada de id ou nome fixos.
+      final contacts = await ChatNetworkService().fetchContacts();
+      final realContractor = contacts.firstWhere(
+        (c) {
+          final role = (c['role'] ?? '').toString().toUpperCase();
+          return role == 'EMPREITEIRO' || role == 'EMPREITEIRA';
+        },
+        orElse: () => <String, dynamic>{},
+      );
+      if (realContractor.isEmpty || realContractor['id'] == null) {
+        throw Exception('Nenhum empreiteiro disponível para conversar nesta obra.');
       }
+      final int contractorId = realContractor['id'] as int;
+      final String contractorName = (realContractor['nome'] ?? 'Empreiteiro').toString();
 
       final chatData = await ChatNetworkService().startPrivateChat(
         contractorId,

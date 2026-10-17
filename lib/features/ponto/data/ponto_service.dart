@@ -1,8 +1,17 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/network/auth_service.dart';
 import '../domain/ponto_record_model.dart';
+
+class PontoException implements Exception {
+  final String message;
+  PontoException(this.message);
+
+  @override
+  String toString() => message;
+}
 
 class PontoService {
   static const String _storagePrefix = 'vizion_ponto_records_v3_';
@@ -31,7 +40,7 @@ class PontoService {
   static PontoDay _fromApiResponse(Map<String, dynamic> item) {
     final DateTime date = DateTime.parse(item['data']);
     final List<PontoPunch> punches = [];
-    final String location = item['localizacao'] ?? 'Canteiro de Obras • GPS Validado';
+    final String location = item['localizacao'] ?? 'Localização não informada';
     final int id = item['id'] ?? 0;
 
     if (item['horaEntrada'] != null) {
@@ -76,20 +85,31 @@ class PontoService {
     );
   }
 
+  /// "Hoje" no fuso de Brasília (UTC-3, sem horário de verão), o mesmo que o servidor usa para a jornada.
+  /// O relógio/fuso do aparelho não define o dia da batida.
+  static DateTime hojeBrasilia() {
+    final b = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+    return DateTime(b.year, b.month, b.day);
+  }
+
+  static String _ymd(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
   /// Load today's PontoDay (from API or local cache)
   static Future<PontoDay> getTodayPonto() async {
-    final now = DateTime.now();
+    final now = hojeBrasilia();
 
     // 1. Try to fetch from API
     try {
-      final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/ponto/meu-ponto'),
+      final response = await ApiClient.get(
+        // Só o dia de hoje: não baixa todo o histórico a cada abertura da tela.
+        Uri.parse('${AuthService.baseUrl}/ponto/meu-ponto?inicio=${_ymd(now)}&fim=${_ymd(now)}'),
         headers: AuthService.getHeaders(),
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
-        final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        final todayStr = _ymd(now);
         final todayItem = list.firstWhere(
           (e) => (e['data'] as String?)?.startsWith(todayStr) == true,
           orElse: () => null,
@@ -119,72 +139,47 @@ class PontoService {
     return today;
   }
 
-  /// Register a new punch for today (saves to vizion-api database and local storage)
+  /// Registra a batida no servidor. O horário oficial é sempre o do servidor (Portaria 671): sem
+  /// conexão ou com recusa do servidor a batida NÃO é registrada e o erro chega ao usuário.
   static Future<({PontoDay day, PontoPunch punch})> registerPunch({
     required PontoType type,
-    String location = 'Canteiro de Obras • GPS Validado (-23.5505, -46.6333)',
+    String? location,
   }) async {
-    final now = DateTime.now();
-    final todayDay = await getTodayPonto();
-
-    final localPunch = PontoPunch(
-      id: 'punch_${now.millisecondsSinceEpoch}',
-      type: type,
-      timestamp: now,
-      location: location,
-      device: 'Vizion Mobile (Portaria 671 MTE)',
-    );
-
-    PontoDay updatedDay;
-    PontoPunch returnedPunch = localPunch;
-
-    // 1. Send to vizion-api backend
+    final http.Response response;
     try {
-      final body = jsonEncode({
-        'idFuncionario': AuthService.userId,
-        'tipoBatida': _mapTypeToApi(type),
-        'localizacao': location,
-      });
-
-      final response = await http.post(
+      response = await ApiClient.post(
         Uri.parse('${AuthService.baseUrl}/ponto/bater'),
         headers: AuthService.getHeaders(),
-        body: body,
+        // O funcionário é o do token; nunca enviamos id vindo do cliente.
+        body: jsonEncode({
+          'tipoBatida': _mapTypeToApi(type),
+          if (location != null) 'localizacao': location,
+        }),
       );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
-        updatedDay = _fromApiResponse(data);
-        if (updatedDay.punches.isNotEmpty) {
-          returnedPunch = updatedDay.punches.last;
-        }
-      } else {
-        // Construct day locally if API returned unexpected status
-        final updatedPunches = List<PontoPunch>.from(todayDay.punches)..add(localPunch);
-        updatedDay = PontoDay(
-          date: todayDay.date,
-          punches: updatedPunches,
-          expectedMinutes: todayDay.expectedMinutes,
-          isDayOff: todayDay.isDayOff,
-          customNote: todayDay.customNote,
-        );
-      }
     } catch (_) {
-      // Local fallback if offline
-      final updatedPunches = List<PontoPunch>.from(todayDay.punches)..add(localPunch);
-      updatedDay = PontoDay(
-        date: todayDay.date,
-        punches: updatedPunches,
-        expectedMinutes: todayDay.expectedMinutes,
-        isDayOff: todayDay.isDayOff,
-        customNote: todayDay.customNote,
-      );
+      throw PontoException('Sem conexão com o servidor. A batida não foi registrada; tente novamente.');
     }
 
-    // 2. Persist to local storage
-    await _saveTodayToLocal(updatedDay);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw PontoException(_mensagemDoServidor(response) ??
+          'Não foi possível registrar o ponto (erro ${response.statusCode}).');
+    }
 
-    return (day: updatedDay, punch: returnedPunch);
+    final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+    final updatedDay = _fromApiResponse(data);
+    if (updatedDay.punches.isEmpty) {
+      throw PontoException('Resposta inválida do servidor ao registrar o ponto.');
+    }
+    await _saveTodayToLocal(updatedDay);
+    return (day: updatedDay, punch: updatedDay.punches.last);
+  }
+
+  static String? _mensagemDoServidor(http.Response response) {
+    try {
+      final corpo = jsonDecode(utf8.decode(response.bodyBytes));
+      if (corpo is Map && corpo['message'] is String) return corpo['message'] as String;
+    } catch (_) {}
+    return null;
   }
 
   /// Helper to save updated today record into local storage
@@ -221,7 +216,7 @@ class PontoService {
 
     // 1. Try to fetch from API
     try {
-      final response = await http.get(
+      final response = await ApiClient.get(
         Uri.parse('${AuthService.baseUrl}/ponto/meu-ponto'),
         headers: AuthService.getHeaders(),
       );

@@ -62,10 +62,7 @@ class _PontoScreenState extends State<PontoScreen> {
     setState(() => _isPunching = true);
 
     try {
-      final result = await PontoService.registerPunch(
-        type: nextType,
-        location: 'Canteiro Res. Bella Vista • GPS Validado (-23.5505, -46.6333)',
-      );
+      final result = await PontoService.registerPunch(type: nextType);
 
       if (mounted) {
         setState(() {
@@ -84,7 +81,7 @@ class _PontoScreenState extends State<PontoScreen> {
         setState(() => _isPunching = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao registrar ponto: $e'),
+            content: Text(e is PontoException ? e.message : 'Erro ao registrar ponto. Tente novamente.'),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
