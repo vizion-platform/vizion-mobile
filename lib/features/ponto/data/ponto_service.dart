@@ -147,7 +147,7 @@ class PontoService {
     return today;
   }
 
-  /// Register a new punch for today (saves to vizion-api database and local storage)
+  // ponto de trabalho 
   static Future<({PontoDay day, PontoPunch punch})> registerPunch({
     required PontoType type,
     String location = 'Canteiro de Obras • GPS Validado (-23.5505, -46.6333)',
@@ -166,19 +166,19 @@ class PontoService {
     PontoDay updatedDay;
     PontoPunch returnedPunch = localPunch;
 
-    // 1. Send to vizion-api database backend
+    
     try {
       final body = jsonEncode({
         'tipoBatida': _mapTypeToApi(type),
         'localizacao': location,
       });
-
+      // chama api para bater ponto
       final response = await http.post(
         Uri.parse('${AuthService.baseUrl}/ponto/bater'),
         headers: AuthService.getHeaders(),
         body: body,
       );
-
+      //
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
         updatedDay = _fromApiResponse(data);
@@ -186,7 +186,7 @@ class PontoService {
           returnedPunch = updatedDay.punches.last;
         }
       } else {
-        // Construct day locally if API returned unexpected status
+      
         final updatedPunches = List<PontoPunch>.from(todayDay.punches)..add(localPunch);
         updatedDay = PontoDay(
           date: todayDay.date,

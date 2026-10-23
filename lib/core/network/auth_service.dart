@@ -21,6 +21,7 @@ class AuthService {
   static int? get userId => _userId;
 
   static String formatStatus(Object? raw) {
+    
     final value = (raw ?? '').toString().trim().toUpperCase();
     const labels = {
       'AGUARDANDO_ACEITE': 'Aguardando aceite',
@@ -43,6 +44,7 @@ class AuthService {
   }
 
   static bool get isEmpreiteiro {
+    
     final r = (_role ?? '').toUpperCase();
     return r == 'EMPREITEIRO' || r == 'ADMIN' || r == 'GESTOR';
   }
@@ -61,9 +63,9 @@ class AuthService {
     return r == 'CLIENTE';
   }
 
-  // Initialize and load session from SharedPreferences
   static Future<bool> init() async {
     try {
+      // carrega os tokens e informações do usuário do SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       _accessToken = prefs.getString('accessToken');
       _refreshToken = prefs.getString('refreshToken');
@@ -78,16 +80,18 @@ class AuthService {
       return false;
     }
   }
-
+   // login
   static Future<bool> login(String email, String password) async {
     try {
+      // chama a api para fazer o login
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email.trim(), 'senha': password}),
       );
-
+      //
       if (response.statusCode == 200) {
+      
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         _accessToken = data['accessToken'];
         _refreshToken = data['refreshToken'];
@@ -96,7 +100,8 @@ class AuthService {
         _tenantId = data['tenantId'];
         _email = email.toLowerCase().trim();
 
-        // Save session locally
+        // salva os tokens e informações do usuário no SharedPreferences
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('accessToken', _accessToken!);
         await prefs.setString('refreshToken', _refreshToken ?? '');
@@ -105,7 +110,7 @@ class AuthService {
         await prefs.setString('tenantId', _tenantId ?? '');
         await prefs.setString('email', _email!);
 
-        // Try to fetch detailed profile to get the user ID
+      
         await fetchProfile();
         return true;
       }
@@ -116,10 +121,11 @@ class AuthService {
     }
   }
 
-  // Fetch logged-in user profile from /auth/me
+ 
   static Future<void> fetchProfile() async {
     if (_accessToken == null) return;
     try {
+      // finaliza a chamada da api para buscar o perfil do usuário
       final response = await http.get(
         Uri.parse('$baseUrl/auth/me'),
         headers: getHeaders(),
@@ -137,7 +143,7 @@ class AuthService {
     }
   }
 
-  // Register a new contractor (Empreiteiro) via API
+  
   static Future<bool> register({
     required String name,
     required String email,
@@ -146,6 +152,7 @@ class AuthService {
     required String cpf,
   }) async {
     try {
+      // chama a api para registrar um novo empreiteiro
       final response = await http.post(
         Uri.parse('$baseUrl/empreiteiro'),
         headers: {'Content-Type': 'application/json'},
@@ -155,7 +162,7 @@ class AuthService {
           'documento': cpf.replaceAll(
             RegExp(r'\D'),
             '',
-          ), // Extract only numbers for validation
+          ),
           'telefone': phone.replaceAll(RegExp(r'\D'), ''),
           'senha': password,
         }),
@@ -171,7 +178,7 @@ class AuthService {
     }
   }
 
-  // Sign out and clear stored session
+
   static Future<void> signOut() async {
     _accessToken = null;
     _refreshToken = null;
@@ -181,6 +188,7 @@ class AuthService {
     _email = null;
     _userId = null;
 
+    // Remove os tokens e informações do usuário do SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('accessToken');
     await prefs.remove('refreshToken');
@@ -191,7 +199,7 @@ class AuthService {
     await prefs.remove('userId');
   }
 
-  // Generate headers for API requests
+ 
   static Map<String, String> getHeaders() {
     return {
       'Content-Type': 'application/json',
@@ -200,14 +208,16 @@ class AuthService {
     };
   }
 
-  // Fetch contractor's works from API
+  //  Gerencia as obras e fases e puxa do banco 
+  // busca obras e returna a lista de string 
   static Future<List<Map<String, dynamic>>> fetchObras() async {
     try {
+      // chama a api para buscar as obras
       final response = await http.get(
         Uri.parse('$baseUrl/obra/minhas-obras'),
         headers: getHeaders(),
       );
-
+      //
       if (response.statusCode == 200) {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
         return list.map((item) => Map<String, dynamic>.from(item)).toList();
@@ -220,8 +230,10 @@ class AuthService {
     }
   }
 
+ // 
   static Future<List<Map<String, dynamic>>> fetchFases(int obraId) async {
     try {
+      // chama a api para buscar as fases da obra
       final response = await http.get(
         Uri.parse('$baseUrl/obra/$obraId/detalhar'),
         headers: getHeaders(),
@@ -248,6 +260,7 @@ class AuthService {
     String acao,
   ) async {
     try {
+      // chama a api para salvar a transicao de status da fase
       final response = await http.patch(
         Uri.parse('$baseUrl/fasesObra/$faseId/status'),
         headers: getHeaders(),
@@ -259,8 +272,9 @@ class AuthService {
       return false;
     }
   }
-
+  // envio de fotos e progresso
   static Future<List<Map<String, dynamic>>> fetchObraPhotos(int obraId) async {
+    // chama a api para buscar as fotos da obra
     final response = await http.get(
       Uri.parse('$baseUrl/obra-fotos/obra/$obraId'),
       headers: getHeaders(),
@@ -278,6 +292,7 @@ class AuthService {
     List<int> bytes,
     String fileName,
   ) async {
+    // envia a imagem para o storage
     final upload = http.MultipartRequest(
       'POST',
       Uri.parse('$baseUrl/storage/upload'),
@@ -291,12 +306,13 @@ class AuthService {
     if (uploadResponse.statusCode != 200) {
       throw Exception('Falha ao enviar a imagem (${uploadResponse.statusCode}).');
     }
+    
     final uploadData = jsonDecode(utf8.decode(uploadResponse.bodyBytes));
     final key = uploadData['key']?.toString();
     if (key == null || key.isEmpty) {
       throw Exception('O storage não retornou a identificação da imagem.');
     }
-
+    // registra a foto na fase da obra
     final response = await http.post(
       Uri.parse('$baseUrl/obra-fotos'),
       headers: getHeaders(),
@@ -320,10 +336,11 @@ class AuthService {
     final clean = value.startsWith('/') ? value.substring(1) : value;
     return '$baseUrl/storage/local/$clean';
   }
-
-  // Create a new work associated with this contractor
+//
+  
   static Future<bool> createObra(Map<String, dynamic> data) async {
     try {
+      // chama a api para criar a obra
       final response = await http.post(
         Uri.parse('$baseUrl/obra/aggregate'),
         headers: getHeaders(),
@@ -355,11 +372,12 @@ class AuthService {
       rethrow;
     }
   }
-
+// calendario e solicitacoes de material
   static Future<List<Map<String, dynamic>>> fetchCalendarioEvents({
     int? obraId,
   }) async {
     try {
+      // Chama a API para buscar os eventos do calendário
       final queryParameters =
           obraId == null ? null : <String, String>{'obraId': obraId.toString()};
       final response = await http.get(
@@ -382,6 +400,7 @@ class AuthService {
     int? obraId,
   }) async {
     try {
+      // Chama a API para buscar as solicitações de material
       final queryParameters =
           obraId == null ? null : <String, String>{'obraId': obraId.toString()};
       final response = await http.get(
@@ -404,6 +423,7 @@ class AuthService {
     Map<String, dynamic> data,
   ) async {
     try {
+      // Chama a API para criar a solicitação de material
       final response = await http.post(
         Uri.parse('$baseUrl/solicitacoes-material'),
         headers: {...getHeaders(), 'Content-Type': 'application/json'},
@@ -421,6 +441,7 @@ class AuthService {
     String observacaoSupervisor,
   ) async {
     try {
+      // Chama a API para aprovar a solicitação de material
       final response = await http.patch(
         Uri.parse('$baseUrl/solicitacoes-material/$id/aprovar'),
         headers: {...getHeaders(), 'Content-Type': 'application/json'},
@@ -432,8 +453,8 @@ class AuthService {
       return false;
     }
   }
+//
 
-  // Delete current contractor account
   static Future<bool> deleteCurrentAccount() async {
     try {
       if (_userId == null) {

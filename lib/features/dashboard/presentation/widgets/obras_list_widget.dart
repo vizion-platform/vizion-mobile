@@ -22,9 +22,10 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
     super.initState();
     _refreshObras();
   }
-
+ // chamado pela funcao de obras do auth service
   Future<void> _refreshObras() async {
     try {
+      //
       final list = await AuthService.fetchObras();
       if (mounted) {
         setState(() {
