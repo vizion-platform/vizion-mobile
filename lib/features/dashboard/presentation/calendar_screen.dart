@@ -91,13 +91,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
         title: const Text('Calendário & Cronograma', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primaryGold),
+            icon: Icon(Icons.refresh, color: AppColors.primaryGold),
             onPressed: _loadEvents,
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGold))
+          ? Center(child: CircularProgressIndicator(color: AppColors.primaryGold))
           : Column(
               children: [
                 // Date Selector Header
@@ -131,9 +131,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           children: [
                             Text(
                               "${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}",
-                              style: const TextStyle(color: AppColors.primaryGold, fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: AppColors.primaryGold, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
-                            const Text('Toque para escolher data', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                            Text('Toque para escolher data', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                           ],
                         ),
                       ),
@@ -148,7 +148,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ],
                   ),
                 ),
-                const Divider(height: 1, color: AppColors.gridLine),
+                Divider(height: 1, color: AppColors.gridLine),
 
                 // Events for the selected date
                 Expanded(
@@ -159,7 +159,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             children: [
                               Icon(Icons.event_available, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.4)),
                               const SizedBox(height: 12),
-                              const Text('Nenhum evento registrado nesta data', style: TextStyle(color: AppColors.textSecondary)),
+                              Text('Nenhum evento registrado nesta data', style: TextStyle(color: AppColors.textSecondary)),
                             ],
                           ),
                         )
@@ -216,17 +216,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         const SizedBox(height: 4),
                                         Text(
                                           event['descricao'] ?? '',
-                                          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                                         ),
                                         if (event['nomeObra'] != null) ...[
                                           const SizedBox(height: 6),
                                           Row(
                                             children: [
-                                              const Icon(Icons.location_city, size: 12, color: AppColors.primaryGold),
+                                              Icon(Icons.location_city, size: 12, color: AppColors.primaryGold),
                                               const SizedBox(width: 4),
                                               Text(
                                                 event['nomeObra'],
-                                                style: const TextStyle(color: AppColors.primaryGold, fontSize: 11),
+                                                style: TextStyle(color: AppColors.primaryGold, fontSize: 11),
                                               ),
                                             ],
                                           ),

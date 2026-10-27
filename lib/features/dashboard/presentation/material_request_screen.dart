@@ -47,7 +47,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.gridLine),
+            side: BorderSide(color: AppColors.gridLine),
           ),
           title: const Text('Nova Solicitação de Material', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
@@ -59,13 +59,13 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Justificativa / Motivo',
-                    labelStyle: const TextStyle(color: AppColors.textSecondary),
+                    labelStyle: TextStyle(color: AppColors.textSecondary),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.gridLine),
+                      borderSide: BorderSide(color: AppColors.gridLine),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.primaryGold),
+                      borderSide: BorderSide(color: AppColors.primaryGold),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -77,13 +77,13 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Quantidade Estimada',
-                    labelStyle: const TextStyle(color: AppColors.textSecondary),
+                    labelStyle: TextStyle(color: AppColors.textSecondary),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.gridLine),
+                      borderSide: BorderSide(color: AppColors.gridLine),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.primaryGold),
+                      borderSide: BorderSide(color: AppColors.primaryGold),
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -94,7 +94,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('CANCELAR', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('CANCELAR', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGold),
@@ -173,7 +173,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
         title: const Text('Solicitações de Material', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.primaryGold),
+            icon: Icon(Icons.refresh, color: AppColors.primaryGold),
             onPressed: _loadSolicitacoes,
           ),
         ],
@@ -185,7 +185,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
         label: const Text('SOLICITAR MATERIAL', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGold))
+          ? Center(child: CircularProgressIndicator(color: AppColors.primaryGold))
           : _solicitacoes.isEmpty
               ? Center(
                   child: Column(
@@ -193,7 +193,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                     children: [
                       Icon(Icons.inventory_2_outlined, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.4)),
                       const SizedBox(height: 12),
-                      const Text('Nenhuma solicitação registrada', style: TextStyle(color: AppColors.textSecondary)),
+                      Text('Nenhuma solicitação registrada', style: TextStyle(color: AppColors.textSecondary)),
                     ],
                   ),
                 )
@@ -241,7 +241,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                           if (sol['nomeSolicitante'] != null)
                             Text(
                               "Solicitado por: ${sol['nomeSolicitante']}",
-                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                             ),
                           if (sol['justificativa'] != null)
                             Padding(
@@ -252,7 +252,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                               ),
                             ),
                           const SizedBox(height: 10),
-                          const Text('Itens da solicitação:', style: TextStyle(color: AppColors.primaryGold, fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text('Itens da solicitação:', style: TextStyle(color: AppColors.primaryGold, fontSize: 12, fontWeight: FontWeight.bold)),
                           ...itens.map((item) => Padding(
                                 padding: const EdgeInsets.only(top: 2.0),
                                 child: Text(
