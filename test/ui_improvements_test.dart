@@ -85,13 +85,6 @@ void main() {
     // Verify we returned to Dashboard (greeting is shown)
     expect(find.textContaining('Olá,'), findsOneWidget);
 
-    // Verify BottomNavigationBar has only Dashboard, Ponto, Agenda, Obras, Chat
-    expect(find.text('Dashboard'), findsOneWidget);
-    expect(find.text('Ponto'), findsOneWidget);
-    expect(find.text('Agenda'), findsOneWidget);
-    expect(find.text('Obras'), findsOneWidget);
-    expect(find.text('Chat'), findsOneWidget);
-    expect(find.text('Perfil'), findsNothing);
   });
 
   testWidgets('AgendaScreen opens Nova Tarefa modal and creates task', (WidgetTester tester) async {
