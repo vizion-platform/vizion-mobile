@@ -395,8 +395,9 @@ class AuthService {
     int obraId,
     int faseId,
     List<int> bytes,
-    String fileName,
-  ) async {
+    String fileName, {
+    String? descricao,
+  }) async {
     final upload = http.MultipartRequest(
       'POST',
       Uri.parse('$baseUrl/storage/upload'),
@@ -423,7 +424,10 @@ class AuthService {
         'idObra': obraId,
         'idFase': faseId,
         'urlFoto': key,
-        'descricao': 'Foto de progresso da fase $faseId',
+        // Observação do andamento digitada junto com a foto (o campo da tela limita a 500 caracteres).
+        'descricao': (descricao == null || descricao.isEmpty)
+            ? 'Foto de progresso da fase $faseId'
+            : descricao,
       }),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
