@@ -229,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               colors: [
                 AppColors.primaryGold,
                 Color(0xFFE5C07B),
@@ -293,7 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.chat_bubble_outline_rounded,
               color: AppColors.primaryGold,

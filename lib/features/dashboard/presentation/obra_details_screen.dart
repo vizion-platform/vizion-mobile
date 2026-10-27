@@ -169,12 +169,12 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
               child: Text('Registrar foto da fase', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primaryGold),
+              leading: Icon(Icons.camera_alt_outlined, color: AppColors.primaryGold),
               title: const Text('Tirar foto', style: TextStyle(color: Colors.white)),
               onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primaryGold),
+              leading: Icon(Icons.photo_library_outlined, color: AppColors.primaryGold),
               title: const Text('Escolher da galeria', style: TextStyle(color: Colors.white)),
               onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
             ),
@@ -561,7 +561,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                               AuthService.mediaUrl(photoStr),
                                                               headers: AuthService.getHeaders(),
                                                               fit: BoxFit.cover,
-                                                              errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined, color: AppColors.textSecondary),
+                                                              errorBuilder: (_, __, ___) => Icon(Icons.broken_image_outlined, color: AppColors.textSecondary),
                                                             ),
                                                     ),
                                                   );
@@ -572,7 +572,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
 
                                           // Controles de Ação do Empreiteiro
                                           if (role == 'EMPREITEIRO' || role == 'EMPREITEIRA' || role == 'ADMIN' || role == 'FUNCIONARIO' || role == 'SUPERVISOR' || role == 'PINTOR' || role == 'ALMOXARIFE') ...[
-                                            const Divider(color: AppColors.gridLine, height: 24),
+                                            Divider(color: AppColors.gridLine, height: 24),
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
