@@ -5,15 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_room_screen.dart';
 import '../../chat/data/chat_network_service.dart';
-
-double calculatePhaseProgress(List<Map<String, dynamic>> phases) {
-  if (phases.isEmpty) return 0;
-  const completedStatuses = {'FINALIZADA', 'CONCLUIDA', 'CONCLUIDO'};
-  final completed = phases.where((phase) => completedStatuses.contains(
-    (phase['status'] ?? '').toString().trim().toUpperCase(),
-  )).length;
-  return completed / phases.length;
-}
+import '../domain/obra_progress.dart';
 
 class ObraDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> obra;
@@ -27,7 +19,10 @@ class ObraDetailsScreen extends StatefulWidget {
 class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _fases = [];
+  List<Map<String, dynamic>> _photos = [];
   Map<int, List<Map<String, dynamic>>> _photosByPhase = {};
+  // Observação digitada por fase; vai junto com a próxima foto enviada para ela.
+  final Map<int, TextEditingController> _observacoes = {};
   String _errorMessage = '';
 
   @override
@@ -35,6 +30,17 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     super.initState();
     _loadFases();
   }
+
+  @override
+  void dispose() {
+    for (final controller in _observacoes.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  TextEditingController _observacaoDaFase(int faseId) =>
+      _observacoes.putIfAbsent(faseId, TextEditingController.new);
 
   Future<void> _loadFases() async {
     try {
@@ -55,6 +61,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
           // Sort by display order (ordem_exibicao)
           _fases = List<Map<String, dynamic>>.from(data)
             ..sort((a, b) => (a['ordem_exibicao'] ?? 0).compareTo(b['ordem_exibicao'] ?? 0));
+          _photos = photos;
           _photosByPhase = groupedPhotos;
           _isLoading = false;
           _errorMessage = '';
@@ -71,7 +78,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   }
 
   double _calculateProgress() {
-    return calculatePhaseProgress(_fases);
+    return calculatePhaseProgress(_fases, photos: _photos);
   }
 
   String _formatCurrency(double value) {
@@ -194,16 +201,20 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
       );
 
       if (image != null) {
+        final faseId = (fase['id_fase'] as num).toInt();
+        final observacao = _observacaoDaFase(faseId).text.trim();
         final bytes = await image.readAsBytes();
         setState(() {
           _isLoading = true;
         });
         await AuthService.addPhasePhoto(
           widget.obra['id'],
-          fase['id_fase'],
+          faseId,
           bytes,
           image.name,
+          descricao: observacao.isEmpty ? null : observacao,
         );
+        _observacaoDaFase(faseId).clear();
         await _loadFases();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -326,24 +337,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Evolução Físico-Temporal', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15)),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryGold.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.3)),
-                                  ),
-                                  child: Text(
-                                    '${(progress * 100).toStringAsFixed(0)}% OK',
-                                    style: TextStyle(color: AppColors.primaryGold, fontSize: 10, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            Text('Evolução Físico-Temporal', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 15)),
                             const SizedBox(height: 16),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(6),
@@ -354,11 +348,26 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                 minHeight: 8,
                               ),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 8),
+                            // Mesma porcentagem mostrada na dashboard
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
+                                Expanded(
+                                  child: Text('Avanço físico', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                                ),
+                                Text(
+                                  '${formatarPercentualAvanco(progress)} concluído',
+                                  style: TextStyle(color: AppColors.primaryGold, fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('PREVISÃO DE ENTREGA', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
@@ -366,17 +375,20 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                     Text(_formatDate(widget.obra['data_previsao_entrega']), style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
                                   ],
                                 ),
+                                  ),
                                 if (role != 'FUNCIONARIO')
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text('INVESTIMENTO TOTAL', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _formatCurrency((widget.obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0),
-                                        style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 13),
-                                      ),
-                                    ],
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text('INVESTIMENTO TOTAL', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _formatCurrency((widget.obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0),
+                                          style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 13),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                               ],
                             ),
@@ -570,11 +582,19 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                             ),
                                           ],
 
+                                          // Observações do andamento enviadas junto com as fotos (visíveis ao cliente)
+                                          ..._observacoesDaFase(photos).map(_buildObservacao),
+
                                           // Controles de Ação do Empreiteiro
-                                          if (role == 'EMPREITEIRO' || role == 'EMPREITEIRA' || role == 'ADMIN' || role == 'FUNCIONARIO' || role == 'SUPERVISOR' || role == 'PINTOR' || role == 'ALMOXARIFE') ...[
+                                          if (_podeRegistrarFoto(role)) ...[
+                                            const SizedBox(height: 12),
+                                            _buildCampoObservacao(fase),
                                             Divider(color: AppColors.gridLine, height: 24),
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            Wrap(
+                                              alignment: WrapAlignment.spaceBetween,
+                                              crossAxisAlignment: WrapCrossAlignment.center,
+                                              spacing: 8,
+                                              runSpacing: 8,
                                               children: [
                                                 // Photo Taking Button
                                                 ElevatedButton.icon(
@@ -610,6 +630,109 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                   ),
                 ),
     );
+  }
+
+  bool _podeRegistrarFoto(String role) => const {
+        'EMPREITEIRO',
+        'EMPREITEIRA',
+        'ADMIN',
+        'FUNCIONARIO',
+        'SUPERVISOR',
+        'PINTOR',
+        'ALMOXARIFE',
+      }.contains(role);
+
+  /// Fotos com observação própria. A descrição padrão gerada pelo app ("Foto de progresso…") não é exibida.
+  List<Map<String, dynamic>> _observacoesDaFase(List<Map<String, dynamic>> photos) {
+    return photos.where((foto) {
+      final texto = (foto['descricao'] ?? '').toString().trim();
+      return texto.isNotEmpty && !texto.startsWith('Foto de progresso da fase');
+    }).toList();
+  }
+
+  Widget _buildObservacao(Map<String, dynamic> foto) {
+    final data = _formatDataFoto(foto['dataFoto']);
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primaryGold.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.notes_rounded, size: 14, color: AppColors.primaryGold),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'OBSERVAÇÃO DO ANDAMENTO',
+                  style: TextStyle(color: AppColors.primaryGold, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.4),
+                ),
+              ),
+              if (data.isNotEmpty)
+                Text(data, style: TextStyle(color: AppColors.textSecondary, fontSize: 9)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            (foto['descricao'] ?? '').toString(),
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 12.5, height: 1.35),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Campo de observação da fase: o texto segue junto com a próxima foto enviada.
+  Widget _buildCampoObservacao(Map<String, dynamic> fase) {
+    final faseId = (fase['id_fase'] as num).toInt();
+    return TextField(
+      controller: _observacaoDaFase(faseId),
+      maxLength: 500,
+      minLines: 1,
+      maxLines: 4,
+      style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+      decoration: InputDecoration(
+        labelText: 'Observação do andamento',
+        hintText: 'Ex.: concretagem da laje concluída, falta acabamento',
+        hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        labelStyle: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        helperText: 'Enviada junto com a próxima foto desta fase.',
+        helperStyle: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+        isDense: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.gridLine),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: AppColors.primaryGold),
+        ),
+      ),
+    );
+  }
+
+  /// Aceita a data como texto ISO ou como o array [ano, mês, dia, h, min, s] do Java.
+  String _formatDataFoto(dynamic raw) {
+    DateTime? data;
+    if (raw is String) {
+      data = DateTime.tryParse(raw);
+    } else if (raw is List && raw.length >= 3) {
+      data = DateTime(
+        (raw[0] as num).toInt(),
+        (raw[1] as num).toInt(),
+        (raw[2] as num).toInt(),
+        raw.length > 3 ? (raw[3] as num).toInt() : 0,
+        raw.length > 4 ? (raw[4] as num).toInt() : 0,
+      );
+    }
+    if (data == null) return '';
+    return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
   }
 
   Widget _buildDateText(String label, String date) {
