@@ -376,20 +376,6 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                   ],
                                 ),
                                   ),
-                                if (role != 'FUNCIONARIO')
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text('INVESTIMENTO TOTAL', style: TextStyle(color: AppColors.textSecondary, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.4)),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _formatCurrency((widget.obra['valor_total_estimado'] as num?)?.toDouble() ?? 0.0),
-                                          style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 13),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
                               ],
                             ),
                             if (widget.obra['logradouro'] != null) ...[

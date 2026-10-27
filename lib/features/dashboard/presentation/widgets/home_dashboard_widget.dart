@@ -657,9 +657,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   )
                 else
                   ..._obras.take(4).map((obra) {
-                    final double val =
-                        (obra['valor_total_estimado'] as num?)?.toDouble() ??
-                        0.0;
                     final int id = obra['id'] ?? 0;
                     final double? progress = _getProjectProgress(id);
                     return Padding(
@@ -680,14 +677,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                _formatCurrency(val),
-                                style: TextStyle(
-                                  color: AppColors.primaryGold,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
