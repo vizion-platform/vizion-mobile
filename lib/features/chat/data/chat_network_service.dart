@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:http/http.dart' as http;
 import 'package:mqtt_client/mqtt_client.dart';
 import 'mqtt_helper.dart';
 import '../../../core/network/api_client.dart';

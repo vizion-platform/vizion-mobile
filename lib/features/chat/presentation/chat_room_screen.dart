@@ -421,8 +421,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.edit, color: AppColors.primaryGold),
-              title: const Text('Editar Mensagem', style: TextStyle(color: AppColors.textPrimary)),
+              leading: Icon(Icons.edit, color: AppColors.primaryGold),
+              title: Text('Editar Mensagem', style: TextStyle(color: AppColors.textPrimary)),
               onTap: () {
                 Navigator.pop(ctx);
                 _showEditDialog(message);
@@ -454,7 +454,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           canPop: !saving,
           child: AlertDialog(
           backgroundColor: AppColors.surface,
-          title: const Text('Editar mensagem', style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+          title: Text('Editar mensagem', style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -462,8 +462,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               TextField(
                 controller: editController,
                 enabled: !saving,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
+                style: TextStyle(color: AppColors.textPrimary),
+                decoration: InputDecoration(
                   hintText: 'Digite o novo texto...',
                   hintStyle: TextStyle(color: AppColors.textSecondary),
                   enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGold)),
@@ -480,7 +480,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           actions: [
             TextButton(
               onPressed: saving ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGold),
@@ -534,12 +534,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           canPop: !deleting,
           child: AlertDialog(
           backgroundColor: AppColors.surface,
-          title: const Text('Excluir mensagem', style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+          title: Text('Excluir mensagem', style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('A mensagem será substituída por “Mensagem apagada” para todos os participantes.', style: TextStyle(color: AppColors.textSecondary)),
+              Text('A mensagem será substituída por “Mensagem apagada” para todos os participantes.', style: TextStyle(color: AppColors.textSecondary)),
               if (dialogError != null) ...[
                 const SizedBox(height: 10),
                 Text(dialogError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
@@ -549,7 +549,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           actions: [
             TextButton(
               onPressed: deleting ? null : () => Navigator.pop(ctx),
-              child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
@@ -577,7 +577,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               },
               child: deleting
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Excluir', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                  : Text('Excluir', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
             ),
           ],
           ),
@@ -678,7 +678,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           if (value == 'edit') _showEditDialog(message);
                           if (value == 'delete') _showDeleteConfirm(message);
                         },
-                        itemBuilder: (_) => const [
+                        itemBuilder: (_) => [
                           PopupMenuItem(
                             value: 'edit',
                             child: Row(children: [
@@ -701,7 +701,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   ],
                   if (isMe) ...[
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.done_all,
                       color: AppColors.primaryGold,
                       size: 12,
