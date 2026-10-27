@@ -202,9 +202,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             children: [
                               // Counterweight matching chat button width to keep Ponto perfectly centered
                               const SizedBox(width: 48),
-                              const Spacer(),
-                              _buildFloatingPontoButton(),
-                              const Spacer(),
+                              // Com a letra ampliada o botão de ponto encolhe em vez de estourar a barra
+                              Expanded(
+                                child: Center(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: _buildFloatingPontoButton(),
+                                  ),
+                                ),
+                              ),
                               _buildFloatingChatButton(),
                             ],
                           ),
@@ -600,6 +606,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             value: AppTheme.isDark,
             onChanged: (dark) => AppTheme.setDark(dark),
+          ),
+          const SizedBox(height: 12),
+
+          // Acessibilidade: tamanho da letra do app; o layout se adapta ao tamanho escolhido.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.gridLine),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.text_fields_rounded, color: AppColors.primaryGold),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Acessibilidade',
+                            style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            'Tamanho da letra do aplicativo',
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                ValueListenableBuilder<double>(
+                  valueListenable: AppTheme.fontScale,
+                  builder: (context, escala, _) => Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final opcao in AppTheme.opcoesFonte)
+                        ChoiceChip(
+                          label: Text(opcao.rotulo),
+                          selected: escala == opcao.escala,
+                          onSelected: (_) => AppTheme.setFontScale(opcao.escala),
+                          selectedColor: AppColors.primaryGold.withValues(alpha: 0.25),
+                          backgroundColor: AppColors.surfaceAlt,
+                          labelStyle: TextStyle(
+                            color: escala == opcao.escala ? AppColors.primaryGold : AppColors.textSecondary,
+                            fontWeight: escala == opcao.escala ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          side: BorderSide(
+                            color: escala == opcao.escala ? AppColors.primaryGold : AppColors.gridLine,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Exemplo: é assim que os textos do aplicativo vão aparecer.',
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
 
