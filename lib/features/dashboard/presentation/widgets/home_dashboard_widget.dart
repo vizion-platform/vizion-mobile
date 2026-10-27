@@ -4,6 +4,7 @@ import '../../../../core/network/auth_service.dart';
 import '../../../chat/presentation/chat_room_screen.dart';
 import '../../../chat/data/chat_network_service.dart';
 import '../../../ponto/presentation/ponto_screen.dart';
+import '../../domain/obra_progress.dart';
 
 class HomeDashboardWidget extends StatefulWidget {
   final VoidCallback? onProfileTap;
@@ -65,23 +66,24 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
     return 'R\$ ${ptBr(value, 2)}';
   }
 
-  /// Progresso real de cada obra: fases finalizadas / total de fases (carregado sob demanda).
+  /// Progresso real de cada obra, calculado com as mesmas fases e fotos usadas na tela da obra.
   final Map<int, double> _progress = {};
 
   Future<void> _loadProgress() async {
-    for (final obra in _obras.take(4)) {
+    await Future.wait(_obras.map((obra) async {
       final id = obra['id'];
-      if (id is! int) continue;
+      if (id is! int) return;
       try {
         final fases = await AuthService.fetchFases(id);
-        if (fases.isEmpty) continue;
-        final done = fases.where((f) => f['status'] == 'FINALIZADA').length;
+        if (fases.isEmpty) return;
+        final fotos = await AuthService.fetchObraPhotos(id)
+            .catchError((_) => <Map<String, dynamic>>[]);
         if (!mounted) return;
-        setState(() => _progress[id] = done / fases.length);
+        setState(() => _progress[id] = calculatePhaseProgress(fases, photos: fotos));
       } catch (_) {
         // sem fases/offline: a obra fica sem barra de progresso
       }
-    }
+    }));
   }
 
   double? _getProjectProgress(int id) => _progress[id];
@@ -188,14 +190,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
 
     // Calculations
     final int totalObras = _obras.length;
-    double totalBudget = 0.0;
-    for (var obra in _obras) {
-      final val = obra['valor_total_estimado'];
-      if (val != null) {
-        totalBudget += (val as num).toDouble();
-      }
-    }
-    final double avgBudget = totalObras > 0 ? totalBudget / totalObras : 0.0;
 
     final role = AuthService.role ?? 'GESTOR';
 
@@ -280,10 +274,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           const SizedBox(height: 6),
           Text(
             role == 'CLIENTE'
-                ? 'Evolução física e financeira de sua residência.'
+                ? 'Evolução física de sua residência.'
                 : role == 'FUNCIONARIO'
                 ? 'Canteiro de obras e atividades atreladas ao seu cargo.'
-                : 'Análise físico-financeira dos canteiros de obra.',
+                : 'Análise física dos canteiros de obra.',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
@@ -301,18 +295,15 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
               // Somente valores reais das obras carregadas (nada de números de exemplo).
               final progressoMedio = _progress.isEmpty
                   ? '—'
-                  : '${(_progress.values.reduce((x, y) => x + y) / _progress.length * 100).round()}%';
+                  : formatarPercentualAvanco(_progress.values.reduce((x, y) => x + y) / _progress.length);
               final primeiraObra = _obras.isNotEmpty ? _obras.first : null;
 
               if (role == 'CLIENTE') {
-                final cardWidth = isWide ? (constraints.maxWidth - 48) / 4 : halfWidth;
                 return Wrap(
                   spacing: 16,
                   runSpacing: 16,
                   children: [
                     _buildStatCard('Progresso Físico', progressoMedio, Icons.trending_up, AppColors.primaryGold, cardWidth),
-                    _buildStatCard('Investimento Total', _formatCurrency(totalBudget),
-                        Icons.account_balance_wallet_outlined, AppColors.success, cardWidth),
                     _buildStatCard(
                       'Status do Projeto',
                       primeiraObra == null ? '—' : '${primeiraObra['status'] ?? '—'}'.replaceAll('_', ' '),
@@ -388,20 +379,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildStatCard(
-                          'Investimento Total',
-                          _formatCurrency(totalBudget),
-                          Icons.account_balance_wallet_outlined,
+                          'Progresso Físico',
+                          progressoMedio,
+                          Icons.trending_up,
                           Colors.greenAccent,
-                          double.infinity,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildStatCard(
-                          'Custo Médio / Obra',
-                          _formatCurrency(avgBudget),
-                          Icons.analytics_outlined,
-                          Colors.blueAccent,
                           double.infinity,
                         ),
                       ),
@@ -413,9 +394,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   children: [
                     _buildStatCard('Canteiros de Obra', totalObras.toString(), Icons.domain_outlined,
                         AppColors.primaryGold, cardWidth),
-                    _buildStatCard('Investimento Total', _formatCurrency(totalBudget),
-                        Icons.account_balance_wallet_outlined, AppColors.success, cardWidth),
-                    _buildStatCard('Custo Médio / Obra', _formatCurrency(avgBudget), Icons.analytics_outlined,
+                    _buildStatCard('Progresso Físico', progressoMedio, Icons.trending_up,
                         AppColors.primaryGold, cardWidth),
                   ],
                 );
@@ -648,12 +627,14 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Cronograma de Execução',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                    Expanded(
+                      child: Text(
+                        'Cronograma de Execução',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                     Icon(
@@ -715,15 +696,20 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Status: ${('${obra['status'] ?? 'PLANEJAMENTO'}').replaceAll('_', ' ').toLowerCase()}',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 11,
+                              Expanded(
+                                child: Text(
+                                  'Status: ${('${obra['status'] ?? 'PLANEJAMENTO'}').replaceAll('_', ' ').toLowerCase()}',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 11,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 8),
                               Text(
-                                progress == null ? 'Progresso indisponível' : '${(progress * 100).toStringAsFixed(0)}% concluído',
+                                progress == null ? 'Progresso indisponível' : '${formatarPercentualAvanco(progress)} concluído',
                                 style: TextStyle(
                                   color: AppColors.primaryGold,
                                   fontSize: 11,
