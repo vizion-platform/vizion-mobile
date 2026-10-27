@@ -230,25 +230,29 @@ class _PontoScreenState extends State<PontoScreen> {
           color: isSelected ? AppColors.goldFill : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? AppColors.onGold : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              title,
-              style: TextStyle(
+        // FittedBox: com a letra ampliada o rótulo da aba diminui em vez de estourar a largura.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 16,
                 color: isSelected ? AppColors.onGold : AppColors.textSecondary,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                letterSpacing: 0.2,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  color: isSelected ? AppColors.onGold : AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
