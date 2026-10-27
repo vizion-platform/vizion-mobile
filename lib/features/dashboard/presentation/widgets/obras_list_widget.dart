@@ -4,7 +4,9 @@ import '../../../../core/network/auth_service.dart';
 import '../obra_details_screen.dart';
 
 class ObrasListWidget extends StatefulWidget {
-  const ObrasListWidget({super.key});
+  final VoidCallback? onBackTap;
+
+  const ObrasListWidget({super.key, this.onBackTap});
 
   @override
   State<ObrasListWidget> createState() => _ObrasListWidgetState();
@@ -20,9 +22,10 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
     super.initState();
     _refreshObras();
   }
-
+ // chamado pela funcao de obras do auth service
   Future<void> _refreshObras() async {
     try {
+      //
       final list = await AuthService.fetchObras();
       if (mounted) {
         setState(() {
@@ -92,11 +95,33 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Cabeçalho com o Título e o Botão Nova Obra
+        // Cabeçalho com o Título e o Botão Voltar
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            if (widget.onBackTap != null) ...[
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: AppRadius.control,
+                  onTap: widget.onBackTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: AppRadius.control,
+                      border: Border.all(color: AppColors.gridLine),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppColors.primaryGold,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +302,7 @@ class _ObrasListWidgetState extends State<ObrasListWidget> {
                                       ),
                                     ),
                                     child: Text(
-                                      obra['status'] ?? 'N/A',
+                                      AuthService.formatStatus(obra['status'] ?? 'N/A'),
                                       style: TextStyle(
                                         color: statusColor,
                                         fontWeight: FontWeight.bold,

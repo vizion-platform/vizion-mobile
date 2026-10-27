@@ -38,6 +38,28 @@ class AuthService {
   static int? get userId => _userId;
   static bool get mustChangePassword => _trocaSenhaObrigatoria;
 
+  static String formatStatus(Object? raw) {
+    final value = (raw ?? '').toString().trim().toUpperCase();
+    const labels = {
+      'AGUARDANDO_ACEITE': 'Aguardando aceite',
+      'AGUARDANDO_EQUIPE': 'Aguardando equipe',
+      'PLANEJADA': 'Planejada',
+      'PLANEJAMENTO': 'Planejamento',
+      'EM_ANDAMENTO': 'Em andamento',
+      'EM_EXECUCAO': 'Em execução',
+      'PAUSADA': 'Pausada',
+      'FINALIZADA': 'Finalizada',
+      'FINALIZADO': 'Finalizado',
+      'CONCLUIDA': 'Concluída',
+      'CONCLUIDO': 'Concluído',
+      'CANCELADA': 'Cancelada',
+      'CANCELADO': 'Cancelado',
+    };
+    if (labels.containsKey(value)) return labels[value]!;
+    return value.replaceAll('_', ' ').toLowerCase().split(' ').map((word) =>
+      word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}').join(' ');
+  }
+
   static bool get isEmpreiteiro {
     final r = (_role ?? '').toUpperCase();
     return r == 'EMPREITEIRO' || r == 'ADMIN' || r == 'GESTOR';
@@ -45,7 +67,11 @@ class AuthService {
 
   static bool get isFuncionario {
     final r = (_role ?? '').toUpperCase();
-    return r == 'FUNCIONARIO' || r == 'COLABORADOR' || r == 'MOBILE-FUNCIONARIO';
+    return r == 'FUNCIONARIO' ||
+        r == 'COLABORADOR' ||
+        r == 'MOBILE-FUNCIONARIO' ||
+        r == 'PINTOR' ||
+        r == 'ALMOXARIFE';
   }
 
   static bool get isCliente {
@@ -81,6 +107,7 @@ class AuthService {
     }
   }
 
+  // login
   static Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -88,7 +115,6 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email.trim(), 'senha': password}),
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         _accessToken = data['accessToken'];
@@ -119,7 +145,6 @@ class AuthService {
     }
   }
 
-  // Fetch logged-in user profile from /auth/me
   static Future<void> fetchProfile() async {
     if (_accessToken == null) return;
     try {
@@ -140,7 +165,6 @@ class AuthService {
     }
   }
 
-  // Register a new contractor (Empreiteiro) via API
   static Future<bool> register({
     required String name,
     required String email,
@@ -149,6 +173,7 @@ class AuthService {
     required String cpf,
   }) async {
     try {
+      // chama a api para registrar um novo empreiteiro
       final response = await http.post(
         Uri.parse('$baseUrl/empreiteiro'),
         headers: {'Content-Type': 'application/json'},
@@ -158,7 +183,7 @@ class AuthService {
           'documento': cpf.replaceAll(
             RegExp(r'\D'),
             '',
-          ), // Extract only numbers for validation
+          ),
           'telefone': phone.replaceAll(RegExp(r'\D'), ''),
           'senha': password,
         }),
@@ -174,7 +199,6 @@ class AuthService {
     }
   }
 
-  // Sign out and clear stored session
   static Future<void> signOut() async {
     // Revoga o refresh token no servidor; sem rede a saída local continua valendo.
     if (_accessToken != null) {
@@ -286,7 +310,6 @@ class AuthService {
     }
   }
 
-  // Generate headers for API requests
   static Map<String, String> getHeaders() {
     return {
       'Content-Type': 'application/json',
@@ -294,17 +317,13 @@ class AuthService {
     };
   }
 
-  // Local databases
-  static final Map<int, List<String>> _fasesPhotos = {};
-
-  // Fetch contractor's works from API
+  // Gerencia as obras e fases e puxa do banco
   static Future<List<Map<String, dynamic>>> fetchObras() async {
     try {
       final response = await ApiClient.get(
         Uri.parse('$baseUrl/obra/minhas-obras'),
         headers: getHeaders(),
       );
-
       if (response.statusCode == 200) {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
         return list.map((item) => Map<String, dynamic>.from(item)).toList();
@@ -326,39 +345,6 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-
-        // Sync uploaded photo documents from server to mobile phase gallery
-        final List<dynamic>? docs = data['documentos'];
-        if (docs != null) {
-          for (var doc in docs) {
-            if (doc['tipo_documento'] == 'ARQUIVO') {
-              final String name = doc['nome_arquivo'] ?? '';
-              final String desc = doc['descricao_arquivo'] ?? '';
-              final String url = doc['url_arquivo'] ?? '';
-              if (url.isNotEmpty) {
-                int? parsedFaseId;
-                final nameMatch = RegExp(r'fase_(\d+)').firstMatch(name);
-                if (nameMatch != null) {
-                  parsedFaseId = int.tryParse(nameMatch.group(1)!);
-                } else {
-                  final descMatch = RegExp(r'fase\s+(\d+)').firstMatch(desc);
-                  if (descMatch != null) {
-                    parsedFaseId = int.tryParse(descMatch.group(1)!);
-                  }
-                }
-
-                if (parsedFaseId != null) {
-                  if (!_fasesPhotos.containsKey(parsedFaseId)) {
-                    _fasesPhotos[parsedFaseId] = [];
-                  }
-                  if (!_fasesPhotos[parsedFaseId]!.contains(url)) {
-                    _fasesPhotos[parsedFaseId]!.add(url);
-                  }
-                }
-              }
-            }
-          }
-        }
 
         final List<dynamic>? phases = data['fases'];
         if (phases != null && phases.isNotEmpty) {
@@ -390,40 +376,70 @@ class AuthService {
     }
   }
 
-  /// Envia a foto ao servidor. Só entra na galeria local se o servidor aceitar.
-  static Future<bool> addPhasePhoto(
+  // envio de fotos e progresso
+  static Future<List<Map<String, dynamic>>> fetchObraPhotos(int obraId) async {
+    final response = await ApiClient.get(
+      Uri.parse('$baseUrl/obra-fotos/obra/$obraId'),
+      headers: getHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível carregar as fotos da obra (${response.statusCode}).');
+    }
+    final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+    return data.map((item) => Map<String, dynamic>.from(item)).toList();
+  }
+
+  /// Envia a foto ao storage e a registra na fase. Lança exceção se qualquer etapa falhar.
+  /// O upload multipart usa http direto (ApiClient não suporta multipart), então não renova token em 401.
+  static Future<Map<String, dynamic>> addPhasePhoto(
     int obraId,
     int faseId,
-    String photoData,
+    List<int> bytes,
+    String fileName,
   ) async {
-    try {
-      final response = await ApiClient.post(
-        Uri.parse('$baseUrl/obra-fotos'),
-        headers: getHeaders(),
-        body: jsonEncode({
-          'idObra': obraId,
-          'idFase': faseId,
-          'urlFoto': photoData,
-          'descricao': 'Foto de progresso da fase $faseId',
-        }),
-      );
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        logDebug('Erro do servidor ao salvar foto: ${response.statusCode}');
-        return false;
-      }
-      _fasesPhotos.putIfAbsent(faseId, () => []).add(photoData);
-      return true;
-    } catch (e) {
-      logDebug('Erro de conexao ao salvar foto no servidor: ${e.runtimeType}');
-      return false;
+    final upload = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/storage/upload'),
+    );
+    upload.headers.addAll(Map<String, String>.from(getHeaders())..remove('Content-Type'));
+    upload.fields['path'] = 'obras/$obraId/fases/$faseId';
+    upload.files.add(http.MultipartFile.fromBytes('file', bytes, filename: fileName));
+
+    final streamed = await upload.send();
+    final uploadResponse = await http.Response.fromStream(streamed);
+    if (uploadResponse.statusCode != 200) {
+      throw Exception('Falha ao enviar a imagem (${uploadResponse.statusCode}).');
     }
+
+    final uploadData = jsonDecode(utf8.decode(uploadResponse.bodyBytes));
+    final key = uploadData['key']?.toString();
+    if (key == null || key.isEmpty) {
+      throw Exception('O storage não retornou a identificação da imagem.');
+    }
+    final response = await ApiClient.post(
+      Uri.parse('$baseUrl/obra-fotos'),
+      headers: getHeaders(),
+      body: jsonEncode({
+        'idObra': obraId,
+        'idFase': faseId,
+        'urlFoto': key,
+        'descricao': 'Foto de progresso da fase $faseId',
+      }),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Falha ao registrar a foto na fase (${response.statusCode}).');
+    }
+    return Map<String, dynamic>.from(jsonDecode(utf8.decode(response.bodyBytes)));
   }
 
-  static List<String> getPhasePhotos(int faseId) {
-    return _fasesPhotos[faseId] ?? [];
+  static String mediaUrl(String value) {
+    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) {
+      return value;
+    }
+    final clean = value.startsWith('/') ? value.substring(1) : value;
+    return '$baseUrl/storage/local/$clean';
   }
 
-  // Create a new work associated with this contractor
   static Future<bool> createObra(Map<String, dynamic> data) async {
     try {
       final response = await ApiClient.post(
@@ -458,7 +474,88 @@ class AuthService {
     }
   }
 
-  // Delete current contractor account
+  // calendario e solicitacoes de material
+  static Future<List<Map<String, dynamic>>> fetchCalendarioEvents({
+    int? obraId,
+  }) async {
+    try {
+      // Chama a API para buscar os eventos do calendário
+      final queryParameters =
+          obraId == null ? null : <String, String>{'obraId': obraId.toString()};
+      final response = await http.get(
+        Uri.parse('$baseUrl/calendario').replace(
+          queryParameters: queryParameters,
+        ),
+        headers: getHeaders(),
+      );
+
+      if (response.statusCode != 200) return [];
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data.map((item) => Map<String, dynamic>.from(item)).toList();
+    } catch (e) {
+      print('Erro ao carregar eventos do calendário: $e');
+      return [];
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchSolicitacoesMaterial({
+    int? obraId,
+  }) async {
+    try {
+      // Chama a API para buscar as solicitações de material
+      final queryParameters =
+          obraId == null ? null : <String, String>{'obraId': obraId.toString()};
+      final response = await http.get(
+        Uri.parse('$baseUrl/solicitacoes-material').replace(
+          queryParameters: queryParameters,
+        ),
+        headers: getHeaders(),
+      );
+
+      if (response.statusCode != 200) return [];
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      return data.map((item) => Map<String, dynamic>.from(item)).toList();
+    } catch (e) {
+      print('Erro ao carregar solicitações de material: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> createSolicitacaoMaterial(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      // Chama a API para criar a solicitação de material
+      final response = await http.post(
+        Uri.parse('$baseUrl/solicitacoes-material'),
+        headers: {...getHeaders(), 'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('Erro ao criar solicitação de material: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> aprovarSolicitacaoMaterial(
+    int id,
+    String observacaoSupervisor,
+  ) async {
+    try {
+      // Chama a API para aprovar a solicitação de material
+      final response = await http.patch(
+        Uri.parse('$baseUrl/solicitacoes-material/$id/aprovar'),
+        headers: {...getHeaders(), 'Content-Type': 'application/json'},
+        body: jsonEncode({'observacaoSupervisor': observacaoSupervisor}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Erro ao aprovar solicitação de material: $e');
+      return false;
+    }
+  }
+
   static Future<bool> deleteCurrentAccount() async {
     try {
       if (_userId == null) {

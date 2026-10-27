@@ -32,6 +32,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   bool _isSocketConnected = false;
+  bool _isSending = false;
   Timer? _fallbackTimer;
 
   @override
@@ -58,18 +59,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       setState(() {
         _isSocketConnected = connected;
       });
-      if (!connected) {
-        _startFallbackTimer();
-      } else {
-        _stopFallbackTimer();
-      }
+      _startFallbackTimer();
     }
   }
 
   void _startFallbackTimer() {
-    if (_fallbackTimer != null) return;
-    logDebug('Iniciando fallback de polling periodico HTTP...');
-    _fallbackTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+    _fallbackTimer?.cancel();
+    final interval = _isSocketConnected
+        ? const Duration(seconds: 15)
+        : const Duration(seconds: 3);
+    logDebug('Iniciando sincronização HTTP de segurança a cada ${interval.inSeconds}s...');
+    _fallbackTimer = Timer.periodic(interval, (timer) {
       _pollMessages();
     });
   }
@@ -83,11 +83,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   Future<void> _pollMessages() async {
-    if (!_isSocketConnected && mounted) {
+    if (mounted) {
       try {
         final data = await _chatService.fetchMessages(widget.chatId);
-        if (mounted && !_isSocketConnected) {
-          if (data.length != _messages.length) {
+        if (mounted) {
+          if (!_sameMessages(data, _messages)) {
             setState(() {
               _messages = data;
             });
@@ -98,6 +98,25 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         logDebug('Erro no fallback polling: $e');
       }
     }
+  }
+
+  bool _sameMessages(
+    List<Map<String, dynamic>> incoming,
+    List<Map<String, dynamic>> current,
+  ) {
+    if (incoming.length != current.length) return false;
+    for (var index = 0; index < incoming.length; index++) {
+      final left = incoming[index];
+      final right = current[index];
+      if (left['id'] != right['id'] ||
+          left['conteudo'] != right['conteudo'] ||
+          left['editada'] != right['editada'] ||
+          left['excluida'] != right['excluida'] ||
+          left['dataCriacao'] != right['dataCriacao']) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> _loadMessages() async {
@@ -128,9 +147,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         final incomingChatId = newMessage['chatId'];
         if (incomingChatId == widget.chatId) {
           setState(() {
-            // Check if message is already added (to avoid duplicates from websocket broadcasts)
-            final exists = _messages.any((m) => m['id'] == newMessage['id']);
-            if (!exists) {
+            final index = _messages.indexWhere((m) => m['id'] == newMessage['id']);
+            if (index >= 0) {
+              _messages[index] = newMessage;
+            } else {
               _messages.add(newMessage);
             }
           });
@@ -139,6 +159,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       }
     });
     _chatService.subscribeToChat(widget.chatId);
+    _startFallbackTimer();
   }
 
   void _scrollToBottom({bool delayed = false}) {
@@ -152,8 +173,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       }
     });
   }
-
-  bool _isSending = false;
 
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
@@ -288,7 +307,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
               const SizedBox(width: 6),
               Text(
-                _isSocketConnected ? 'Online' : 'HTTP Fallback',
+                _isSocketConnected ? 'Online' : 'Reconectando tempo real',
                 style: TextStyle(
                   color: _isSocketConnected
                       ? AppColors.success
@@ -386,12 +405,188 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         final String content = message['conteudo'] ?? '';
         final String time = _formatTime(message['dataCriacao']);
 
-        return _buildMessageBubble(content, time, isMe);
+        return _buildMessageBubble(message, content, time, isMe);
       },
     );
   }
 
-  Widget _buildMessageBubble(String content, String time, bool isMe) {
+  void _showMessageOptions(Map<String, dynamic> message) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit, color: AppColors.primaryGold),
+              title: const Text('Editar Mensagem', style: TextStyle(color: AppColors.textPrimary)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showEditDialog(message);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              title: const Text('Excluir Mensagem', style: TextStyle(color: Colors.redAccent)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showDeleteConfirm(message);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditDialog(Map<String, dynamic> message) async {
+    final editController = TextEditingController(text: message['conteudo'] ?? '');
+    var saving = false;
+    String? dialogError;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => PopScope(
+          canPop: !saving,
+          child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Editar mensagem', style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: editController,
+                enabled: !saving,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  hintText: 'Digite o novo texto...',
+                  hintStyle: TextStyle(color: AppColors.textSecondary),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGold)),
+                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryGold, width: 2)),
+                ),
+                autofocus: true,
+              ),
+              if (dialogError != null) ...[
+                const SizedBox(height: 10),
+                Text(dialogError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: saving ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGold),
+              onPressed: saving ? null : () async {
+                final newText = editController.text.trim();
+                if (newText.isEmpty) {
+                  setDialogState(() => dialogError = 'A mensagem não pode ficar vazia.');
+                  return;
+                }
+                setDialogState(() {
+                  saving = true;
+                  dialogError = null;
+                });
+                try {
+                  final updated = await _chatService.editMessage(message['id'], newText);
+                  if (!mounted) return;
+                  setState(() {
+                    final idx = _messages.indexWhere((m) => m['id'] == message['id']);
+                    if (idx != -1) _messages[idx] = updated;
+                  });
+                  if (ctx.mounted) Navigator.pop(ctx);
+                } catch (error) {
+                  if (ctx.mounted) {
+                    setDialogState(() {
+                      saving = false;
+                      dialogError = _chatService.messageFromError(error);
+                    });
+                  }
+                }
+              },
+              child: saving
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : const Text('Salvar', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+          ),
+        ),
+      ),
+    );
+    editController.dispose();
+  }
+
+  Future<void> _showDeleteConfirm(Map<String, dynamic> message) async {
+    var deleting = false;
+    String? dialogError;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => PopScope(
+          canPop: !deleting,
+          child: AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Excluir mensagem', style: TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('A mensagem será substituída por “Mensagem apagada” para todos os participantes.', style: TextStyle(color: AppColors.textSecondary)),
+              if (dialogError != null) ...[
+                const SizedBox(height: 10),
+                Text(dialogError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: deleting ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              onPressed: deleting ? null : () async {
+                setDialogState(() {
+                  deleting = true;
+                  dialogError = null;
+                });
+                try {
+                  final deleted = await _chatService.deleteMessage(message['id']);
+                  if (!mounted) return;
+                  setState(() {
+                    final idx = _messages.indexWhere((m) => m['id'] == message['id']);
+                    if (idx != -1) _messages[idx] = deleted;
+                  });
+                  if (ctx.mounted) Navigator.pop(ctx);
+                } catch (error) {
+                  if (ctx.mounted) {
+                    setDialogState(() {
+                      deleting = false;
+                      dialogError = _chatService.messageFromError(error);
+                    });
+                  }
+                }
+              },
+              child: deleting
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Excluir', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+            ),
+          ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageBubble(Map<String, dynamic> message, String content, String time, bool isMe) {
     final bubbleColor = isMe
         ? AppColors.goldSoft // Elegant dark Gold/Bronze for current user
         : AppColors.surface; // Dark grey for other
@@ -421,50 +616,101 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
     return Align(
       alignment: alignment,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: bubbleColor,
-          borderRadius: borderRadius,
-          border: border,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              content,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14.5,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  time,
-                  style: TextStyle(
-                    color: AppColors.textSecondary.withValues(alpha: 0.8),
-                    fontSize: 10,
-                  ),
+      child: GestureDetector(
+        onLongPress: isMe && content != 'Mensagem apagada' ? () => _showMessageOptions(message) : null,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: bubbleColor,
+            borderRadius: borderRadius,
+            border: border,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                content,
+                style: TextStyle(
+                  color: content == 'Mensagem apagada' ? AppColors.textSecondary : AppColors.textPrimary,
+                  fontStyle: content == 'Mensagem apagada' ? FontStyle.italic : FontStyle.normal,
+                  fontSize: 14.5,
+                  height: 1.3,
                 ),
-                if (isMe) ...[
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.done_all,
-                    color: AppColors.primaryGold,
-                    size: 12,
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    time,
+                    style: TextStyle(
+                      color: AppColors.textSecondary.withValues(alpha: 0.8),
+                      fontSize: 10,
+                    ),
                   ),
+                  if (message['editada'] == true && content != 'Mensagem apagada') ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      'editada',
+                      style: TextStyle(
+                        color: AppColors.textSecondary.withValues(alpha: 0.8),
+                        fontSize: 9,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                  if (isMe && content != 'Mensagem apagada') ...[
+                    const SizedBox(width: 2),
+                    SizedBox(
+                      width: 28,
+                      height: 24,
+                      child: PopupMenuButton<String>(
+                        padding: EdgeInsets.zero,
+                        iconSize: 18,
+                        tooltip: 'Ações da mensagem',
+                        color: AppColors.surface,
+                        icon: const Icon(Icons.more_horiz, color: Colors.black87),
+                        onSelected: (value) {
+                          if (value == 'edit') _showEditDialog(message);
+                          if (value == 'delete') _showDeleteConfirm(message);
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(children: [
+                              Icon(Icons.edit_outlined, color: AppColors.primaryGold, size: 18),
+                              SizedBox(width: 10),
+                              Text('Editar', style: TextStyle(color: AppColors.textPrimary)),
+                            ]),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(children: [
+                              Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
+                              SizedBox(width: 10),
+                              Text('Excluir', style: TextStyle(color: Colors.redAccent)),
+                            ]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (isMe) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.done_all,
+                      color: AppColors.primaryGold,
+                      size: 12,
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

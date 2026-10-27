@@ -36,9 +36,34 @@ class PontoService {
     }
   }
 
+  /// Aceita data/hora como string ISO, como array [ano, mês, dia, h, m, s] (LocalDate/LocalDateTime
+  /// do Java) ou como epoch em milissegundos.
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    if (value is List && value.isNotEmpty) {
+      final year = value[0] as int;
+      final month = value.length > 1 ? value[1] as int : 1;
+      final day = value.length > 2 ? value[2] as int : 1;
+      final hour = value.length > 3 ? value[3] as int : 0;
+      final minute = value.length > 4 ? value[4] as int : 0;
+      final second = value.length > 5 ? value[5] as int : 0;
+      return DateTime(year, month, day, hour, minute, second);
+    }
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    try {
+      return DateTime.parse(value.toString());
+    } catch (_) {
+      return DateTime.now();
+    }
+  }
+
   /// Converts a vizion-api RegistroPontoResponse Map into PontoDay
   static PontoDay _fromApiResponse(Map<String, dynamic> item) {
-    final DateTime date = DateTime.parse(item['data']);
+    final DateTime parsedDate = _parseDateTime(item['data']);
+    final DateTime date = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
     final List<PontoPunch> punches = [];
     final String location = item['localizacao'] ?? 'Localização não informada';
     final int id = item['id'] ?? 0;
@@ -47,7 +72,7 @@ class PontoService {
       punches.add(PontoPunch(
         id: 'api_${id}_entrada',
         type: PontoType.entrada,
-        timestamp: DateTime.parse(item['horaEntrada']),
+        timestamp: _parseDateTime(item['horaEntrada']),
         location: location,
       ));
     }
@@ -55,7 +80,7 @@ class PontoService {
       punches.add(PontoPunch(
         id: 'api_${id}_saida_almoco',
         type: PontoType.saidaAlmoco,
-        timestamp: DateTime.parse(item['horaSaidaAlmoco']),
+        timestamp: _parseDateTime(item['horaSaidaAlmoco']),
         location: location,
       ));
     }
@@ -63,7 +88,7 @@ class PontoService {
       punches.add(PontoPunch(
         id: 'api_${id}_retorno_almoco',
         type: PontoType.retornoAlmoco,
-        timestamp: DateTime.parse(item['horaRetornoAlmoco']),
+        timestamp: _parseDateTime(item['horaRetornoAlmoco']),
         location: location,
       ));
     }
@@ -71,7 +96,7 @@ class PontoService {
       punches.add(PontoPunch(
         id: 'api_${id}_saida',
         type: PontoType.saida,
-        timestamp: DateTime.parse(item['horaSaida']),
+        timestamp: _parseDateTime(item['horaSaida']),
         location: location,
       ));
     }
@@ -109,9 +134,12 @@ class PontoService {
 
       if (response.statusCode == 200) {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
-        final todayStr = _ymd(now);
         final todayItem = list.firstWhere(
-          (e) => (e['data'] as String?)?.startsWith(todayStr) == true,
+          (e) {
+            if (e is! Map || e['data'] == null) return false;
+            final dt = _parseDateTime(e['data']);
+            return dt.year == now.year && dt.month == now.month && dt.day == now.day;
+          },
           orElse: () => null,
         );
 
@@ -223,11 +251,11 @@ class PontoService {
 
       if (response.statusCode == 200) {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
-        final monthStr = '$year-${month.toString().padLeft(2, '0')}';
 
         for (var item in list) {
-          final dataStr = item['data'] as String?;
-          if (dataStr != null && dataStr.startsWith(monthStr)) {
+          if (item['data'] == null) continue;
+          final dt = _parseDateTime(item['data']);
+          if (dt.year == year && dt.month == month) {
             days.add(_fromApiResponse(Map<String, dynamic>.from(item)));
           }
         }

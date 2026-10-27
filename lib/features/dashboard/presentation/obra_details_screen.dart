@@ -5,7 +5,15 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_room_screen.dart';
 import '../../chat/data/chat_network_service.dart';
-import 'widgets/camera_simulator_screen.dart';
+
+double calculatePhaseProgress(List<Map<String, dynamic>> phases) {
+  if (phases.isEmpty) return 0;
+  const completedStatuses = {'FINALIZADA', 'CONCLUIDA', 'CONCLUIDO'};
+  final completed = phases.where((phase) => completedStatuses.contains(
+    (phase['status'] ?? '').toString().trim().toUpperCase(),
+  )).length;
+  return completed / phases.length;
+}
 
 class ObraDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> obra;
@@ -19,6 +27,7 @@ class ObraDetailsScreen extends StatefulWidget {
 class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _fases = [];
+  Map<int, List<Map<String, dynamic>>> _photosByPhase = {};
   String _errorMessage = '';
 
   @override
@@ -29,13 +38,26 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
 
   Future<void> _loadFases() async {
     try {
-      final data = await AuthService.fetchFases(widget.obra['id']);
+      final result = await Future.wait([
+        AuthService.fetchFases(widget.obra['id']),
+        AuthService.fetchObraPhotos(widget.obra['id']),
+      ]);
+      final data = result[0];
+      final photos = result[1];
+      final groupedPhotos = <int, List<Map<String, dynamic>>>{};
+      for (final photo in photos) {
+        final rawPhaseId = photo['idFase'];
+        if (rawPhaseId is! num) continue;
+        groupedPhotos.putIfAbsent(rawPhaseId.toInt(), () => []).add(photo);
+      }
       if (mounted) {
         setState(() {
           // Sort by display order (ordem_exibicao)
           _fases = List<Map<String, dynamic>>.from(data)
             ..sort((a, b) => (a['ordem_exibicao'] ?? 0).compareTo(b['ordem_exibicao'] ?? 0));
+          _photosByPhase = groupedPhotos;
           _isLoading = false;
+          _errorMessage = '';
         });
       }
     } catch (e) {
@@ -49,10 +71,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   }
 
   double _calculateProgress() {
-    if (_fases.isEmpty) return 0.0;
-    final finishedCount = _fases.where((f) => f['status'] == 'FINALIZADA').length;
-    final inProgressCount = _fases.where((f) => f['status'] == 'EM_ANDAMENTO').length;
-    return (finishedCount + (inProgressCount * 0.5)) / _fases.length;
+    return calculatePhaseProgress(_fases);
   }
 
   String _formatCurrency(double value) {
@@ -134,61 +153,79 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     }
   }
 
-  Future<void> _openCameraForPhase(Map<String, dynamic> fase) async {
+  Future<void> _openPhotoForPhase(Map<String, dynamic> fase) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
+              child: Text('Registrar foto da fase', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primaryGold),
+              title: const Text('Tirar foto', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppColors.primaryGold),
+              title: const Text('Escolher da galeria', style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
-        source: ImageSource.camera,
+        source: source,
         imageQuality: 70,
+        maxWidth: 1920,
       );
 
       if (image != null) {
         final bytes = await image.readAsBytes();
-        final String base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
-
         setState(() {
           _isLoading = true;
         });
-        final salvou = await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], base64Image);
+        await AuthService.addPhasePhoto(
+          widget.obra['id'],
+          fase['id_fase'],
+          bytes,
+          image.name,
+        );
         await _loadFases();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(salvou ? 'Foto tirada e salva com sucesso!' : 'Não foi possível enviar a foto. Tente novamente.'),
-              backgroundColor: salvou ? AppColors.success : AppColors.danger,
+            const SnackBar(
+              content: Text('Foto enviada e registrada na fase com sucesso!'),
+              backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
             ),
           );
         }
       }
     } catch (e) {
-      debugPrint('Erro ao acessar camera real, abrindo simulador: $e');
+      debugPrint('Erro ao registrar foto da fase: $e');
+      if (mounted) setState(() => _isLoading = false);
       if (!mounted) return;
-      final photoData = await Navigator.push<String>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CameraSimulatorScreen(
-            phaseName: fase['nome_fase'] ?? 'Fase',
-          ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Não foi possível registrar a foto: ${e.toString().replaceFirst('Exception: ', '')}'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
         ),
       );
-
-      if (photoData != null) {
-        setState(() {
-          _isLoading = true;
-        });
-        final salvou = await AuthService.addPhasePhoto(widget.obra['id'], fase['id_fase'], photoData);
-        await _loadFases();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(salvou ? 'Foto simulada salva com sucesso!' : 'Não foi possível enviar a foto. Tente novamente.'),
-              backgroundColor: salvou ? AppColors.success : AppColors.danger,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
     }
   }
 
@@ -418,7 +455,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                           final isLast = index == _fases.length - 1;
                           final status = (fase['status'] ?? 'PLANEJADA').toString().toUpperCase();
                           final color = _getStatusColor(status);
-                          final List<String> photos = AuthService.getPhasePhotos(fase['id_fase']);
+                          final List<Map<String, dynamic>> photos = _photosByPhase[fase['id_fase']] ?? const [];
 
                           return IntrinsicHeight(
                             child: Row(
@@ -476,7 +513,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                   border: Border.all(color: color.withValues(alpha: 0.3), width: 0.8),
                                                 ),
                                                 child: Text(
-                                                  status,
+                                                  AuthService.formatStatus(status),
                                                   style: TextStyle(color: color, fontSize: 8.5, fontWeight: FontWeight.bold),
                                                 ),
                                               ),
@@ -510,21 +547,22 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                                 itemCount: photos.length,
                                                 separatorBuilder: (context, idx) => const SizedBox(width: 8),
                                                 itemBuilder: (context, idx) {
-                                                  final photoStr = photos[idx];
+                                                  final photo = photos[idx];
+                                                  final photoStr = (photo['urlFoto'] ?? '').toString();
                                                   return ClipRRect(
                                                     borderRadius: BorderRadius.circular(6),
                                                     child: Container(
                                                       width: 70,
                                                       height: 70,
                                                       color: AppColors.background,
-                                                      child: photoStr.startsWith('mock-camera-')
-                                                          ? _buildMockImagePreview(photoStr)
-                                                          : photoStr.startsWith('data:image/')
-                                                              ? Image.memory(
-                                                                  base64Decode(photoStr.split(',')[1]),
-                                                                  fit: BoxFit.cover,
-                                                                )
-                                                              : Icon(Icons.image, color: AppColors.textSecondary),
+                                                      child: photoStr.startsWith('data:image/')
+                                                          ? Image.memory(base64Decode(photoStr.split(',')[1]), fit: BoxFit.cover)
+                                                          : Image.network(
+                                                              AuthService.mediaUrl(photoStr),
+                                                              headers: AuthService.getHeaders(),
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined, color: AppColors.textSecondary),
+                                                            ),
                                                     ),
                                                   );
                                                 },
@@ -533,14 +571,14 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                           ],
 
                                           // Controles de Ação do Empreiteiro
-                                          if (role == 'EMPREITEIRO' || role == 'EMPREITEIRA' || role == 'ADMIN') ...[
-                                            Divider(color: AppColors.gridLine, height: 24),
+                                          if (role == 'EMPREITEIRO' || role == 'EMPREITEIRA' || role == 'ADMIN' || role == 'FUNCIONARIO' || role == 'SUPERVISOR' || role == 'PINTOR' || role == 'ALMOXARIFE') ...[
+                                            const Divider(color: AppColors.gridLine, height: 24),
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
                                                 // Photo Taking Button
                                                 ElevatedButton.icon(
-                                                  onPressed: () => _openCameraForPhase(fase),
+                                                  onPressed: () => _openPhotoForPhase(fase),
                                                   icon: const Icon(Icons.camera_alt_outlined, size: 14),
                                                   label: const Text('FOTO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                                                   style: ElevatedButton.styleFrom(
@@ -582,47 +620,6 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         const SizedBox(height: 2),
         Text(date, style: TextStyle(color: AppColors.textPrimary.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold)),
       ],
-    );
-  }
-
-  Widget _buildMockImagePreview(String photoStr) {
-    final phaseType = photoStr.replaceFirst('mock-camera-', '');
-    Color previewBg = Colors.grey;
-    IconData previewIcon = Icons.home;
-    String label = 'Construção';
-
-    if (phaseType.contains('Projetos')) {
-      previewBg = Colors.blueGrey;
-      previewIcon = Icons.draw_outlined;
-      label = 'Projetos';
-    } else if (phaseType.contains('Fundação')) {
-      previewBg = Colors.brown;
-      previewIcon = Icons.foundation_outlined;
-      label = 'Fundação';
-    } else if (phaseType.contains('Superestrutura')) {
-      previewBg = Colors.blue;
-      previewIcon = Icons.domain;
-      label = 'Estrutura';
-    } else if (phaseType.contains('Alvenaria')) {
-      previewBg = AppColors.warning;
-      previewIcon = Icons.square;
-      label = 'Tijolos';
-    } else if (phaseType.contains('Acabamento')) {
-      previewBg = Colors.teal;
-      previewIcon = Icons.format_paint_outlined;
-      label = 'Acabamento';
-    }
-
-    return Container(
-      color: previewBg.withValues(alpha: 0.25),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(previewIcon, color: previewBg, size: 24),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: previewBg, fontSize: 7, fontWeight: FontWeight.bold)),
-        ],
-      ),
     );
   }
 

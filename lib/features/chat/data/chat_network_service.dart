@@ -16,6 +16,26 @@ class ChatNetworkService {
   bool get isConnected => _isConnected;
   Function(Map<String, dynamic>)? _onNewMessageCallback;
 
+  String messageFromError(Object error) {
+    final raw = error.toString().replaceFirst('Exception: ', '');
+    return raw.isEmpty ? 'Não foi possível concluir a operação.' : raw;
+  }
+
+  String _serverMessage(http.Response response, String fallback) {
+    try {
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      if (body is Map) {
+        final message = body['message'] ?? body['error'] ?? body['detail'];
+        if (message is String && message.trim().isNotEmpty) return message;
+      }
+      if (body is String && body.trim().isNotEmpty) return body;
+    } catch (_) {
+      final body = utf8.decode(response.bodyBytes).trim();
+      if (body.isNotEmpty) return body;
+    }
+    return fallback;
+  }
+
   // REST endpoints
 
   Future<List<Map<String, dynamic>>> fetchChats() async {
@@ -41,7 +61,7 @@ class ChatNetworkService {
 
         return chats;
       } else {
-        throw Exception('Erro ao buscar conversas: ${response.statusCode}');
+        throw Exception(_serverMessage(response, 'Não foi possível carregar as conversas.'));
       }
     } catch (e) {
       logDebug('Erro ao carregar chats: $e');
@@ -60,7 +80,7 @@ class ChatNetworkService {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
         return list.map((item) => Map<String, dynamic>.from(item)).toList();
       } else {
-        throw Exception('Erro ao buscar contatos: ${response.statusCode}');
+        throw Exception(_serverMessage(response, 'Não foi possível carregar os contatos.'));
       }
     } catch (e) {
       logDebug('Erro ao carregar contatos: $e');
@@ -80,7 +100,7 @@ class ChatNetworkService {
           jsonDecode(utf8.decode(response.bodyBytes)),
         );
       } else {
-        throw Exception('Erro ao iniciar chat privado: ${response.statusCode}');
+        throw Exception(_serverMessage(response, 'Não foi possível iniciar a conversa.'));
       }
     } catch (e) {
       logDebug('Erro ao iniciar chat: $e');
@@ -99,7 +119,7 @@ class ChatNetworkService {
         final List<dynamic> list = jsonDecode(utf8.decode(response.bodyBytes));
         return list.map((item) => Map<String, dynamic>.from(item)).toList();
       } else {
-        throw Exception('Erro ao carregar mensagens: ${response.statusCode}');
+        throw Exception(_serverMessage(response, 'Não foi possível carregar as mensagens.'));
       }
     } catch (e) {
       logDebug('Erro ao carregar mensagens do chat: $e');
@@ -142,7 +162,7 @@ class ChatNetworkService {
     _subscribedChatIds.remove(chatId);
     if (_client != null &&
         _client!.connectionStatus!.state == MqttConnectionState.connected) {
-      final topic = 'chat/$chatId';
+      final topic = 'vizion/chats/$chatId';
       _client!.unsubscribe(topic);
     }
   }
@@ -150,7 +170,7 @@ class ChatNetworkService {
   void _subscribeToTopic(int chatId) {
     if (_client != null &&
         _client!.connectionStatus!.state == MqttConnectionState.connected) {
-      final topic = 'chat/$chatId';
+      final topic = 'vizion/chats/$chatId';
       logDebug('Inscrevendo no topico MQTT: $topic');
       _client!.subscribe(topic, MqttQos.atLeastOnce);
     }
@@ -205,8 +225,11 @@ class ChatNetworkService {
       );
       logDebug('Mensagem MQTT recebida no topico ${c[0].topic}');
       try {
-        final data = jsonDecode(pt);
-        if (_onNewMessageCallback != null && data != null) {
+        final decoded = jsonDecode(pt);
+        final data = decoded is Map && decoded['message'] is Map
+            ? decoded['message']
+            : decoded;
+        if (_onNewMessageCallback != null && data is Map) {
           _onNewMessageCallback!(Map<String, dynamic>.from(data));
         }
       } catch (e) {
@@ -248,10 +271,51 @@ class ChatNetworkService {
           jsonDecode(utf8.decode(response.bodyBytes)),
         );
       } else {
-        throw Exception('Erro ao enviar mensagem via HTTP: ${response.statusCode}');
+        throw Exception(_serverMessage(response, 'Não foi possível enviar a mensagem.'));
       }
     } catch (e) {
       logDebug('Erro ao postar mensagem: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> editMessage(int messageId, String newContent) async {
+    try {
+      final response = await ApiClient.put(
+        Uri.parse('${AuthService.baseUrl}/chats/mensagens/$messageId'),
+        headers: {
+          ...AuthService.getHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(newContent),
+      );
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(
+          jsonDecode(utf8.decode(response.bodyBytes)),
+        );
+      } else {
+        throw Exception(_serverMessage(response, 'Não foi possível editar a mensagem.'));
+      }
+    } catch (e) {
+      logDebug('Erro ao editar mensagem: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> deleteMessage(int messageId) async {
+    try {
+      final response = await ApiClient.delete(
+        Uri.parse('${AuthService.baseUrl}/chats/mensagens/$messageId'),
+        headers: AuthService.getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(utf8.decode(response.bodyBytes)));
+      }
+      throw Exception(_serverMessage(response, 'Não foi possível excluir a mensagem.'));
+    } catch (e) {
+      logDebug('Erro ao excluir mensagem: $e');
       rethrow;
     }
   }

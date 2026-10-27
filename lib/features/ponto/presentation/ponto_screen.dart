@@ -9,7 +9,9 @@ import 'widgets/ponto_punch_dialog.dart';
 import 'widgets/espelho_ponto_tab.dart';
 
 class PontoScreen extends StatefulWidget {
-  const PontoScreen({super.key});
+  final VoidCallback? onBackTap;
+
+  const PontoScreen({super.key, this.onBackTap});
 
   @override
   State<PontoScreen> createState() => _PontoScreenState();
@@ -155,6 +157,29 @@ class _PontoScreenState extends State<PontoScreen> {
       ),
       child: Row(
         children: [
+          if (widget.onBackTap != null) ...[
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: AppRadius.control,
+                onTap: widget.onBackTap,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: AppRadius.control,
+                    border: Border.all(color: AppColors.gridLine),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: AppColors.primaryGold,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(4),

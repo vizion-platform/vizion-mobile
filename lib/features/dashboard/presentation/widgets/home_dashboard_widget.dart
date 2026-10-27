@@ -7,8 +7,19 @@ import '../../../ponto/presentation/ponto_screen.dart';
 
 class HomeDashboardWidget extends StatefulWidget {
   final VoidCallback? onProfileTap;
+  final VoidCallback? onAgendaTap;
+  final VoidCallback? onObrasTap;
+  final VoidCallback? onPontoTap;
+  final VoidCallback? onChatTap;
 
-  const HomeDashboardWidget({super.key, this.onProfileTap});
+  const HomeDashboardWidget({
+    super.key,
+    this.onProfileTap,
+    this.onAgendaTap,
+    this.onObrasTap,
+    this.onPontoTap,
+    this.onChatTap,
+  });
 
   @override
   State<HomeDashboardWidget> createState() => _HomeDashboardWidgetState();
@@ -283,7 +294,8 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           // Métricas em Cards
           LayoutBuilder(
             builder: (context, constraints) {
-              final cardWidth = (constraints.maxWidth - 16) / 2;
+              final isWide = constraints.maxWidth >= 560;
+              final halfWidth = (constraints.maxWidth - 16) / 2;
 
               // Somente valores reais das obras carregadas (nada de números de exemplo).
               final progressoMedio = _progress.isEmpty
@@ -292,6 +304,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
               final primeiraObra = _obras.isNotEmpty ? _obras.first : null;
 
               if (role == 'CLIENTE') {
+                final cardWidth = isWide ? (constraints.maxWidth - 48) / 4 : halfWidth;
                 return Wrap(
                   spacing: 16,
                   runSpacing: 16,
@@ -309,9 +322,43 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   ],
                 );
               } else if (role == 'FUNCIONARIO') {
-                return Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
+                if (isWide) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          'Meu Canteiro',
+                          'Bella Vista',
+                          Icons.apartment_outlined,
+                          Colors.blueAccent,
+                          double.infinity,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Atividade Atual',
+                          'Fundação',
+                          Icons.construction_outlined,
+                          AppColors.primaryGold,
+                          double.infinity,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Status de Presença',
+                          'Registrada',
+                          Icons.verified_user_outlined,
+                          Colors.greenAccent,
+                          double.infinity,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return Column(
                   children: [
                     _buildStatCard(
                       'Meu Canteiro',
@@ -325,9 +372,43 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   ],
                 );
               } else {
-                return Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
+                if (isWide) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          'Canteiros de Obra',
+                          totalObras.toString(),
+                          Icons.domain_outlined,
+                          AppColors.primaryGold,
+                          double.infinity,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Investimento Total',
+                          _formatCurrency(totalBudget),
+                          Icons.account_balance_wallet_outlined,
+                          Colors.greenAccent,
+                          double.infinity,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildStatCard(
+                          'Custo Médio / Obra',
+                          _formatCurrency(avgBudget),
+                          Icons.analytics_outlined,
+                          Colors.blueAccent,
+                          double.infinity,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return Column(
                   children: [
                     _buildStatCard('Canteiros de Obra', totalObras.toString(), Icons.domain_outlined,
                         AppColors.primaryGold, cardWidth),
@@ -407,10 +488,14 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const PontoScreen()),
-                      );
+                      if (widget.onPontoTap != null) {
+                        widget.onPontoTap!();
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const PontoScreen()),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.goldFill,
@@ -499,7 +584,13 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: _startChatWithContractor,
+                    onPressed: () {
+                      if (widget.onChatTap != null) {
+                        widget.onChatTap!();
+                      } else {
+                        _startChatWithContractor();
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.goldFill,
                       foregroundColor: AppColors.onGold,
@@ -657,8 +748,48 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
               ],
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 90),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTopHeaderButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.primaryGold.withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.primaryGold,
+              size: 18,
+            ),
+          ),
+        ),
       ),
     );
   }
