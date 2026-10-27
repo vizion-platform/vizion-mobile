@@ -296,6 +296,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 560;
               final halfWidth = (constraints.maxWidth - 16) / 2;
+              final cardWidth = halfWidth;
 
               // Somente valores reais das obras carregadas (nada de números de exemplo).
               final progressoMedio = _progress.isEmpty
