@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:vizion_mobile/core/network/auth_service.dart';
-import 'package:vizion_mobile/features/dashboard/presentation/obra_details_screen.dart';
+import 'package:vizion_mobile/features/dashboard/domain/obra_progress.dart';
 
 void main() {
   test('avanço considera somente fases efetivamente concluídas', () {
