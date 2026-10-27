@@ -19,7 +19,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
   late DateTime _selectedDate; // Currently selected day
   DateTime? _selectedFilterDay; // Selected day filter for toggling
   String _selectedViewMode = 'Semana'; // 'Semana', 'Dia', 'Mês'
-  String _activeFilter = 'Todas'; // 'Todas', 'Pendentes', 'Concluídas', 'Obra', 'Vistoria', 'Entrega', 'Segurança'
+  String _activeFilter = 'Todas'; // 'Todas', 'Obra', 'Vistoria', 'Entrega', 'Segurança'
 
   // Task Data State
   List<AgendaTask> _allTasks = [];
@@ -47,7 +47,8 @@ class _AgendaScreenState extends State<AgendaScreen> {
     final tasks = await AgendaService.loadTasks();
     if (mounted) {
       setState(() {
-        _allTasks = tasks;
+        // Tarefa concluída não fica na agenda: quem ainda estiver marcada no banco é ocultada.
+        _allTasks = tasks.where((t) => !t.isCompleted).toList();
         _isLoading = false;
       });
     }
@@ -58,12 +59,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
     return role == 'EMPREITEIRO' || role == 'ADMIN' || role == 'GESTOR';
   }
 
-  /// Toggles completion status of a task
-  Future<void> _toggleTaskCompletion(String id) async {
+  /// Concluir a tarefa a remove da agenda na hora e do banco de dados.
+  Future<void> _concluirTarefa(String id) async {
     if (!_canModifyAgenda) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Apenas o Empreiteiro pode modificar status de tarefas no calendário.'),
+          content: Text('Apenas o Empreiteiro pode concluir tarefas no calendário.'),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
           duration: Duration(seconds: 2),
@@ -72,20 +73,19 @@ class _AgendaScreenState extends State<AgendaScreen> {
       return;
     }
     final index = _allTasks.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      final task = _allTasks[index];
-      setState(() {
-        _allTasks[index] = task.copyWith(isCompleted: !task.isCompleted);
-      });
-      final updated = await AgendaService.toggleTaskCompletion(task);
-      if (mounted) {
-        setState(() {
-          final idx = _allTasks.indexWhere((t) => t.id == id || t.id == updated.id);
-          if (idx != -1) {
-            _allTasks[idx] = updated;
-          }
-        });
-      }
+    if (index == -1) return;
+    final task = _allTasks[index];
+    setState(() => _allTasks.removeAt(index));
+    await AgendaService.deleteTask(task);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tarefa concluída e removida da agenda.'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -133,14 +133,34 @@ class _AgendaScreenState extends State<AgendaScreen> {
     });
   }
 
-  /// Navigates week forward or backward
-  void _navigateWeek(int weeksDelta) {
+  /// Avança ou volta no tempo conforme a visão escolhida em cima: dia, semana ou mês.
+  void _navigate(int delta) {
     setState(() {
-      _currentWeekStart = _currentWeekStart.add(Duration(days: weeksDelta * 7));
-      _selectedDate = _currentWeekStart;
+      if (_selectedViewMode == 'Dia') {
+        _selectedDate = _selectedDate.add(Duration(days: delta));
+      } else if (_selectedViewMode == 'Mês') {
+        final int year = _selectedDate.year;
+        final int month = _selectedDate.month + delta;
+        final int lastDay = DateTime(year, month + 1, 0).day;
+        final int day = _selectedDate.day > lastDay ? lastDay : _selectedDate.day;
+        _selectedDate = DateTime(year, month, day);
+      } else {
+        _selectedDate = _currentWeekStart.add(Duration(days: delta * 7));
+      }
+      _currentWeekStart = _getMonday(_selectedDate);
       _selectedFilterDay = null;
     });
   }
+
+  /// Período exibido no cabeçalho: a semana na visão semanal, o dia/mês selecionado nas demais.
+  DateTime get _periodoReferencia =>
+      _selectedViewMode == 'Semana' ? _currentWeekStart : _selectedDate;
+
+  String get _rotuloNavegacao => switch (_selectedViewMode) {
+        'Dia' => 'Dia',
+        'Mês' => 'Mês',
+        _ => 'Semana',
+      };
 
   /// Get 7 days for the current active week (Mon - Sun)
   List<DateTime> get _activeWeekDays {
@@ -171,9 +191,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
         }
       }
 
-      // Category / Status filter
-      if (_activeFilter == 'Pendentes') return !task.isCompleted;
-      if (_activeFilter == 'Concluídas') return task.isCompleted;
+      // Category filter
       if (_activeFilter != 'Todas') {
         return task.category.toLowerCase() == _activeFilter.toLowerCase();
       }
@@ -189,7 +207,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String monthYearTitle = _formatMonthYear(_currentWeekStart);
+    final String monthYearTitle = _formatMonthYear(_periodoReferencia);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -252,13 +270,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(14),
                 onTap: widget.onBackTap,
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppColors.gridLine),
                   ),
                   child: Icon(
@@ -277,7 +295,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: AppColors.primaryGold.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               Icons.calendar_month,
@@ -321,12 +339,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
           // "Hoje" Button
           InkWell(
             onTap: _jumpToToday,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(16),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.gridLine,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.4)),
               ),
               child: Row(
@@ -348,20 +366,20 @@ class _AgendaScreenState extends State<AgendaScreen> {
           ),
           const SizedBox(width: 2),
 
-          // Previous Week Arrow
+          // Anterior (dia, semana ou mês, conforme a visão)
           IconButton(
             icon: Icon(Icons.chevron_left, color: AppColors.textPrimary, size: 22),
-            onPressed: () => _navigateWeek(-1),
-            tooltip: 'Semana Anterior',
+            onPressed: () => _navigate(-1),
+            tooltip: '$_rotuloNavegacao anterior',
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
           ),
 
-          // Next Week Arrow
+          // Próximo (dia, semana ou mês, conforme a visão)
           IconButton(
             icon: Icon(Icons.chevron_right, color: AppColors.textPrimary, size: 22),
-            onPressed: () => _navigateWeek(1),
-            tooltip: 'Próxima Semana',
+            onPressed: () => _navigate(1),
+            tooltip: '$_rotuloNavegacao seguinte',
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
           ),
@@ -389,7 +407,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.gridLine),
                 ),
                 child: Row(
@@ -403,7 +421,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
                           color: isSelected ? AppColors.goldFill : Colors.transparent,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
                           mode,
@@ -424,11 +442,11 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.gridLine),
                 ),
                 child: Text(
-                  '${_filteredTasks.where((t) => t.isCompleted).length}/${_filteredTasks.length} concluídas',
+                  '${_filteredTasks.length} ${_filteredTasks.length == 1 ? 'pendente' : 'pendentes'}',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 10,
@@ -447,8 +465,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
             child: Row(
               children: [
                 'Todas',
-                'Pendentes',
-                'Concluídas',
                 'Obra',
                 'Vistoria',
                 'Entrega',
@@ -472,7 +488,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
                         color: isSelected ? AppColors.primaryGold : AppColors.gridLine,
                       ),
@@ -497,7 +513,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.gridLine, width: 1.0),
       ),
       child: Row(
@@ -521,7 +537,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   }
                 });
               },
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(16),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -531,7 +547,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       : (isTodayDate
                           ? AppColors.primaryGold.withValues(alpha: 0.12)
                           : Colors.transparent),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.primaryGold
@@ -667,7 +683,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 color: isTodayDate
                     ? AppColors.primaryGold.withValues(alpha: 0.15)
                     : AppColors.surface,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isTodayDate ? AppColors.primaryGold.withValues(alpha: 0.4) : AppColors.gridLine,
                 ),
@@ -698,7 +714,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: AppColors.primaryGold,
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
                         'HOJE',
@@ -718,7 +734,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
                           color: AppColors.primaryGold.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: AppColors.primaryGold),
                         ),
                         child: Row(
@@ -783,7 +799,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.gridLine),
             ),
             child: Row(
@@ -880,13 +896,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
                     _selectedViewMode = 'Dia';
                   });
                 },
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(16),
                 child: Container(
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primaryGold.withValues(alpha: 0.2)
                         : AppColors.surface,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isTodayDate
                           ? AppColors.primaryGold
@@ -959,16 +975,14 @@ class _AgendaScreenState extends State<AgendaScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: task.isCompleted
-              ? AppColors.gridLine
-              : task.color.withValues(alpha: 0.35),
+          color: task.color.withValues(alpha: 0.35),
           width: 1.0,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -976,27 +990,23 @@ class _AgendaScreenState extends State<AgendaScreen> {
             Container(
               width: 4,
               constraints: const BoxConstraints(minHeight: 64),
-              color: task.isCompleted ? Colors.grey : task.color,
+              color: task.color,
             ),
 
-            // Checkbox for completed status
+            // Concluir: a tarefa sai da agenda e do banco na hora
             IconButton(
               padding: const EdgeInsets.only(left: 6, right: 4, top: 8),
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              icon: Icon(
-                task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: task.isCompleted ? AppColors.primaryGold : task.color,
-                size: 20,
-              ),
-              onPressed: () => _toggleTaskCompletion(task.id),
-              tooltip: task.isCompleted ? 'Marcar como pendente' : 'Marcar como concluída',
+              icon: Icon(Icons.radio_button_unchecked, color: task.color, size: 20),
+              onPressed: () => _concluirTarefa(task.id),
+              tooltip: 'Concluir tarefa',
             ),
 
             // Task info body (Auto-Wrap em Qualquer Tamanho de Texto)
             Expanded(
               child: InkWell(
                 onTap: () => _showTaskDetailsDialog(task),
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(16),
                 child: Padding(
                   padding: const EdgeInsets.only(top: 8, bottom: 8, right: 4),
                   child: Column(
@@ -1016,15 +1026,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               Icon(
                                 Icons.date_range,
                                 size: 11,
-                                color: task.isCompleted ? AppColors.textSecondary : AppColors.primaryGold,
+                                color: AppColors.primaryGold,
                               ),
                               const SizedBox(width: 3),
                               Text(
                                 dateRangeString,
                                 style: TextStyle(
-                                  color: task.isCompleted
-                                      ? AppColors.textSecondary
-                                      : AppColors.primaryGold,
+                                  color: AppColors.primaryGold,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1047,7 +1055,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                             decoration: BoxDecoration(
                               color: task.color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               task.category.toUpperCase(),
@@ -1065,7 +1073,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                               decoration: BoxDecoration(
                                 color: AppColors.danger.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 'ALTA',
@@ -1085,11 +1093,10 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         task.title,
                         softWrap: true,
                         style: TextStyle(
-                          color: task.isCompleted ? AppColors.textSecondary : AppColors.textPrimary,
+                          color: AppColors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           height: 1.25,
-                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                         ),
                       ),
 
@@ -1103,7 +1110,6 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             color: AppColors.textSecondary.withValues(alpha: 0.85),
                             fontSize: 11,
                             height: 1.25,
-                            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                           ),
                         ),
                       ],
@@ -1256,7 +1262,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       margin: const EdgeInsets.only(top: 14),
                       decoration: BoxDecoration(
                         color: Colors.amber.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                       ),
                       child: Row(
@@ -1279,18 +1285,18 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         Expanded(
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: task.isCompleted ? AppColors.warning : const Color(0xFF34A853),
+                              backgroundColor: const Color(0xFF34A853),
                               foregroundColor: AppColors.textPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             ),
                             onPressed: () {
                               Navigator.pop(context);
-                              _toggleTaskCompletion(task.id);
+                              _concluirTarefa(task.id);
                             },
-                            icon: Icon(task.isCompleted ? Icons.undo : Icons.check, size: 16),
+                            icon: Icon(Icons.check, size: 16),
                             label: Text(
-                              task.isCompleted ? 'Marcar Pendente' : 'Marcar Concluída',
+                              'Concluir',
                               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -1344,7 +1350,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (context) {
         return StatefulBuilder(
@@ -1404,7 +1410,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           fillColor: AppColors.background,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: AppColors.gridLine),
                           ),
                         ),
@@ -1442,7 +1448,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: AppColors.gridLine),
                                 ),
                                 child: Column(
@@ -1493,7 +1499,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: AppColors.gridLine),
                                 ),
                                 child: Column(
@@ -1551,7 +1557,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               fontSize: 10,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(16),
                               side: BorderSide(
                                 color: isSelected ? Color(color) : AppColors.gridLine,
                               ),
@@ -1613,7 +1619,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           fillColor: AppColors.background,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: AppColors.gridLine),
                           ),
                         ),
@@ -1628,7 +1634,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.goldFill,
                             foregroundColor: AppColors.textPrimary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           onPressed: () async {
                             if (titleController.text.trim().isEmpty) {
