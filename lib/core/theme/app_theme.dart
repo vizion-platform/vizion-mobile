@@ -122,6 +122,37 @@ class AppTheme {
     _rebuildAll();
   }
 
+  static const String _fontScaleKey = 'vizion_font_scale';
+
+  /// Opções de tamanho da letra da acessibilidade (perfil). 1.0 é o tamanho padrão.
+  static const List<({double escala, String rotulo})> opcoesFonte = [
+    (escala: 0.9, rotulo: 'Menor'),
+    (escala: 1.0, rotulo: 'Padrão'),
+    (escala: 1.15, rotulo: 'Maior'),
+    (escala: 1.3, rotulo: 'Muito maior'),
+  ];
+
+  /// Multiplicador aplicado a todo texto do app (via MediaQuery em main.dart).
+  static final ValueNotifier<double> fontScale = ValueNotifier<double>(1.0);
+
+  static Future<void> loadFontScale() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final salvo = prefs.getDouble(_fontScaleKey) ?? 1.0;
+      fontScale.value = opcoesFonte.any((o) => o.escala == salvo) ? salvo : 1.0;
+    } catch (_) {
+      fontScale.value = 1.0;
+    }
+  }
+
+  static Future<void> setFontScale(double escala) async {
+    fontScale.value = escala;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_fontScaleKey, escala);
+    } catch (_) {}
+  }
+
   /// As telas leem AppColors diretamente (sem depender do Theme): força o rebuild da árvore inteira.
   static void _rebuildAll() {
     void rebuild(Element element) {

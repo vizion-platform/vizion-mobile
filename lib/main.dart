@@ -11,6 +11,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppTheme.load();
+  await AppTheme.loadFontScale();
   
   // Initialize auth session from local storage
   final bool isLoggedIn = await AuthService.init();
@@ -41,6 +42,19 @@ class VizionApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       navigatorKey: navigatorKey,
+      // Tamanho da letra escolhido na acessibilidade do perfil, somado ao da preferência do sistema.
+      builder: (context, child) => ValueListenableBuilder<double>(
+        valueListenable: AppTheme.fontScale,
+        builder: (context, escala, _) {
+          final mediaQuery = MediaQuery.of(context);
+          return MediaQuery(
+            data: mediaQuery.copyWith(
+              textScaler: TextScaler.linear(mediaQuery.textScaler.scale(1) * escala),
+            ),
+            child: child!,
+          );
+        },
+      ),
       initialRoute: !isLoggedIn
           ? '/login'
           : (AuthService.mustChangePassword ? '/trocar-senha' : '/dashboard'),
