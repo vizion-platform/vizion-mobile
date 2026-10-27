@@ -170,7 +170,7 @@ class _PontoScreenState extends State<PontoScreen> {
                     borderRadius: AppRadius.control,
                     border: Border.all(color: AppColors.gridLine),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_ios_new_rounded,
                     color: AppColors.primaryGold,
                     size: 18,
