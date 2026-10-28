@@ -32,7 +32,17 @@ void main() {
     expect(find.text('Acessibilidade'), findsOneWidget);
     expect(tester.takeException(), isNull, reason: 'perfil com letra ampliada');
 
+    // A opção abre a página de acessibilidade, que também cabe com a letra ampliada.
+    await tester.ensureVisible(find.text('Acessibilidade'));
+    await tester.pump();
+    await tester.tap(find.text('Acessibilidade'));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Tamanho da letra'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'página de acessibilidade com letra ampliada');
+
     // Escolher uma opção salva a preferência e a aplica.
+    await tester.ensureVisible(find.text('Muito maior'));
     await tester.tap(find.text('Muito maior'));
     await tester.pump();
     expect(AppTheme.fontScale.value, 1.3);

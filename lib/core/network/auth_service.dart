@@ -211,6 +211,14 @@ class AuthService {
     await _limparSessaoLocal();
   }
 
+  static const Set<String> _preferenciasDoAparelho = {
+    'vizion_theme',
+    'vizion_font_scale',
+    'vizion_bold_text',
+    'vizion_reduce_motion',
+    'vizion_last_email',
+  };
+
   static Future<void> _limparSessaoLocal() async {
     _trocaSenhaObrigatoria = false;
     _accessToken = null;
@@ -224,7 +232,9 @@ class AuthService {
     await TokenStore.clear();
     final prefs = await SharedPreferences.getInstance();
     // Remove também os caches de ponto/agenda (chaves vizion_*) para não vazar dados a outro usuário no aparelho.
-    for (final chave in prefs.getKeys().where((k) => k.startsWith('vizion_')).toList()) {
+    // Preferências do aparelho (tema, acessibilidade e último e-mail) continuam: quem aumentou a letra
+    // não pode perder a escolha ao sair.
+    for (final chave in prefs.getKeys().where((k) => k.startsWith('vizion_') && !_preferenciasDoAparelho.contains(k)).toList()) {
       await prefs.remove(chave);
     }
     await prefs.remove('nome');

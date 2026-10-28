@@ -153,6 +153,52 @@ class AppTheme {
     } catch (_) {}
   }
 
+  static const String _boldTextKey = 'vizion_bold_text';
+  static const String _reduceMotionKey = 'vizion_reduce_motion';
+
+  /// Texto em negrito em todo o app (somado à preferência de negrito do sistema).
+  static final ValueNotifier<bool> boldText = ValueNotifier<bool>(false);
+
+  /// Remove animações e transições (somado à preferência "remover animações" do sistema).
+  static final ValueNotifier<bool> reduceMotion = ValueNotifier<bool>(false);
+
+  static Future<void> loadAccessibility() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      boldText.value = prefs.getBool(_boldTextKey) ?? false;
+      reduceMotion.value = prefs.getBool(_reduceMotionKey) ?? false;
+    } catch (_) {
+      boldText.value = false;
+      reduceMotion.value = false;
+    }
+  }
+
+  static Future<void> setBoldText(bool ativo) async {
+    boldText.value = ativo;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_boldTextKey, ativo);
+    } catch (_) {}
+  }
+
+  static Future<void> setReduceMotion(bool ativo) async {
+    reduceMotion.value = ativo;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_reduceMotionKey, ativo);
+    } catch (_) {}
+  }
+
+  /// Volta tamanho da letra, negrito e animações ao padrão (o tema claro/escuro não muda).
+  static Future<void> restaurarAcessibilidade() async {
+    await setFontScale(1.0);
+    await setBoldText(false);
+    await setReduceMotion(false);
+  }
+
+  static bool get acessibilidadePadrao =>
+      fontScale.value == 1.0 && !boldText.value && !reduceMotion.value;
+
   /// As telas leem AppColors diretamente (sem depender do Theme): força o rebuild da árvore inteira.
   static void _rebuildAll() {
     void rebuild(Element element) {

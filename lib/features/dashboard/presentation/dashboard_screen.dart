@@ -611,71 +611,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Acessibilidade: tamanho da letra do app; o layout se adapta ao tamanho escolhido.
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
+          // Acessibilidade: tamanho da letra, tema, negrito e animações ficam em uma página própria.
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            tileColor: AppColors.surface,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.gridLine),
+              side: BorderSide(color: AppColors.gridLine),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.text_fields_rounded, color: AppColors.primaryGold),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Acessibilidade',
-                            style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
-                          ),
-                          Text(
-                            'Tamanho da letra do aplicativo',
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                ValueListenableBuilder<double>(
-                  valueListenable: AppTheme.fontScale,
-                  builder: (context, escala, _) => Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final opcao in AppTheme.opcoesFonte)
-                        ChoiceChip(
-                          label: Text(opcao.rotulo),
-                          selected: escala == opcao.escala,
-                          onSelected: (_) => AppTheme.setFontScale(opcao.escala),
-                          selectedColor: AppColors.primaryGold.withValues(alpha: 0.25),
-                          backgroundColor: AppColors.surfaceAlt,
-                          labelStyle: TextStyle(
-                            color: escala == opcao.escala ? AppColors.primaryGold : AppColors.textSecondary,
-                            fontWeight: escala == opcao.escala ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          side: BorderSide(
-                            color: escala == opcao.escala ? AppColors.primaryGold : AppColors.gridLine,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Exemplo: é assim que os textos do aplicativo vão aparecer.',
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
-                ),
-              ],
+            leading: Icon(Icons.accessibility_new_rounded, color: AppColors.primaryGold),
+            title: Text(
+              'Acessibilidade',
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
             ),
+            subtitle: Text(
+              'Tamanho da letra, negrito e animações',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            ),
+            trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            onTap: () => Navigator.of(context).pushNamed('/acessibilidade'),
           ),
           const SizedBox(height: 12),
 

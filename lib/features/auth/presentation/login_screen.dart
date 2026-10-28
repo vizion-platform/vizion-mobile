@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/grid_background.dart';
 import '../../../core/network/auth_service.dart';
@@ -33,6 +34,32 @@ class _LoginScreenState extends State<LoginScreen> {
     (_) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+
+  /// Último e-mail que entrou neste aparelho: o usuário só digita a senha.
+  static const String _ultimoEmailKey = 'vizion_last_email';
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarUltimoEmail();
+  }
+
+  Future<void> _carregarUltimoEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString(_ultimoEmailKey);
+      if (mounted && email != null && email.isNotEmpty && _emailController.text.isEmpty) {
+        _emailController.text = email;
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _salvarUltimoEmail(String email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_ultimoEmailKey, email);
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -74,7 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = true;
       });
 
-      final email = _emailController.text;
+      // Espaços no começo ou no fim (comuns no teclado do celular) não podem fazer o login falhar.
+      final email = _emailController.text.trim();
       final password = _passwordController.text;
       final name = _nameController.text;
       final phone = _phoneController.text;
@@ -85,6 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
           bool success = await AuthService.login(email, password);
 
           if (success) {
+            await _salvarUltimoEmail(email);
             setState(() {
               _isLoading = false;
             });
@@ -153,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Erro de rede: $e'),
+              content: const Text('Sem conexão com o servidor. Verifique a internet e tente novamente.'),
               backgroundColor: AppColors.danger,
               behavior: SnackBarBehavior.floating,
             ),
@@ -259,7 +288,14 @@ class _LoginScreenState extends State<LoginScreen> {
         Positioned(
           top: media.padding.top + 12,
           right: 16,
-          child: _buildThemeButton(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildAccessibilityButton(),
+              const SizedBox(width: 8),
+              _buildThemeButton(),
+            ],
+          ),
         ),
       ],
     );
@@ -390,6 +426,43 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Quem precisa de letra maior ajusta antes de entrar, sem depender de já estar logado.
+  Widget _buildAccessibilityButton() {
+    return Material(
+      color: AppColors.surface.withValues(alpha: 0.9),
+      shape: CircleBorder(side: BorderSide(color: AppColors.gridLine)),
+      child: IconButton(
+        tooltip: 'Acessibilidade',
+        icon: Icon(Icons.accessibility_new_rounded, color: AppColors.textPrimary, size: 22),
+        onPressed: () => Navigator.of(context).pushNamed('/acessibilidade'),
+      ),
+    );
+  }
+
+  void _mostrarEsqueciSenha() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Esqueceu a senha?',
+          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Peça ao responsável pela sua empreiteira para redefinir a sua senha. '
+          'Você receberá uma senha temporária e vai escolher a nova no primeiro acesso.',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text('Entendi', style: TextStyle(color: AppColors.primaryGold, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -550,29 +623,32 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Entre para acompanhar cada detalhe da sua operação.',
+              'Entre com o seu e-mail e a sua senha.',
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 14,
+                fontSize: 15,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
             _fieldLabel('E-mail'),
             TextFormField(
               controller: _emailController,
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
               keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              autocorrect: false,
+              enableSuggestions: false,
               autofillHints: const [AutofillHints.email],
               decoration: _inputStyle('voce@empresa.com'),
               validator: (value) {
-                if (value == null || value.isEmpty) {
+                final email = value?.trim() ?? '';
+                if (email.isEmpty) {
                   return 'O e-mail é obrigatório.';
                 }
-                if (!RegExp(
-                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                ).hasMatch(value)) {
-                  return 'Insira um e-mail válido.';
+                // Aceita qualquer domínio (.com.br, .engenharia, ...), sem limite de letras no final.
+                if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$').hasMatch(email)) {
+                  return 'Confira o e-mail: falta algo, como o @ ou o final (.com).';
                 }
                 return null;
               },
@@ -582,7 +658,10 @@ class _LoginScreenState extends State<LoginScreen> {
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
-              style: TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+              textInputAction: TextInputAction.done,
+              autocorrect: false,
+              enableSuggestions: false,
               autofillHints: const [AutofillHints.password],
               onFieldSubmitted: (_) {
                 if (!_isLoading) _submitForm();
@@ -629,13 +708,27 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       )
                     : const Text(
-                        'Entrar na plataforma',
+                        'Entrar',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.4,
-                          fontSize: 14,
+                          fontSize: 16,
                         ),
                       ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton(
+                onPressed: _isLoading ? null : _mostrarEsqueciSenha,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  foregroundColor: AppColors.primaryGold,
+                ),
+                child: const Text(
+                  'Esqueci minha senha',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
               ),
             ),
           ],
@@ -650,7 +743,7 @@ class _LoginScreenState extends State<LoginScreen> {
           text,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -843,7 +936,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: AppColors.textSecondary),
+      hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 16),
       errorStyle: TextStyle(color: AppColors.danger, fontSize: 12),
       suffixIcon: suffixIcon,
       filled: false,

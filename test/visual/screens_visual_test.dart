@@ -14,6 +14,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vizion_mobile/core/network/auth_service.dart';
 import 'package:vizion_mobile/core/theme/app_theme.dart';
+import 'package:vizion_mobile/features/acessibilidade/presentation/acessibilidade_screen.dart';
 import 'package:vizion_mobile/features/agenda/presentation/agenda_screen.dart';
 import 'package:vizion_mobile/features/auth/presentation/change_password_screen.dart';
 import 'package:vizion_mobile/features/auth/presentation/login_screen.dart';
@@ -97,6 +98,7 @@ void main() {
     'ponto': () => const PontoScreen(),
     'agenda': () => const AgendaScreen(),
     'trocar_senha': () => const ChangePasswordScreen(),
+    'acessibilidade': () => const AcessibilidadeScreen(),
   };
 
   setUpAll(() async {
