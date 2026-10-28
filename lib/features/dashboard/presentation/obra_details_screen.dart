@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../domain/fase_fluxo.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
 import '../../chat/presentation/chat_room_screen.dart';
@@ -24,6 +25,8 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
   // Observação digitada por fase; vai junto com a próxima foto enviada para ela.
   final Map<int, TextEditingController> _observacoes = {};
   String _errorMessage = '';
+  // O que cada fase pode fazer agora, definido pela API (mesmo fluxo do desktop).
+  Map<int, FaseFluxo> _fluxo = {};
 
   @override
   void initState() {
@@ -50,6 +53,9 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
       ]);
       final data = result[0];
       final photos = result[1];
+      // Sem o fluxo (ex.: falha de rede) nenhum botão de ação aparece: melhor não agir do que agir fora da regra.
+      final fluxo = await AuthService.fetchPhaseFlow(widget.obra['id'])
+          .catchError((_) => <int, FaseFluxo>{});
       final groupedPhotos = <int, List<Map<String, dynamic>>>{};
       for (final photo in photos) {
         final rawPhaseId = photo['idFase'];
@@ -63,6 +69,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
             ..sort((a, b) => (a['ordem_exibicao'] ?? 0).compareTo(b['ordem_exibicao'] ?? 0));
           _photos = photos;
           _photosByPhase = groupedPhotos;
+          _fluxo = fluxo;
           _isLoading = false;
           _errorMessage = '';
         });
@@ -131,14 +138,15 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     });
 
     try {
-      final ok = await AuthService.transitionPhaseStatus(widget.obra['id'], faseId, acao);
+      final resultado = await AuthService.transitionPhase(faseId, acao);
+      final ok = resultado.ok;
       await _loadFases();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(ok
-                ? 'Fase atualizada com sucesso para a ação: $acao.'
-                : 'Não foi possível atualizar a fase. Verifique sua conexão e permissões.'),
+                ? 'Fase atualizada: ${rotuloAcaoFase(acao).toLowerCase()}.'
+                : (resultado.mensagem ?? 'Não foi possível atualizar a fase. Verifique sua conexão e permissões.')),
             backgroundColor: ok ? AppColors.primaryGold : AppColors.danger,
             behavior: SnackBarBehavior.floating,
           ),
@@ -574,6 +582,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
                                           // Controles de Ação do Empreiteiro
                                           if (_podeRegistrarFoto(role)) ...[
                                             const SizedBox(height: 12),
+                                            _buildBloqueioFase(fase),
                                             _buildCampoObservacao(fase),
                                             Divider(color: AppColors.gridLine, height: 24),
                                             Wrap(
@@ -732,29 +741,46 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
     );
   }
 
+  /// Botões do fluxo único das fases: só aparecem as ações que a API libera agora.
   List<Widget> _buildTransitionActions(Map<String, dynamic> fase) {
-    final status = (fase['status'] ?? 'PLANEJADA').toString().toUpperCase();
     final id = fase['id_fase'];
-    
-    if (status == 'PLANEJADA') {
-      return [
-        _buildTransitionButton('Iniciar', () => _handleStatusTransition(id, 'INICIAR'), AppColors.primaryGold),
-      ];
-    } else if (status == 'EM_ANDAMENTO') {
-      return [
-        _buildTransitionButton('Pausar', () => _handleStatusTransition(id, 'PAUSAR'), AppColors.warning),
-        const SizedBox(width: 8),
-        _buildTransitionButton('Finalizar', () => _handleStatusTransition(id, 'FINALIZAR'), AppColors.success),
-      ];
-    } else if (status == 'PAUSADA') {
-      return [
-        _buildTransitionButton('Retomar', () => _handleStatusTransition(id, 'RETOMAR'), AppColors.primaryGold),
-        const SizedBox(width: 8),
-        _buildTransitionButton('Finalizar', () => _handleStatusTransition(id, 'FINALIZAR'), AppColors.success),
-      ];
+    final fluxo = id is num ? _fluxo[id.toInt()] : null;
+    if (fluxo == null) return [];
+
+    final botoes = <Widget>[];
+    for (final acao in ordemAcoesFase) {
+      if (!fluxo.permite(acao)) continue;
+      if (botoes.isNotEmpty) botoes.add(const SizedBox(width: 8));
+      botoes.add(_buildTransitionButton(
+        rotuloAcaoFase(acao),
+        () => _handleStatusTransition(id, acao),
+        corAcaoFase(acao),
+      ));
     }
-    
-    return []; // Cancelled or Completed phases have no actions
+    return botoes;
+  }
+
+  /// Aviso de por que a fase ainda não pode andar (ex.: a anterior não foi finalizada).
+  Widget _buildBloqueioFase(Map<String, dynamic> fase) {
+    final id = fase['id_fase'];
+    final motivo = id is num ? _fluxo[id.toInt()]?.motivoBloqueio : null;
+    if (motivo == null || motivo.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.lock_outline_rounded, size: 16, color: AppColors.warning),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              motivo,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.3),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTransitionButton(String text, VoidCallback onPressed, Color color) {

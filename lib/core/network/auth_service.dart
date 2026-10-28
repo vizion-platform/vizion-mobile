@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show ValueNotifier, visibleForTesting;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,6 +9,16 @@ import 'api_client.dart';
 import 'token_store.dart';
 
 enum RenovacaoSessao { renovada, rejeitada, indisponivel }
+
+/// O que uma fase pode fazer agora, segundo a API (fluxo único das fases).
+class FaseFluxo {
+  final List<String> acoesPermitidas;
+  final String? motivoBloqueio;
+
+  const FaseFluxo({this.acoesPermitidas = const [], this.motivoBloqueio});
+
+  bool permite(String acao) => acoesPermitidas.contains(acao);
+}
 
 class AuthService {
   static const String baseUrl = 'https://vizion.cognisgroup.cloud/api';
@@ -29,6 +39,26 @@ class AuthService {
   static void Function()? onPasswordChangeRequired;
 
   static Future<RenovacaoSessao>? _renovacaoEmAndamento;
+
+  /// Chave da foto de perfil no storage (null = sem foto). Notifica as telas quando muda.
+  static final ValueNotifier<String?> avatarKey = ValueNotifier<String?>(null);
+
+  static String? get avatarUrl {
+    final key = avatarKey.value;
+    return (key == null || key.isEmpty) ? null : mediaUrl(key);
+  }
+
+  static Future<void> _definirAvatar(String? key) async {
+    avatarKey.value = (key == null || key.isEmpty) ? null : key;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (avatarKey.value == null) {
+        await prefs.remove('avatarKey');
+      } else {
+        await prefs.setString('avatarKey', avatarKey.value!);
+      }
+    } catch (_) {}
+  }
 
   static String? get accessToken => _accessToken;
   static String? get tenantId => _tenantId;
@@ -99,6 +129,7 @@ class AuthService {
       _tenantId = prefs.getString('tenantId');
       _email = prefs.getString('email');
       _userId = prefs.getInt('userId');
+      avatarKey.value = prefs.getString('avatarKey');
       _trocaSenhaObrigatoria = prefs.getBool('trocaSenhaObrigatoria') ?? false;
       return _accessToken != null;
     } catch (e) {
@@ -159,6 +190,7 @@ class AuthService {
         if (_userId != null) {
           await prefs.setInt('userId', _userId!);
         }
+        await _definirAvatar(data['avatarKey']?.toString());
       }
     } catch (e) {
       logDebug('Erro ao carregar perfil /me: $e');
@@ -242,6 +274,8 @@ class AuthService {
     await prefs.remove('tenantId');
     await prefs.remove('email');
     await prefs.remove('userId');
+    await prefs.remove('avatarKey');
+    avatarKey.value = null;
     await prefs.remove('trocaSenhaObrigatoria');
   }
 
@@ -373,17 +407,79 @@ class AuthService {
     int faseId,
     String acao,
   ) async {
+    return (await transitionPhase(faseId, acao)).ok;
+  }
+
+  /// Executa uma ação do fluxo das fases (INICIAR, PAUSAR, RETOMAR, FINALIZAR). Quando o servidor recusa
+  /// (ex.: a fase anterior ainda não foi finalizada), devolve o motivo para mostrar ao usuário.
+  static Future<({bool ok, String? mensagem})> transitionPhase(int faseId, String acao) async {
     try {
       final response = await ApiClient.patch(
         Uri.parse('$baseUrl/fasesObra/$faseId/status'),
         headers: getHeaders(),
         body: jsonEncode({'acao': acao}),
       );
-      return response.statusCode == 200 || response.statusCode == 204;
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return (ok: true, mensagem: null);
+      }
+      String? motivo;
+      try {
+        final body = jsonDecode(utf8.decode(response.bodyBytes));
+        if (body is Map && body['message'] is String) motivo = body['message'] as String;
+      } catch (_) {}
+      if (response.statusCode == 403) {
+        motivo ??= 'Seu perfil não pode alterar esta fase.';
+      }
+      return (ok: false, mensagem: motivo);
     } catch (e) {
       logDebug('Erro ao salvar transicao de status no servidor: $e');
-      return false;
+      return (ok: false, mensagem: null);
     }
+  }
+
+  /// Fluxo único das fases, definido pela API: o que cada fase pode fazer agora e, quando travada, o porquê.
+  /// Mobile, desktop e web desenham os botões a partir desta resposta.
+  static Future<Map<int, FaseFluxo>> fetchPhaseFlow(int obraId) async {
+    final response = await ApiClient.get(
+      Uri.parse('$baseUrl/fasesObra/obra/$obraId/fluxo'),
+      headers: getHeaders(),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Não foi possível carregar o fluxo das fases (${response.statusCode}).');
+    }
+    final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+    final fluxo = <int, FaseFluxo>{};
+    for (final item in data) {
+      final map = Map<String, dynamic>.from(item as Map);
+      final id = map['id_fase'];
+      if (id is! num) continue;
+      fluxo[id.toInt()] = FaseFluxo(
+        acoesPermitidas: List<String>.from(map['acoes_permitidas'] ?? const []),
+        motivoBloqueio: map['motivo_bloqueio']?.toString(),
+      );
+    }
+    return fluxo;
+  }
+
+  /// Envia a foto de perfil e atualiza o avatar em todas as telas.
+  static Future<String> uploadAvatar(List<int> bytes, String fileName) async {
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/auth/avatar'));
+    request.headers.addAll(Map<String, String>.from(getHeaders())..remove('Content-Type'));
+    request.files.add(http.MultipartFile.fromBytes('file', bytes, filename: fileName));
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode != 200) {
+      String? motivo;
+      try {
+        final body = jsonDecode(utf8.decode(response.bodyBytes));
+        if (body is Map && body['message'] is String) motivo = body['message'] as String;
+      } catch (_) {}
+      throw Exception(motivo ?? 'Não foi possível enviar a foto (${response.statusCode}).');
+    }
+    final data = jsonDecode(utf8.decode(response.bodyBytes));
+    final key = data['avatarKey']?.toString();
+    await _definirAvatar(key);
+    return key ?? '';
   }
 
   // envio de fotos e progresso

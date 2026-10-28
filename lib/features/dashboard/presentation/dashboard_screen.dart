@@ -4,7 +4,9 @@ import '../../../core/network/auth_service.dart';
 import '../../chat/data/chat_network_service.dart';
 import '../../chat/presentation/chat_list_screen.dart';
 import '../../agenda/presentation/agenda_screen.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/config/feature_flags.dart';
+import '../../../core/widgets/user_avatar.dart';
 import '../../ponto/presentation/ponto_screen.dart';
 import 'widgets/home_dashboard_widget.dart';
 import 'widgets/obras_list_widget.dart';
@@ -351,11 +353,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  /// Troca a foto de perfil: o usuário escolhe câmera ou galeria e a imagem vai para o MinIO pela API.
+  Future<void> _alterarFotoPerfil() async {
+    final origem = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.photo_camera_outlined, color: AppColors.primaryGold),
+              title: Text('Tirar foto', style: TextStyle(color: AppColors.textPrimary)),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library_outlined, color: AppColors.primaryGold),
+              title: Text('Escolher da galeria', style: TextStyle(color: AppColors.textPrimary)),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (origem == null || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final foto = await ImagePicker().pickImage(source: origem, maxWidth: 1024, imageQuality: 85);
+      if (foto == null) return;
+      final bytes = await foto.readAsBytes();
+      await AuthService.uploadAvatar(bytes, foto.name.isEmpty ? 'avatar.jpg' : foto.name);
+      messenger.showSnackBar(SnackBar(
+        content: const Text('Foto de perfil atualizada.'),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(e.toString().replaceFirst('Exception: ', '')),
+        backgroundColor: AppColors.danger,
+        behavior: SnackBarBehavior.floating,
+      ));
+    }
+  }
+
   Widget _buildProfileContent() {
-    final String initial =
-        AuthService.nome != null && AuthService.nome!.isNotEmpty
-        ? AuthService.nome![0].toUpperCase()
-        : 'U';
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -420,17 +463,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             child: Column(
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: AppColors.goldFill.withValues(alpha: 0.1),
-                  child: Text(
-                    initial,
-                    style: TextStyle(
-                      color: AppColors.primaryGold,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                Stack(
+                  children: [
+                    const UserAvatar(radius: 40, fontSize: 32),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Semantics(
+                        button: true,
+                        label: 'Alterar foto de perfil',
+                        child: Material(
+                          color: AppColors.goldFill,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: _alterarFotoPerfil,
+                            child: const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Icon(Icons.photo_camera_outlined, size: 18, color: AppColors.onGold),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 Text(

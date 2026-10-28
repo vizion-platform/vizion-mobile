@@ -4,6 +4,7 @@ import '../../../../core/network/auth_service.dart';
 import '../../../chat/presentation/chat_room_screen.dart';
 import '../../../chat/data/chat_network_service.dart';
 import '../../../../core/config/feature_flags.dart';
+import '../../../../core/widgets/user_avatar.dart';
 import '../../../ponto/presentation/ponto_screen.dart';
 import '../../domain/obra_progress.dart';
 
@@ -203,19 +204,10 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.primaryGold, width: 1.5),
                   ),
-                  child: CircleAvatar(
+                  child: UserAvatar(
                     radius: 22,
-                    backgroundColor: AppColors.surface,
-                    child: Text(
-                      AuthService.nome != null && AuthService.nome!.isNotEmpty
-                          ? AuthService.nome![0].toUpperCase()
-                          : 'U',
-                      style: TextStyle(
-                        color: AppColors.primaryGold,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+                    fontSize: 16,
+                    background: AppColors.surface,
                   ),
                 ),
                 const SizedBox(width: 14),
