@@ -469,6 +469,9 @@ class AuthService {
     final streamed = await request.send();
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode != 200) {
+      if (response.statusCode == 413) {
+        throw Exception('A foto é grande demais para ser enviada. Escolha uma imagem menor.');
+      }
       String? motivo;
       try {
         final body = jsonDecode(utf8.decode(response.bodyBytes));
@@ -514,6 +517,9 @@ class AuthService {
 
     final streamed = await upload.send();
     final uploadResponse = await http.Response.fromStream(streamed);
+    if (uploadResponse.statusCode == 413) {
+      throw Exception('A foto é grande demais para ser enviada. Tire outra ou escolha uma imagem menor.');
+    }
     if (uploadResponse.statusCode != 200) {
       throw Exception('Falha ao enviar a imagem (${uploadResponse.statusCode}).');
     }

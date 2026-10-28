@@ -204,8 +204,9 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: source,
-        imageQuality: 70,
-        maxWidth: 1920,
+        // O proxy recusa corpo acima de ~1 MB (erro 413): 1600 px a 65% ficam bem abaixo disso.
+        imageQuality: 65,
+        maxWidth: 1600,
       );
 
       if (image != null) {

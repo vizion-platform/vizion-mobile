@@ -380,7 +380,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final foto = await ImagePicker().pickImage(source: origem, maxWidth: 1024, imageQuality: 85);
+      final foto = await ImagePicker().pickImage(source: origem, maxWidth: 640, imageQuality: 80);
       if (foto == null) return;
       final bytes = await foto.readAsBytes();
       await AuthService.uploadAvatar(bytes, foto.name.isEmpty ? 'avatar.jpg' : foto.name);

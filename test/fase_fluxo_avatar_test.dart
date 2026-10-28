@@ -98,4 +98,14 @@ void main() {
     );
     expect(AuthService.avatarKey.value, isNull);
   });
+
+  test('foto de perfil recusada pelo proxy por tamanho (413) vira mensagem clara', () async {
+    final client = MockClient((request) async => http.Response('<html>413 Request Entity Too Large</html>', 413));
+
+    await expectLater(
+      http.runWithClient(() => AuthService.uploadAvatar(List.filled(10, 1), 'grande.jpg'), () => client),
+      throwsA(predicate((e) => e.toString().contains('grande demais'))),
+    );
+    expect(AuthService.avatarKey.value, isNull);
+  });
 }
