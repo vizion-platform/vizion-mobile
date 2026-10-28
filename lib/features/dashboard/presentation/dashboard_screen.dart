@@ -230,42 +230,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: AppRadius.card,
         onTap: () => _navigateToModule(1),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primaryGold,
-                Color(0xFFE5C07B),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryGold.withValues(alpha: 0.4),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: AppColors.goldFill,
+            borderRadius: AppRadius.card,
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.fingerprint_rounded,
-                color: Colors.black,
+                color: AppColors.onGold,
                 size: 22,
               ),
               SizedBox(width: 8),
               Text(
-                'BATER PONTO',
+                'Bater ponto',
                 style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  letterSpacing: 0.8,
+                  color: AppColors.onGold,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -279,25 +266,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppRadius.card,
         onTap: () => _navigateToModule(4),
         child: Container(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
             color: AppColors.surface,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.primaryGold.withValues(alpha: 0.6),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.35),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            borderRadius: AppRadius.card,
+            border: Border.all(color: AppColors.gridLine),
           ),
           child: Center(
             child: Icon(
@@ -363,7 +340,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               InkWell(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 onTap: () => _navigateToModule(0),
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -615,7 +592,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(color: AppColors.gridLine),
             ),
             child: Column(

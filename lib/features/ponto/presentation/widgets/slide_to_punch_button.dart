@@ -220,7 +220,7 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(36),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color: AppColors.primaryGold.withValues(alpha: 0.4),
                 width: 1.5,
@@ -260,7 +260,7 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
             width: trackWidth,
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(36),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color: AppColors.primaryGold.withValues(alpha: _isDragging ? 0.6 : 0.3),
                 width: 1.5,
@@ -278,7 +278,7 @@ class _SlideToPunchButtonState extends State<SlideToPunchButton>
                     width: _dragPosition + knobSize + horizontalPadding,
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(36),
+                        borderRadius: BorderRadius.circular(6),
                         gradient: LinearGradient(
                           colors: [
                             AppColors.primaryGold.withValues(alpha: 0.35),

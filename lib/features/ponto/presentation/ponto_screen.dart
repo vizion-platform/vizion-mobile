@@ -372,29 +372,35 @@ class _PontoScreenState extends State<PontoScreen> {
         ),
 
         // GPS status chip (Vizion standard styling)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: AppColors.primaryGold.withValues(alpha: 0.4),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.verified_outlined, color: AppColors.primaryGold, size: 12),
-              SizedBox(width: 4),
-              Text(
-                'Horário do servidor',
-                style: TextStyle(
-                  color: AppColors.primaryGold,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
+        Flexible(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: AppColors.primaryGold.withValues(alpha: 0.4),
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.verified_outlined, color: AppColors.primaryGold, size: 12),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    'Horário do servidor',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: AppColors.primaryGold,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],

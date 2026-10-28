@@ -270,13 +270,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(6),
                 onTap: widget.onBackTap,
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: AppColors.gridLine),
                   ),
                   child: Icon(
@@ -295,7 +295,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: AppColors.primaryGold.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(
               Icons.calendar_month,
@@ -339,12 +339,12 @@ class _AgendaScreenState extends State<AgendaScreen> {
           // "Hoje" Button
           InkWell(
             onTap: _jumpToToday,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(6),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.gridLine,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.4)),
               ),
               child: Row(
@@ -407,7 +407,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppColors.gridLine),
                 ),
                 child: Row(
@@ -421,7 +421,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
                           color: isSelected ? AppColors.goldFill : Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           mode,
@@ -442,7 +442,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: AppColors.gridLine),
                 ),
                 child: Text(
@@ -488,7 +488,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(6),
                       side: BorderSide(
                         color: isSelected ? AppColors.primaryGold : AppColors.gridLine,
                       ),
@@ -513,7 +513,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.gridLine, width: 1.0),
       ),
       child: Row(
@@ -537,7 +537,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                   }
                 });
               },
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(6),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -547,7 +547,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       : (isTodayDate
                           ? AppColors.primaryGold.withValues(alpha: 0.12)
                           : Colors.transparent),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(
                     color: isSelected
                         ? AppColors.primaryGold
@@ -683,7 +683,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                 color: isTodayDate
                     ? AppColors.primaryGold.withValues(alpha: 0.15)
                     : AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: isTodayDate ? AppColors.primaryGold.withValues(alpha: 0.4) : AppColors.gridLine,
                 ),
@@ -714,7 +714,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: AppColors.primaryGold,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
                         'HOJE',
@@ -734,7 +734,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
                           color: AppColors.primaryGold.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                           border: Border.all(color: AppColors.primaryGold),
                         ),
                         child: Row(
@@ -799,7 +799,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(color: AppColors.gridLine),
             ),
             child: Row(
@@ -896,13 +896,13 @@ class _AgendaScreenState extends State<AgendaScreen> {
                     _selectedViewMode = 'Dia';
                   });
                 },
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(6),
                 child: Container(
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primaryGold.withValues(alpha: 0.2)
                         : AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: isTodayDate
                           ? AppColors.primaryGold
@@ -975,14 +975,14 @@ class _AgendaScreenState extends State<AgendaScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: task.color.withValues(alpha: 0.35),
           width: 1.0,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(6),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1006,7 +1006,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
             Expanded(
               child: InkWell(
                 onTap: () => _showTaskDetailsDialog(task),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(6),
                 child: Padding(
                   padding: const EdgeInsets.only(top: 8, bottom: 8, right: 4),
                   child: Column(
@@ -1055,7 +1055,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                             decoration: BoxDecoration(
                               color: task.color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               task.category.toUpperCase(),
@@ -1073,7 +1073,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                               decoration: BoxDecoration(
                                 color: AppColors.danger.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 'ALTA',
@@ -1173,7 +1173,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
       ),
       builder: (context) {
         return SafeArea(
@@ -1262,7 +1262,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                       margin: const EdgeInsets.only(top: 14),
                       decoration: BoxDecoration(
                         color: Colors.amber.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                       ),
                       child: Row(
@@ -1288,7 +1288,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               backgroundColor: const Color(0xFF34A853),
                               foregroundColor: AppColors.textPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                             ),
                             onPressed: () {
                               Navigator.pop(context);
@@ -1350,7 +1350,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
       ),
       builder: (context) {
         return StatefulBuilder(
@@ -1410,7 +1410,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           fillColor: AppColors.background,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(6),
                             borderSide: BorderSide(color: AppColors.gridLine),
                           ),
                         ),
@@ -1448,7 +1448,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(6),
                                   border: Border.all(color: AppColors.gridLine),
                                 ),
                                 child: Column(
@@ -1499,7 +1499,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(6),
                                   border: Border.all(color: AppColors.gridLine),
                                 ),
                                 child: Column(
@@ -1557,7 +1557,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                               fontSize: 10,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(6),
                               side: BorderSide(
                                 color: isSelected ? Color(color) : AppColors.gridLine,
                               ),
@@ -1619,7 +1619,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           fillColor: AppColors.background,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(6),
                             borderSide: BorderSide(color: AppColors.gridLine),
                           ),
                         ),
@@ -1634,7 +1634,7 @@ class _AgendaScreenState extends State<AgendaScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.goldFill,
                             foregroundColor: AppColors.textPrimary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                           ),
                           onPressed: () async {
                             if (titleController.text.trim().isEmpty) {

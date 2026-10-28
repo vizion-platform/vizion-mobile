@@ -191,7 +191,7 @@ class _CameraSimulatorScreenState extends State<CameraSimulatorScreen> with Sing
                     height: 44,
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(color: Colors.white24, width: 1.5),
                     ),
                     child: const Icon(Icons.photo_library_outlined, color: Colors.white70, size: 20),
@@ -248,7 +248,7 @@ class _CameraSimulatorScreenState extends State<CameraSimulatorScreen> with Sing
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: active ? AppColors.primaryGold : Colors.black54,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(color: active ? Colors.transparent : Colors.white24),
         ),
         child: Text(

@@ -415,7 +415,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
       ),
       builder: (ctx) => SafeArea(
         child: Wrap(

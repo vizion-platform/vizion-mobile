@@ -165,7 +165,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(6)),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -644,7 +644,7 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.primaryGold.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.25)),
       ),
       child: Column(
@@ -692,11 +692,11 @@ class _ObraDetailsScreenState extends State<ObraDetailsScreen> {
         helperStyle: TextStyle(color: AppColors.textSecondary, fontSize: 10),
         isDense: true,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide(color: AppColors.gridLine),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(6),
           borderSide: BorderSide(color: AppColors.primaryGold),
         ),
       ),

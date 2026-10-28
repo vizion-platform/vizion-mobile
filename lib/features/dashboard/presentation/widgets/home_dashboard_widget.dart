@@ -343,17 +343,22 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   );
                 }
 
-                return Column(
+                return Row(
                   children: [
-                    _buildStatCard(
-                      'Meu Canteiro',
-                      primeiraObra == null ? '—' : '${primeiraObra['nome_projeto'] ?? '—'}',
-                      Icons.apartment_outlined,
-                      AppColors.primaryGold,
-                      cardWidth,
+                    Expanded(
+                      child: _buildStatCard(
+                        'Meu Canteiro',
+                        primeiraObra == null ? '—' : '${primeiraObra['nome_projeto'] ?? '—'}',
+                        Icons.apartment_outlined,
+                        AppColors.primaryGold,
+                        double.infinity,
+                      ),
                     ),
-                    _buildStatCard('Obras alocadas', totalObras.toString(), Icons.construction_outlined,
-                        AppColors.primaryGold, cardWidth),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatCard('Obras alocadas', totalObras.toString(), Icons.construction_outlined,
+                          AppColors.primaryGold, double.infinity),
+                    ),
                   ],
                 );
               } else {
@@ -383,12 +388,17 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
                   );
                 }
 
-                return Column(
+                return Row(
                   children: [
-                    _buildStatCard('Canteiros de Obra', totalObras.toString(), Icons.domain_outlined,
-                        AppColors.primaryGold, cardWidth),
-                    _buildStatCard('Progresso Físico', progressoMedio, Icons.trending_up,
-                        AppColors.primaryGold, cardWidth),
+                    Expanded(
+                      child: _buildStatCard('Canteiros de Obra', totalObras.toString(), Icons.domain_outlined,
+                          AppColors.primaryGold, double.infinity),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatCard('Progresso Físico', progressoMedio, Icons.trending_up,
+                          AppColors.primaryGold, double.infinity),
+                    ),
                   ],
                 );
               }
@@ -421,12 +431,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryGold.withValues(alpha: 0.15),
-                    AppColors.surface,
-                  ],
-                ),
+                color: AppColors.goldSoft,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: AppColors.primaryGold.withValues(alpha: 0.4), width: 1.5),
               ),
@@ -745,47 +750,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
         foregroundColor: AppColors.primaryGold,
         side: BorderSide(color: AppColors.primaryGold.withValues(alpha: 0.5)),
         padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-    );
-  }
-
-  Widget _buildTopHeaderButton({
-    required IconData icon,
-    required String tooltip,
-    required VoidCallback? onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.primaryGold.withValues(alpha: 0.35),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Icon(
-              icon,
-              color: AppColors.primaryGold,
-              size: 18,
-            ),
-          ),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.control),
       ),
     );
   }
@@ -799,36 +764,34 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
   ) {
     return Container(
       width: width,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.gridLine, width: 1.5),
+        border: Border.all(color: AppColors.gridLine),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 22, color: iconColor),
-          const SizedBox(height: 16),
+          Icon(icon, size: 20, color: iconColor),
+          const SizedBox(height: 12),
           Text(
             value,
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
-              letterSpacing: 0.5,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             title,
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
-              letterSpacing: 0.2,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

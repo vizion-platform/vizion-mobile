@@ -46,7 +46,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
         return AlertDialog(
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(6),
             side: BorderSide(color: AppColors.gridLine),
           ),
           title: const Text('Nova Solicitação de Material', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -62,11 +62,11 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                     labelStyle: TextStyle(color: AppColors.textSecondary),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: AppColors.gridLine),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: AppColors.primaryGold),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
                 ),
@@ -80,11 +80,11 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                     labelStyle: TextStyle(color: AppColors.textSecondary),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: AppColors.gridLine),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: AppColors.primaryGold),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                   ),
                 ),
@@ -211,7 +211,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: color.withValues(alpha: 0.4)),
                       ),
                       child: Column(
@@ -228,7 +228,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: color.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   AuthService.formatStatus(status),
@@ -267,7 +267,7 @@ class _MaterialRequestScreenState extends State<MaterialRequestScreen> {
                               child: ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                 ),
                                 onPressed: () => _handleAprovar(sol['id']),
                                 icon: const Icon(Icons.check_circle, color: Colors.white, size: 18),

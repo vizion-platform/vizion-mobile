@@ -209,98 +209,362 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GridBackground(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20.0,
-              vertical: 24.0,
-            ),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _show2FA ? _build2FACard() : _buildLoginCard(),
-            ),
-          ),
-        ),
+      backgroundColor: AppColors.surface,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _show2FA
+            ? GridBackground(
+                key: const ValueKey('2fa_bg'),
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 24.0,
+                    ),
+                    child: _build2FACard(),
+                  ),
+                ),
+              )
+            : _buildLoginPage(),
       ),
     );
   }
 
-  Widget _buildLoginCard() {
-    return Container(
-      key: const ValueKey('login_card'),
-      constraints: const BoxConstraints(maxWidth: 400),
-      width: double.infinity,
-      padding: const EdgeInsets.all(36.0),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.gridLine, width: 1.5),
+  Widget _buildLoginPage() {
+    final media = MediaQuery.of(context);
+    final wide = media.size.width >= 780;
+    final form = _buildLoginForm();
+
+    return Stack(
+      key: const ValueKey('login_page'),
+      children: [
+        Positioned.fill(
+          child: wide
+              ? Row(
+                  children: [
+                    Expanded(flex: 112, child: _buildHero(expanded: true)),
+                    Expanded(
+                      flex: 88,
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(32),
+                          child: form,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : _buildMobileLogin(media, form),
+        ),
+        Positioned(
+          top: media.padding.top + 12,
+          right: 16,
+          child: _buildThemeButton(),
+        ),
+      ],
+    );
+  }
+
+  /// Celular: a obra ocupa a tela inteira e o formulário sobe como uma folha
+  /// ancorada embaixo (alcance do polegar), sem espremer imagem e campos juntos.
+  Widget _buildMobileLogin(MediaQueryData media, Widget form) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          'assets/obra_background.jpg',
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+          errorBuilder: (_, __, ___) =>
+              const ColoredBox(color: Color(0xFF15221E)),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xD1081410), Color(0x66081410), Color(0xB8040B09)],
+              stops: [0, 0.5, 1],
+            ),
+          ),
+        ),
+        LayoutBuilder(
+          builder: (context, c) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: c.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        media.padding.top + 20,
+                        72,
+                        0,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.94),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Image.asset(
+                              'assets/logo.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.blur_on_outlined,
+                                color: AppColors.primaryGold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'VIZION',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Controle total da sua obra, do canteiro ao escritório.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.15,
+                                  letterSpacing: -0.8,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Container(
+                                width: 52,
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldFill,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        28,
+                        24,
+                        24 + media.padding.bottom,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(28),
+                        ),
+                      ),
+                      child: form,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildThemeButton() {
+    final dark = AppTheme.isDark;
+    return Material(
+      color: AppColors.surface.withValues(alpha: 0.9),
+      shape: CircleBorder(side: BorderSide(color: AppColors.gridLine)),
+      child: IconButton(
+        tooltip: dark ? 'Usar tema claro' : 'Usar tema escuro',
+        icon: Icon(
+          dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+          color: AppColors.textPrimary,
+          size: 20,
+        ),
+        onPressed: () => AppTheme.setDark(!dark),
       ),
+    );
+  }
+
+  Widget _buildHero({required bool expanded}) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(
+          'assets/obra_background.jpg',
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              const ColoredBox(color: Color(0xFF15221E)),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xD6081410), Color(0x73081410), Color(0xC2081410)],
+              stops: [0, 0.58, 1],
+            ),
+          ),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.center,
+              colors: [Color(0xC7040B09), Color(0x00040B09)],
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            expanded ? 56 : 24,
+            24,
+            expanded ? 72 : 24,
+            expanded ? 64 : 44,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: expanded ? 44 : 36,
+                    height: expanded ? 44 : 36,
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.94),
+                      borderRadius: BorderRadius.circular(expanded ? 14 : 11),
+                    ),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.blur_on_outlined,
+                        color: AppColors.primaryGold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'VIZION',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: expanded ? 20 : 16,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: expanded ? 24 : 14),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Text(
+                  'Controle total da sua obra, do canteiro ao escritório.',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: expanded ? 40 : 24,
+                    fontWeight: FontWeight.w600,
+                    height: 1.13,
+                    letterSpacing: -1,
+                  ),
+                ),
+              ),
+              SizedBox(height: expanded ? 28 : 16),
+              Container(
+                width: expanded ? 72 : 52,
+                height: expanded ? 4 : 3,
+                decoration: BoxDecoration(
+                  color: AppColors.goldFill,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Curva que "encaixa" o painel do formulário na imagem.
+        Positioned(
+          left: expanded ? null : -24,
+          right: expanded ? -1 : -24,
+          top: expanded ? -40 : null,
+          bottom: expanded ? -40 : -1,
+          width: expanded ? 90 : null,
+          height: expanded ? null : 36,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: expanded
+                  ? const BorderRadius.horizontal(left: Radius.circular(90))
+                  : const BorderRadius.vertical(top: Radius.circular(36)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginForm() {
+    return ConstrainedBox(
+      key: const ValueKey('login_card'),
+      constraints: const BoxConstraints(maxWidth: 390),
       child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Logo Vizion
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/logo.png',
-                  height: 38,
-                  width: 38,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.blur_on_outlined,
-                      color: AppColors.primaryGold,
-                      size: 38,
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'VIZION',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: Container(
-                width: 50,
-                height: 2,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.primaryGold, AppColors.warning],
-                  ),
-                ),
+            Text(
+              'Bem-vindo de volta',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+                letterSpacing: -1,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             Text(
-              'Acesse o portal corporativo',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              'Entre para acompanhar cada detalhe da sua operação.',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 28),
-
-            // E-mail
+            _fieldLabel('E-mail'),
             TextFormField(
               controller: _emailController,
               style: TextStyle(color: AppColors.textPrimary),
               keyboardType: TextInputType.emailAddress,
-              decoration: _inputStyle(
-                'E-mail corporativo',
-                Icons.email_outlined,
-              ),
+              autofillHints: const [AutofillHints.email],
+              decoration: _inputStyle('voce@empresa.com'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'O e-mail é obrigatório.';
@@ -313,31 +577,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
-
-            // Senha
+            const SizedBox(height: 20),
+            _fieldLabel('Senha'),
             TextFormField(
               controller: _passwordController,
               obscureText: _obscurePassword,
               style: TextStyle(color: AppColors.textPrimary),
+              autofillHints: const [AutofillHints.password],
+              onFieldSubmitted: (_) {
+                if (!_isLoading) _submitForm();
+              },
               decoration: _inputStyle(
-                'Senha de acesso',
-                Icons.lock_outline,
+                'Sua senha',
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscurePassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: _obscurePassword
-                        ? AppColors.textSecondary
-                        : AppColors.primaryGold,
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: AppColors.textSecondary,
                     size: 20,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                   tooltip: _obscurePassword ? 'Mostrar senha' : 'Ocultar senha',
                 ),
               ),
@@ -345,44 +606,55 @@ class _LoginScreenState extends State<LoginScreen> {
                   ? 'A senha é obrigatória.'
                   : null,
             ),
-            const SizedBox(height: 16),
-
-            const SizedBox(height: 24),
-
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submitForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.goldFill,
-                foregroundColor: AppColors.onGold,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+            const SizedBox(height: 28),
+            SizedBox(
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.goldFill,
+                  foregroundColor: AppColors.onGold,
+                  disabledBackgroundColor:
+                      AppColors.goldFill.withValues(alpha: 0.68),
+                  shape: const StadiumBorder(),
+                  elevation: 0,
                 ),
-                elevation: 0,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: AppColors.onGold,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Entrar na plataforma',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                          fontSize: 14,
+                        ),
+                      ),
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: AppColors.onGold,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : const Text(
-                      'Entrar',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.4,
-                        fontSize: 13,
-                      ),
-                    ),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _fieldLabel(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
 
   Widget _build2FACard() {
     return Container(
@@ -563,13 +835,23 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Campos no padrão do design system (caixa de 4 px, foco dourado): o estilo vem do tema.
-  InputDecoration _inputStyle(String label, IconData icon, {Widget? suffixIcon}) {
+  // Campos no padrão do desktop: rótulo acima, caixa de 14 px, foco dourado.
+  InputDecoration _inputStyle(String hint, {Widget? suffixIcon}) {
+    OutlineInputBorder border(Color c, [double w = 1]) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: c, width: w),
+        );
     return InputDecoration(
-      labelText: label,
+      hintText: hint,
+      hintStyle: TextStyle(color: AppColors.textSecondary),
       errorStyle: TextStyle(color: AppColors.danger, fontSize: 12),
-      prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 18),
       suffixIcon: suffixIcon,
+      filled: false,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      enabledBorder: border(AppColors.gridLine),
+      focusedBorder: border(AppColors.goldFill, 1.5),
+      errorBorder: border(AppColors.danger),
+      focusedErrorBorder: border(AppColors.danger, 1.5),
     );
   }
 }

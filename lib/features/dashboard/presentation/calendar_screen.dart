@@ -176,7 +176,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               padding: const EdgeInsets.all(16.0),
                               decoration: BoxDecoration(
                                 color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: color.withValues(alpha: 0.5)),
                               ),
                               child: Row(
