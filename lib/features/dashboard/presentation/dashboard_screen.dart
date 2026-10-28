@@ -4,6 +4,7 @@ import '../../../core/network/auth_service.dart';
 import '../../chat/data/chat_network_service.dart';
 import '../../chat/presentation/chat_list_screen.dart';
 import '../../agenda/presentation/agenda_screen.dart';
+import '../../../core/config/feature_flags.dart';
 import '../../ponto/presentation/ponto_screen.dart';
 import 'widgets/home_dashboard_widget.dart';
 import 'widgets/obras_list_widget.dart';
@@ -142,6 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
+        bottomNavigationBar: _buildBottomNav(),
         body: SafeArea(
           child: NotificationListener<ScrollNotification>(
             onNotification: (ScrollNotification notification) {
@@ -181,9 +183,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
 
-                // Floating Bottom Bar locked on Home Dashboard only: Ponto Centered, Chat to the Right
-                // Smoothly hides when scrolled and reappears on top/scroll up
-                if (_selectedModuleIndex == 0)
+                // Botão flutuante de ponto: só existe com o ponto habilitado (kPontoHabilitado).
+                // A navegação principal fica na barra inferior.
+                if (kPontoHabilitado && _selectedModuleIndex == 0)
                   Positioned(
                     left: 16,
                     right: 16,
@@ -200,8 +202,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ignoring: !_isFloatingBarVisible,
                           child: Row(
                             children: [
-                              // Counterweight matching chat button width to keep Ponto perfectly centered
-                              const SizedBox(width: 48),
                               // Com a letra ampliada o botão de ponto encolhe em vez de estourar a barra
                               Expanded(
                                 child: Center(
@@ -211,7 +211,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                               ),
-                              _buildFloatingChatButton(),
                             ],
                           ),
                         ),
@@ -262,27 +261,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildFloatingChatButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: AppRadius.card,
-        onTap: () => _navigateToModule(4),
-        child: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: AppRadius.card,
-            border: Border.all(color: AppColors.gridLine),
-          ),
-          child: Center(
-            child: Icon(
-              Icons.chat_bubble_outline_rounded,
-              color: AppColors.primaryGold,
-              size: 22,
+  /// Módulo exibido por destino da barra inferior (o ponto não tem destino próprio).
+  static const _navModules = [0, 3, 2, 4, 5];
+
+  Widget _buildBottomNav() {
+    final selected = _navModules.indexOf(_selectedModuleIndex);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.gridLine)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: NavigationBar(
+          height: 68,
+          backgroundColor: AppColors.surface,
+          surfaceTintColor: Colors.transparent,
+          indicatorColor: AppColors.goldSoft,
+          selectedIndex: selected < 0 ? 0 : selected,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          onDestinationSelected: (i) => _navigateToModule(_navModules[i]),
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined, color: AppColors.textSecondary),
+              selectedIcon: Icon(Icons.home_rounded, color: AppColors.primaryGold),
+              label: 'Início',
             ),
-          ),
+            NavigationDestination(
+              icon: Icon(Icons.domain_outlined, color: AppColors.textSecondary),
+              selectedIcon: Icon(Icons.domain_rounded, color: AppColors.primaryGold),
+              label: 'Obras',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.calendar_month_outlined, color: AppColors.textSecondary),
+              selectedIcon: Icon(Icons.calendar_month_rounded, color: AppColors.primaryGold),
+              label: 'Agenda',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textSecondary),
+              selectedIcon: Icon(Icons.chat_bubble_rounded, color: AppColors.primaryGold),
+              label: 'Chat',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary),
+              selectedIcon: Icon(Icons.person_rounded, color: AppColors.primaryGold),
+              label: 'Perfil',
+            ),
+          ],
         ),
       ),
     );

@@ -3,6 +3,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/auth_service.dart';
 import '../../../chat/presentation/chat_room_screen.dart';
 import '../../../chat/data/chat_network_service.dart';
+import '../../../../core/config/feature_flags.dart';
 import '../../../ponto/presentation/ponto_screen.dart';
 import '../../domain/obra_progress.dart';
 
@@ -415,7 +416,7 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
             ],
           ),
 
-          if (role == 'FUNCIONARIO') ...[
+          if (kPontoHabilitado && role == 'FUNCIONARIO') ...[
             const SizedBox(height: 28),
             Text(
               'CONTROLE DE PONTO',

@@ -2,8 +2,13 @@
 /// assim as duas porcentagens são sempre iguais.
 ///
 /// - Fase concluída vale 1.
-/// - Fase ainda não concluída, mas com foto de andamento registrada, vale 0,5.
+/// - Fase iniciada (em andamento ou pausada) vale 0,5, assim o avanço sobe assim que
+///   o funcionário inicia a fase.
+/// - Fase ainda não concluída, mas com foto de andamento registrada, também vale 0,5
+///   (não soma com o início da fase).
 /// - Demais fases valem 0.
+///
+/// É o mesmo critério usado pela API (`ProgressoObra`).
 double calculatePhaseProgress(
   List<Map<String, dynamic>> phases, {
   List<Map<String, dynamic>> photos = const [],
@@ -20,6 +25,8 @@ double calculatePhaseProgress(
   for (final phase in phases) {
     if (_faseConcluida(phase)) {
       avanco += 1;
+    } else if (_faseIniciada(phase)) {
+      avanco += 0.5;
     } else {
       final id = phase['id_fase'];
       if (id is num && fasesComFoto.contains(id.toInt())) avanco += 0.5;
@@ -29,11 +36,14 @@ double calculatePhaseProgress(
 }
 
 const _statusConcluida = {'FINALIZADA', 'CONCLUIDA', 'CONCLUIDO'};
+const _statusIniciada = {'EM_ANDAMENTO', 'PAUSADA'};
 
-bool _faseConcluida(Map<String, dynamic> phase) {
-  final status = (phase['status'] ?? '').toString().trim().toUpperCase();
-  return _statusConcluida.contains(status);
-}
+String _statusDaFase(Map<String, dynamic> phase) =>
+    (phase['status'] ?? '').toString().trim().toUpperCase();
+
+bool _faseConcluida(Map<String, dynamic> phase) => _statusConcluida.contains(_statusDaFase(phase));
+
+bool _faseIniciada(Map<String, dynamic> phase) => _statusIniciada.contains(_statusDaFase(phase));
 
 /// Porcentagem exibida para o avanço, igual em todas as telas (dashboard e obra).
 String formatarPercentualAvanco(double progress) => '${(progress * 100).round()}%';
