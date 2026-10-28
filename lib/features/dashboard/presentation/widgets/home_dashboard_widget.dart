@@ -59,13 +59,6 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
     }
   }
 
-  String _formatCurrency(double value) {
-    String ptBr(double v, int decimals) => v.toStringAsFixed(decimals).replaceAll('.', ',');
-    if (value >= 1000000) return 'R\$ ${ptBr(value / 1000000, 2)} mi';
-    if (value >= 1000) return 'R\$ ${ptBr(value / 1000, 0)} mil';
-    return 'R\$ ${ptBr(value, 2)}';
-  }
-
   /// Progresso real de cada obra, calculado com as mesmas fases e fotos usadas na tela da obra.
   final Map<int, double> _progress = {};
 
@@ -402,6 +395,16 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
             },
           ),
 
+          // Atalhos para as telas de Agenda e Obras
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildAtalho('AGENDA', Icons.calendar_month_outlined, widget.onAgendaTap)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildAtalho('OBRAS', Icons.domain_outlined, widget.onObrasTap)),
+            ],
+          ),
+
           if (role == 'FUNCIONARIO') ...[
             const SizedBox(height: 28),
             Text(
@@ -726,6 +729,23 @@ class _HomeDashboardWidgetState extends State<HomeDashboardWidget> {
           ),
           const SizedBox(height: 90),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAtalho(String rotulo, IconData icone, VoidCallback? onTap) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icone, size: 16),
+      label: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(rotulo, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+      ),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primaryGold,
+        side: BorderSide(color: AppColors.primaryGold.withValues(alpha: 0.5)),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
