@@ -7,6 +7,21 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/auth_service.dart';
 import 'package:vizion_mobile/core/log.dart';
 
+/// Horário exibido na lista de conversas: hora de hoje, "Ontem" ou dia/mês.
+/// [agora] existe para os testes.
+String formatarHorarioConversa(String? iso, {DateTime? agora}) {
+  if (iso == null || iso.isEmpty) return '';
+  final data = DateTime.tryParse(iso);
+  if (data == null) return '';
+  final hoje = agora ?? DateTime.now();
+  String dois(int n) => n.toString().padLeft(2, '0');
+  final mesmoDia = data.year == hoje.year && data.month == hoje.month && data.day == hoje.day;
+  if (mesmoDia) return '${dois(data.hour)}:${dois(data.minute)}';
+  final ontem = DateTime(hoje.year, hoje.month, hoje.day).subtract(const Duration(days: 1));
+  if (data.year == ontem.year && data.month == ontem.month && data.day == ontem.day) return 'Ontem';
+  return '${dois(data.day)}/${dois(data.month)}';
+}
+
 class ChatNetworkService {
   static final ChatNetworkService _instance = ChatNetworkService._internal();
   factory ChatNetworkService() => _instance;
@@ -190,6 +205,12 @@ class ChatNetworkService {
     _client = createMqttClient('rabbit.felipedepauladev.site', clientId, 443);
     _client!.logging(on: false);
     _client!.keepAlivePeriod = 20;
+    // Quando a internet cai e volta (ou o app sai do Wi-Fi), reconecta e reinscreve nos chats
+    // sozinho; antes o tempo real parava até reabrir a tela.
+    _client!.autoReconnect = true;
+    _client!.resubscribeOnAutoReconnect = true;
+    _client!.onAutoReconnect = () => _updateConnectionStatus(false);
+    _client!.onAutoReconnected = () => _updateConnectionStatus(true);
 
     final connMessage = MqttConnectMessage()
         .withClientIdentifier(clientId)

@@ -337,8 +337,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
         final chat = _filteredChats[index];
         final String title =
             chat['nomeOutroParticipante'] ?? chat['tituloChat'] ?? 'Conversa';
-        final String subtitle =
-            chat['emailOutroParticipante'] ?? 'Chat privado';
+        // Prévia da última mensagem (como nos outros apps de conversa); sem mensagem, mostra o e-mail.
+        final String ultima = (chat['ultimaMensagem'] ?? '').toString().trim();
+        final String subtitle = ultima.isNotEmpty
+            ? ultima
+            : (chat['emailOutroParticipante'] ?? 'Chat privado').toString();
+        final String horario = formatarHorarioConversa(chat['dataUltimaMensagem']?.toString());
         final String initial = title.isNotEmpty ? title[0].toUpperCase() : 'U';
 
         return Container(
@@ -353,36 +357,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
               horizontal: 16,
               vertical: 8,
             ),
-            leading: Stack(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: AppColors.goldFill.withValues(
-                    alpha: 0.12,
-                  ),
-                  child: Text(
-                    initial,
-                    style: TextStyle(
-                      color: AppColors.primaryGold,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
+            // Sem bolinha verde de "online": o app não sabe quem está conectado.
+            leading: CircleAvatar(
+              radius: 24,
+              backgroundColor: AppColors.goldFill.withValues(
+                alpha: 0.12,
+              ),
+              child: Text(
+                initial,
+                style: TextStyle(
+                  color: AppColors.primaryGold,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: AppColors.success,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.surface, width: 1.5),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             title: Text(
               title,
@@ -410,11 +398,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: AppColors.textSecondary,
-                  size: 14,
-                ),
+                if (horario.isNotEmpty)
+                  Text(
+                    horario,
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  )
+                else
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: AppColors.textSecondary,
+                    size: 14,
+                  ),
               ],
             ),
             onTap: () => _openChatRoom(chat),
