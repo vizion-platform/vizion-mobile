@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:http/http.dart' as http;
 import 'package:mqtt_client/mqtt_client.dart';
 import 'mqtt_helper.dart';
@@ -26,6 +27,9 @@ class ChatNetworkService {
   static final ChatNetworkService _instance = ChatNetworkService._internal();
   factory ChatNetworkService() => _instance;
   ChatNetworkService._internal();
+
+  /// Total de mensagens não lidas, mostrado na bolinha vermelha do ícone do Chat.
+  static final ValueNotifier<int> unreadTotal = ValueNotifier<int>(0);
 
   MqttClient? _client;
   bool _isConnected = false;
@@ -67,6 +71,11 @@ class ChatNetworkService {
             .map((item) => Map<String, dynamic>.from(item))
             .toList();
 
+        unreadTotal.value = chats.fold<int>(
+          0,
+          (soma, chat) => soma + ((chat['naoLidas'] as num?)?.toInt() ?? 0),
+        );
+
         // Auto-subscribe to all active chats in MQTT
         for (var chat in chats) {
           final id = chat['id'];
@@ -82,6 +91,36 @@ class ChatNetworkService {
     } catch (e) {
       logDebug('Erro ao carregar chats: $e');
       rethrow;
+    }
+  }
+
+  /// Atualiza o total de mensagens não lidas (todas as conversas).
+  Future<void> refreshUnread() async {
+    try {
+      final response = await ApiClient.get(
+        Uri.parse('${AuthService.baseUrl}/chats/nao-lidas'),
+        headers: AuthService.getHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final body = jsonDecode(utf8.decode(response.bodyBytes));
+        final total = body is Map ? body['total'] : 0;
+        unreadTotal.value = total is num ? total.toInt() : 0;
+      }
+    } catch (e) {
+      logDebug('Erro ao carregar mensagens não lidas: $e');
+    }
+  }
+
+  /// Marca a conversa como lida no servidor e atualiza o total.
+  Future<void> markChatRead(int chatId) async {
+    try {
+      await ApiClient.post(
+        Uri.parse('${AuthService.baseUrl}/chats/$chatId/lida'),
+        headers: AuthService.getHeaders(),
+      );
+      await refreshUnread();
+    } catch (e) {
+      logDebug('Erro ao marcar conversa como lida: $e');
     }
   }
 

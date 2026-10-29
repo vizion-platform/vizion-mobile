@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/auth_service.dart';
@@ -21,10 +22,41 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedModuleIndex = 0;
   bool _isFloatingBarVisible = true;
+  Timer? _unreadTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    ChatNetworkService().refreshUnread();
+    _unreadTimer = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => ChatNetworkService().refreshUnread(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _unreadTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Ícone do Chat com a bolinha vermelha de mensagens não lidas.
+  Widget _chatIcon(IconData icon, Color color) {
+    return ValueListenableBuilder<int>(
+      valueListenable: ChatNetworkService.unreadTotal,
+      builder: (context, total, _) => Badge(
+        isLabelVisible: total > 0,
+        smallSize: 9,
+        backgroundColor: const Color(0xFFEF4444),
+        child: Icon(icon, color: color),
+      ),
+    );
+  }
 
   Future<void> _handleSignOut() async {
     // Desconecta o chat antes de limpar a sessão: o MQTT usa o token do usuário.
     ChatNetworkService().disconnectSocket();
+    ChatNetworkService.unreadTotal.value = 0;
     await AuthService.signOut();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -300,8 +332,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               label: 'Agenda',
             ),
             NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textSecondary),
-              selectedIcon: Icon(Icons.chat_bubble_rounded, color: AppColors.primaryGold),
+              icon: _chatIcon(Icons.chat_bubble_outline_rounded, AppColors.textSecondary),
+              selectedIcon: _chatIcon(Icons.chat_bubble_rounded, AppColors.primaryGold),
               label: 'Chat',
             ),
             NavigationDestination(

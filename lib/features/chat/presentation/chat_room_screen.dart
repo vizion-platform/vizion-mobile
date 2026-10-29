@@ -91,6 +91,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             setState(() {
               _messages = data;
             });
+            if (data.isNotEmpty && data.last['remetenteId'] != AuthService.userId) {
+              _chatService.markChatRead(widget.chatId);
+            }
             _scrollToBottom();
           }
         }
@@ -128,6 +131,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           _isLoading = false;
           _errorMessage = '';
         });
+        _chatService.markChatRead(widget.chatId);
         _scrollToBottom(delayed: true);
       }
     } catch (e) {
@@ -154,6 +158,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               _messages.add(newMessage);
             }
           });
+          if (newMessage['remetenteId'] != AuthService.userId) {
+            _chatService.markChatRead(widget.chatId);
+          }
           _scrollToBottom();
         }
       }

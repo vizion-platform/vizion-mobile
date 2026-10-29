@@ -102,6 +102,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   void _openChatRoom(Map<String, dynamic> chat) {
     final chatId = chat['id'];
+    if (((chat['naoLidas'] as num?)?.toInt() ?? 0) > 0) {
+      setState(() => chat['naoLidas'] = 0);
+      if (chatId is int) _chatService.markChatRead(chatId);
+    }
     final otherName =
         chat['nomeOutroParticipante'] ?? chat['tituloChat'] ?? 'Conversa';
 
@@ -344,6 +348,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             : (chat['emailOutroParticipante'] ?? 'Chat privado').toString();
         final String horario = formatarHorarioConversa(chat['dataUltimaMensagem']?.toString());
         final String initial = title.isNotEmpty ? title[0].toUpperCase() : 'U';
+        final int naoLidas = (chat['naoLidas'] as num?)?.toInt() ?? 0;
 
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -376,7 +381,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               title,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
+                fontWeight: naoLidas > 0 ? FontWeight.w900 : FontWeight.bold,
                 fontSize: 15,
               ),
               maxLines: 1,
@@ -387,7 +392,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
               child: Text(
                 subtitle,
                 style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: naoLidas > 0 ? AppColors.textPrimary : AppColors.textSecondary,
+                  fontWeight: naoLidas > 0 ? FontWeight.w700 : FontWeight.normal,
                   fontSize: 12,
                 ),
                 maxLines: 1,
@@ -408,6 +414,18 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     Icons.arrow_forward_ios,
                     color: AppColors.textSecondary,
                     size: 14,
+                  ),
+                if (naoLidas > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEF4444),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
               ],
             ),
