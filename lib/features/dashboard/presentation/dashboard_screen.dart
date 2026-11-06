@@ -54,7 +54,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _handleSignOut() async {
-    // Desconecta o chat antes de limpar a sessão: o MQTT usa o token do usuário.
+    // Desconecta o chat antes de limpar a sessão: o socket usa o token do usuário.
     ChatNetworkService().disconnectSocket();
     ChatNetworkService.unreadTotal.value = 0;
     await AuthService.signOut();

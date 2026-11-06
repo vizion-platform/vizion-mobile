@@ -47,7 +47,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   @override
   void dispose() {
     _chatService.removeConnectionListener(_onConnectionStatusChanged);
-    _chatService.unsubscribeFromChat(widget.chatId);
     _stopFallbackTimer();
     _messageController.dispose();
     _scrollController.dispose();
@@ -165,7 +164,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         }
       }
     });
-    _chatService.subscribeToChat(widget.chatId);
     _startFallbackTimer();
   }
 

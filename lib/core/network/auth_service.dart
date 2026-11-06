@@ -21,7 +21,7 @@ class FaseFluxo {
 }
 
 class AuthService {
-  static const String baseUrl = 'https://vizion.cognisgroup.cloud/api';
+  static const String baseUrl = 'https://vizion.felipedepaula.com.br/api';
 
   static String? _accessToken;
   static String? _refreshToken;

@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:http/http.dart' as http;
-import 'package:mqtt_client/mqtt_client.dart';
-import 'mqtt_helper.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../../core/network/api_client.dart';
 import '../../../core/network/auth_service.dart';
 import 'package:vizion_mobile/core/log.dart';
@@ -31,7 +30,7 @@ class ChatNetworkService {
   /// Total de mensagens não lidas, mostrado na bolinha vermelha do ícone do Chat.
   static final ValueNotifier<int> unreadTotal = ValueNotifier<int>(0);
 
-  MqttClient? _client;
+  io.Socket? _socket;
   bool _isConnected = false;
   bool get isConnected => _isConnected;
   Function(Map<String, dynamic>)? _onNewMessageCallback;
@@ -75,14 +74,6 @@ class ChatNetworkService {
           0,
           (soma, chat) => soma + ((chat['naoLidas'] as num?)?.toInt() ?? 0),
         );
-
-        // Auto-subscribe to all active chats in MQTT
-        for (var chat in chats) {
-          final id = chat['id'];
-          if (id is int) {
-            subscribeToChat(id);
-          }
-        }
 
         return chats;
       } else {
@@ -206,114 +197,67 @@ class ChatNetworkService {
     }
   }
 
-  final Set<int> _subscribedChatIds = {};
-
-  void subscribeToChat(int chatId) {
-    _subscribedChatIds.add(chatId);
-    _subscribeToTopic(chatId);
-  }
-
-  void unsubscribeFromChat(int chatId) {
-    _subscribedChatIds.remove(chatId);
-    if (_client != null &&
-        _client!.connectionStatus!.state == MqttConnectionState.connected) {
-      final topic = 'vizion/chats/$chatId';
-      _client!.unsubscribe(topic);
-    }
-  }
-
-  void _subscribeToTopic(int chatId) {
-    if (_client != null &&
-        _client!.connectionStatus!.state == MqttConnectionState.connected) {
-      final topic = 'vizion/chats/$chatId';
-      logDebug('Inscrevendo no topico MQTT: $topic');
-      _client!.subscribe(topic, MqttQos.atLeastOnce);
-    }
-  }
-
-  Future<void> _connectMqtt() async {
-    if (_client != null &&
-        (_client!.connectionStatus!.state == MqttConnectionState.connected ||
-            _client!.connectionStatus!.state ==
-                MqttConnectionState.connecting)) {
-      return;
-    }
-
-    final clientId =
-        'vizion_mobile_${DateTime.now().millisecondsSinceEpoch}_${AuthService.userId}';
-    _client = createMqttClient('rabbit.felipedepauladev.site', clientId, 443);
-    _client!.logging(on: false);
-    _client!.keepAlivePeriod = 20;
-    // Quando a internet cai e volta (ou o app sai do Wi-Fi), reconecta e reinscreve nos chats
-    // sozinho; antes o tempo real parava até reabrir a tela.
-    _client!.autoReconnect = true;
-    _client!.resubscribeOnAutoReconnect = true;
-    _client!.onAutoReconnect = () => _updateConnectionStatus(false);
-    _client!.onAutoReconnected = () => _updateConnectionStatus(true);
-
-    final connMessage = MqttConnectMessage()
-        .withClientIdentifier(clientId)
-        .authenticateAs('${AuthService.userId}', AuthService.accessToken ?? '')
-        .startClean()
-        .withWillQos(MqttQos.atLeastOnce);
-    _client!.connectionMessage = connMessage;
-
-    _client!.onConnected = () {
-      logDebug('Conectado ao broker MQTT com sucesso!');
-      _updateConnectionStatus(true);
-      for (final chatId in _subscribedChatIds) {
-        _subscribeToTopic(chatId);
-      }
-    };
-
-    _client!.onDisconnected = () {
-      logDebug('Desconectado do broker MQTT.');
-      _updateConnectionStatus(false);
-    };
-
-    try {
-      logDebug('Conectando ao broker MQTT: wss://rabbit.felipedepauladev.site/ws');
-      await _client!.connect();
-    } catch (e) {
-      logDebug('Erro ao conectar ao broker MQTT: $e');
-      _updateConnectionStatus(false);
-    }
-
-    _client!.updates?.listen((List<MqttReceivedMessage<MqttMessage>> c) {
-      final recMess = c[0].payload as MqttPublishMessage;
-      final pt = MqttPublishPayload.bytesToStringAsString(
-        recMess.payload.message,
-      );
-      logDebug('Mensagem MQTT recebida no topico ${c[0].topic}');
-      try {
-        final decoded = jsonDecode(pt);
-        final data = decoded is Map && decoded['message'] is Map
-            ? decoded['message']
-            : decoded;
-        if (_onNewMessageCallback != null && data is Map) {
-          _onNewMessageCallback!(Map<String, dynamic>.from(data));
-        }
-      } catch (e) {
-        logDebug('Erro ao decodificar mensagem MQTT: $e');
-      }
-    });
-  }
-
-  // Socket Connection wrapper for compatibility
+  /// O servidor (Socket.IO) coloca o usuário na sala dele ao conectar e entrega
+  /// `new_message`, `message_edited` e `message_deleted` de todas as conversas dele.
+  static const String _socketUrl = 'https://vizion.felipedepaula.com.br';
+  static const List<String> _messageEvents = [
+    'new_message',
+    'message_edited',
+    'message_deleted',
+  ];
 
   void connectSocket(Function(Map<String, dynamic>) onNewMessage) {
     _onNewMessageCallback = onNewMessage;
-    _connectMqtt();
+    final token = AuthService.accessToken;
+    if (token == null || token.isEmpty) return;
+    if (_socket != null) return;
+
+    final socket = io.io(
+      _socketUrl,
+      io.OptionBuilder()
+          .setTransports(['websocket', 'polling'])
+          .setQuery({'token': token})
+          .enableReconnection()
+          .setReconnectionDelay(3000)
+          .disableAutoConnect()
+          .build(),
+    );
+    _socket = socket;
+
+    socket.onConnect((_) {
+      logDebug('Conectado ao servidor de chat (socket).');
+      _updateConnectionStatus(true);
+    });
+    socket.onDisconnect((_) {
+      logDebug('Desconectado do servidor de chat (socket).');
+      _updateConnectionStatus(false);
+    });
+    socket.onConnectError((error) {
+      logDebug('Erro ao conectar no socket: $error');
+      _updateConnectionStatus(false);
+    });
+
+    for (final event in _messageEvents) {
+      socket.on(event, (data) {
+        try {
+          if (_onNewMessageCallback != null && data is Map) {
+            _onNewMessageCallback!(Map<String, dynamic>.from(data));
+          }
+        } catch (e) {
+          logDebug('Erro ao tratar mensagem do socket: $e');
+        }
+      });
+    }
+
+    socket.connect();
   }
 
   void disconnectSocket() {
-    if (_client != null) {
-      _client!.disconnect();
-      _client = null;
-    }
+    _socket?.dispose();
+    _socket = null;
     _updateConnectionStatus(false);
     _onNewMessageCallback = null;
-    logDebug('MQTT desconectado e limpo.');
+    logDebug('Socket do chat desconectado e limpo.');
   }
 
   Future<Map<String, dynamic>> postMessage(int chatId, String content) async {
