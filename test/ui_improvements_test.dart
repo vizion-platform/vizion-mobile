@@ -6,7 +6,6 @@ import 'package:http/testing.dart';
 import 'package:vizion_mobile/core/network/auth_service.dart';
 import 'package:vizion_mobile/features/auth/presentation/login_screen.dart';
 import 'package:vizion_mobile/features/agenda/presentation/agenda_screen.dart';
-import 'package:vizion_mobile/features/dashboard/presentation/widgets/home_dashboard_widget.dart';
 import 'package:vizion_mobile/features/dashboard/presentation/dashboard_screen.dart';
 
 void main() {
